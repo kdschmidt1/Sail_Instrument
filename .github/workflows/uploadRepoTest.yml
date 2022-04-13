@@ -1,0 +1,27 @@
+name: test
+on:
+  push:
+    branches: [never]
+  workflow_dispatch:
+
+jobs:
+  
+  deploy:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    steps:
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Create Artifact
+        run: echo "test" > test.txt
+      - name: Upload Repository
+        uses:  wellenvogel/sftp-upload-action@v1.0
+        with:
+          privateKey: '${{ secrets.REPO_KEY }}'
+          server: '${{ secrets.REPO_SERVER }}'
+          user: '${{ secrets.REPO_USER }}'
+          localFile: 'test.txt'
+          remoteDir: '${{ secrets.REMOTE_DIR }}'
+        
