@@ -23,11 +23,12 @@ If there are "APPARENT" Winddata in the NMEA input stream it calculates:
 | TWS | 0..∞ [m/s] | gps.TWS | True WindSpeed |
 |  |  |  |  |
 
-· 
+· file:///mnt/hgfs/F/boot-transfer/avn1.png
 
 In case of "TRUE" Winddata **no** calculation is done, because True winddata are not very likely on boats!  
 (If there is interest in calculation of Apparent Wind-Data from TRUE, please leave a message in [Issues](https://github.com/kdschmidt1/avnav-more-nmea-plugin/issues))
-
+Images/avn1.png
+![Alternativtext](https://github.com/kdschmidt1/SegelDisplay//Images/avn1.png "Bildtitel hier")
 In adition the plugin listens for incoming NMEA records regarding course and speed.
 
 If NMEA records with course data are received (\$HDM or \$HDG or \$VHW) it calculates:
