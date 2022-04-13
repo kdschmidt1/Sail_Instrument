@@ -1,13 +1,10 @@
-**AvNav more-nmea Plugin**
+**SegelDisplay Plugin**
 
 ===========================
 
 
 
-This project provides a plugin for AvNav to calculate additional (hopefully) useful data .
-
-
-
+This project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
 
 It calculates the Magnetic Variation at the actual position based on the World Magnetic Model 2020 of [NOAA](https://www.ngdc.noaa.gov/) 
