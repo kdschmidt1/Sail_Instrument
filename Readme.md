@@ -11,11 +11,12 @@ There is a very good description of the basic functionality in [blauwasser.de](h
  
  
 some Remarks:
-The display is only shown iv valid GPS data are available
-It needs the more [nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
-To get regular redraws of the display it is necessary to add the layline widget in the [Layout Editor](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
-You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml)
-Configuration of the Display is done on the Status/Server page under point 10(PluginHandler)
+*  The display is only shown if valid GPS data are available
+*  It needs the more [nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
+*  To get regular redraws of the display it is necessary to add the layline widget in the [Layout Editor](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+*  You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml)
+*  Configuration of the Display is done on the Status/Server page under point 10(PluginHandler)
+*  You have to configure the SegelDisplay overlay https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html
 
 **NEW:**  
 
