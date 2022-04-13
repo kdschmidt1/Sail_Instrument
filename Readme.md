@@ -4,57 +4,20 @@
 
 
 
-This project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer
+This project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
 
-It calculates the Magnetic Variation at the actual position based on the World Magnetic Model 2020 of [NOAA](https://www.ngdc.noaa.gov/) 
+There is a very good description of the basic functionality in [blauwasser.de](https://www.blauwasser.de/navigation/app-sailsteer-bandg) und [mark-chisnell](https://www.bandg.com/de-de/blog/sailsteer-with-mark-chisnell/)
  
-If there are "APPARENT" Winddata in the NMEA input stream it calculates:
-·  
-
-| Value | Format | Storename | Description |
-| --- | --- | --- | --- |
-| MagVar | +/- 180 [°] | gps.MagVar | Magnetic Variation |
-| AWA | +/- 180 [°] | gps.AWA | Apparent WindAngle |
-| AWD | 0…360 [°] | gps.AWD | Apparent WindDirection |
-| AWS | 0..∞ [m/s] | gps.AWS | Apparent WindSpeed |
-| TWA | +/- 180 [°] | gps.TWA | True WindAngle |
-| TWD | 0…360 [°] | gps.TWD | True WindDirection |
-| TWS | 0..∞ [m/s] | gps.TWS | True WindSpeed |
-|  |  |  |  |
-
-· file:///mnt/hgfs/F/boot-transfer/avn1.png
-
-In case of "TRUE" Winddata **no** calculation is done, because True winddata are not very likely on boats!  
-(If there is interest in calculation of Apparent Wind-Data from TRUE, please leave a message in [Issues](https://github.com/kdschmidt1/avnav-more-nmea-plugin/issues))
-Images/avn1.png
-![Alternativtext](https://github.com/kdschmidt1/SegelDisplay/blob/927b7d25dde94995c99fb2730518262bc580bd32/Images/avn1.png "Bildtitel hier")
-In adition the plugin listens for incoming NMEA records regarding course and speed.
-
-If NMEA records with course data are received (\$HDM or \$HDG or \$VHW) it calculates:
-
-| Value | Format | Storename | Description |
-| --- | --- | --- | --- |
-| HDGm | 0…360 [°] | gps.HDGm | Heading magnetic |
-| HDGt | 0…360 [°] | gps.HDGt | Heading true |
-
-in case of $VHW records it will also create 
-
-| Value | Format | Storename | Description |
-| --- | --- | --- | --- |
-| STW | 0..∞ [m/s] | gps.STW | Speed through water |
-
+ 
+some Remarks:
+The display is only shown iv valid GPS data are available
+It needs the more [nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
+To get regular redraws of the display it is necessary to add the layline widget in the [Layout Editor](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml)
+Configuration of the Display is done on the Status/Server page under point 10(PluginHandler)
 
 **NEW:**  
-Since Release 20210517 the Plugin is able to create the following NMEA records: **$MWD,** **$MWV,** **$HDT,** **$HDM and** **$HDG**. These messages are available i.e. on the SocketWriter Ports. 
-They will be transmitted only, if the necessary signals are available and if there is **no record with the same name** in the NMEA input data stream.  
-One can explicitly declare which records to be sent by using the FILTER_NMEA_OUT Parameter (i.e. “$HDT,$MWV" to transmit only these two).
-If the "Filter_NMEA_OUT" is empty, all records are transmitted.  
-One can avoid to transmit a specific record by adding its name as inverse (i.e. “^$HDT”) to the "Filter_NMEA_OUT".   
-A special case are the records $HDG,  $MWV and $VHW because these messages have different meanings depending on their message content:  
-$HDG, $MVW can be either TRUE oder RELATIVE. In this case the plugin delivers the opposite TRUE oder RELATIVE Message, even if there is already a message with the same name in the input stream.  
-Based on $VHW the plugin also creates the corresponding $HDT or $HDM and $HDG messages, if they are not already in the input stream.  
-If case of feeding back the avnav-nmea records to signalk, you should add the sourceName Parameter (i.e. "more_nmea") to the blackList of the AVNSocketWriter that is used in signalk for receiving data from avnav in the avnav_server.xml to avoid creating a loop.
 
 The Plugin can be configured in the avnav-Server.xml with the following parmeters:
 
