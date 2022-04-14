@@ -15,22 +15,25 @@ some Remarks:
 *  It needs the more [nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
 *  To get regular redraws of the display it is necessary to add the layline widget in the [Layout Editor](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 *  You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml)
-*  Configuration of the Display is done on the Status/Server page under point 10(PluginHandler)
-*  You have to configure the SegelDisplay overlay https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html
+*  You have to add the SegelDisplay overlay https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html
 
 **NEW:**  
 
-The Plugin can be configured in the avnav-Server.xml with the following parmeters:
+The Plugin can either be configured in the avnav-Server.xml with the following parmeters:
 
 | Name | Default Value | Description |
 | --- | --- | --- |
-| WMM_FILE | "WMM2020.COF” | The WMM-Coefficent-File in the Plugin Directory |
-| WMM_PERIOD | "10" | Intervall (sec) to calculate Variation |
-| NMEAPeriod | “1” | Intervall (sec) to transmit new NMEA-records |
-| computePeriod | "0.5” | Intervall (sec) to read NMEA-records |
-| FILTER_NMEA_OUT | “” | Filter for transmitted new NMEA-records |
-| sourceName | “more_nmea” | source name to be set for the generated records |
+| Displaysize| "100" | Size of the Layline Display (%) |
+| Laylinerefresh | "10" | Time in (min) to completely clear Layline-Area |
+| Laylinelength | “100” | Length of Laylines (nm) |
+| TWD_filtFreq | "0.2” | Limit Frequency for PT1-Filter of TWD |
+| Laylineoverlap | “False” | Extent Laylines over Intersection |
+| LaylineBoat | “True” | Draw Ahead-Laylines from Boatposition |
+| LaylineWP | “True” | Draw Waypoint-Laylines |
+| TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |
 
+or on the Status/Server page under point 10(PluginHandler):
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/c3503c50ce09bfc21681f1f1e58452fd98255a73/Images/avn1.png "Beispielbild")
 
 
 Please report any Errors to [Issues](https://github.com/kdschmidt1/avnav-more-nmea-plugin/issues)

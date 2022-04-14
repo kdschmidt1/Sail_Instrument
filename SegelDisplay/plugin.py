@@ -31,7 +31,7 @@ class Plugin(object):
   CONFIG = [
       {
       'name':'Displaysize',
-      'description':'Size of the Layline Display',
+      'description':'Size of the Layline Display \'%\'',
       'default':100,
       'type': 'NUMBER'
       },
@@ -76,7 +76,7 @@ class Plugin(object):
       {
           'name': 'TWDFilt_Indicator',
           'description': 'Show filtered TWD Arrow',
-          'default': True,
+          'default': False,
           'type': 'BOOLEAN'
 
         },
