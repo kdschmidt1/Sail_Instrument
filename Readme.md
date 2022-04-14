@@ -12,10 +12,8 @@ There is a very good description of the basic functionality in [blauwasser.de](h
  
 some Remarks:
 *  The display is only shown if valid GPS data are available
-*  It needs the more [nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
-*  To get regular redraws of the display it is necessary to add the layline widget in the [Layout Editor](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+*  It requires the more [nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
 *  You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml)
-*  You have to add the SegelDisplay overlay https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html
 
 **NEW:**  
 
@@ -65,6 +63,8 @@ You can use the plugin in 2 different ways.
  sudo dpkg -i avnav-more-nmea-plugin...._all.deb
 
  ```
+2. Add the layline widget in the [Layout Editor](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog) to your map
+3. Add the SegelDisplay overlay https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html to your map
 
 
 
@@ -90,18 +90,16 @@ No configuration necessary
 
 ------
 
-The plugin provides no specific Widget.
-
-One can use the default widget from avnav to visualize the data by selecting the appropriate gps... message.
-
+The plugin provides the layline-Widget.
+it is necessary to activate periody redraw of the display.
 
 
 **Formatter**
 
 ---------
 
-To display values in a proper unit the necessary formatters are included in the default widget.
 
+No formatters are included in widget.
 
 
 
