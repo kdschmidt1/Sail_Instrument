@@ -62,8 +62,8 @@ You can use the plugin in 2 different ways.
  sudo dpkg -i avnav-more-nmea-plugin...._all.deb
 
  ```
-2. Add the LaylineWidget to your map [see](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
-3. Add the SegelDisplay overlay you can find in the plugin directory under Overlay https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html to your map [see](https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html)
+2. Add the LaylineWidget to your map [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+3. Add the SegelDisplay overlay you can find in the Overlay folder of the plugin directory to your map [overlays](https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html)
 
 
 
