@@ -5,7 +5,7 @@ sailsteerImageCanvasSource={};
 
 //       		window.localStorage.setItem('kds',mycanvasFunction)
             let widgetParameters = {
-				formatterParameters: false
+				formatterParameters: false,
             };
 
 var TWD_Abweichung = [0,0]

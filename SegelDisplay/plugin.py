@@ -56,7 +56,7 @@ class Plugin(object):
       {
       'name':'Laylineoverlap',
       'description':'Extent Laylines over Intersection',
-          'default': True,
+          'default': False,
           'type': 'BOOLEAN'
       },
       {
