@@ -110,29 +110,9 @@ No formatters are included in widget.
 
 
 
-
-
-**Take care for NMEA200 Sources: **
-
-The Signalk-Plugin "sk-to-nmea0183" has some bugs:
-
-- $VHW : see <https://github.com/SignalK/signalk-to-nmea0183/issues/63>
-
-- $HDG : Swapped Deviation and Variation see <https://github.com/SignalK/signalk-to-nmea0183/issues/71>
-
-The sentences from canboat are ok, as far as tested!
-
-
-
-HDGt (Heading True) is calculated from HDGm (Heading magnetic from $HDM or $HDG or $VHW) taking into account the magnetic variation if no True Heading Data is received.
-
-Receiving True Heading overwrites calculated Data!
-
-If magnetic variation is received (by $HDG) inside the "WMM_PERIOD" -time this value is taken into account.
-
-             
-
-
+The position of the Laylines in the display depends on the filtered TWD, that one 
+can see by activating the TWDFilt_Indicator
+Laylines on the map are only shown, if a waypoint is active!
 
 **Package Building**
 
