@@ -5,9 +5,7 @@ sailsteerImageCanvasSource={};
 
 //       		window.localStorage.setItem('kds',mycanvasFunction)
             let widgetParameters = {
-				formatterParameters: true,
-				sailsteerrefresh: {type: 'NUMBER', default: 5},
-				sailsteerPT1frequenz: {type: 'NUMBER', default: 0.2},
+				formatterParameters: false
             };
 
 var TWD_Abweichung = [0,0]

@@ -12,7 +12,7 @@ There is a very good description of the basic functionality in [blauwasser.de](h
  
 some Remarks:
 *  The display is only shown if valid GPS data are available
-*  It requires the more [nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
+*  It requires the [more nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
 *  You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml)
 
 **NEW:**  
@@ -22,15 +22,15 @@ The Plugin can either be configured in the avnav-Server.xml with the following p
 | Name | Default Value | Description |
 | --- | --- | --- |
 | Displaysize| "100" | Size of the Layline Display (%) |
-| Laylinerefresh | "10" | Time in (min) to completely clear Layline-Area |
+| Laylinerefresh | "5" | Time in (min) to completely clear Layline-Area |
 | Laylinelength | “100” | Length of Laylines (nm) |
-| TWD_filtFreq | "0.2” | Limit Frequency for PT1-Filter of TWD |
+| TWD_filtFreq | "0.2” | Lowpass Frequency for PT1-filtered TWD |
 | Laylineoverlap | “False” | Extent Laylines over Intersection |
 | LaylineBoat | “True” | Draw Ahead-Laylines from Boatposition |
 | LaylineWP | “True” | Draw Waypoint-Laylines |
 | TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |
 
-or on the Status/Server page under point 10(PluginHandler):
+or in the Status/Server page under point 10(PluginHandler):
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/ea65410604be75307a485cd68e3691d6f8c494a5/Images/EditHandler%20vom%202022-04-14%2010-11-23.png "Beispielbild")
 
 
@@ -62,7 +62,7 @@ You can use the plugin in 2 different ways.
  sudo dpkg -i avnav-more-nmea-plugin...._all.deb
 
  ```
-2. Add the layline widget in the [Layout Editor] to your map [see](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+2. Add the LaylineWidget to your map [see](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 3. Add the SegelDisplay overlay you can find in the plugin directory under Overlay https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html to your map [see](https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html)
 
 
@@ -87,7 +87,7 @@ No configuration necessary
 
 ------
 
-The plugin provides the layline-Widget.
+The plugin provides the LaylineWidget.
 it is necessary to activate periody redraw of the display.
 
 
