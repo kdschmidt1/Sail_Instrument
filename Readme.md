@@ -33,7 +33,7 @@ The Plugin can either be configured in the avnav-Server.xml with the following p
 | TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |
 
 or on the Status/Server page under point 10(PluginHandler):
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/c3503c50ce09bfc21681f1f1e58452fd98255a73/Images/avn1.png "Beispielbild")
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/ea65410604be75307a485cd68e3691d6f8c494a5/Images/EditHandler%20vom%202022-04-14%2010-11-23.png "Beispielbild")
 
 
 Please report any Errors to [Issues](https://github.com/kdschmidt1/avnav-more-nmea-plugin/issues)
