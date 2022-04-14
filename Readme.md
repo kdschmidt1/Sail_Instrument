@@ -48,12 +48,11 @@ License: [MIT](LICENSE.md)
 
 You can use the plugin in 2 different ways.
 
-1. Download the source code as a zip and unpack it into a directory /home/pi/avnav/data/plugins/more-nmea.
+1. Download the source code as a zip and unpack it into a directory /home/pi/avnav/data/plugins/SegelDisplay.
 
- If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/more-nmea.
+ If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/SegelDisplay.
 
- In this case the name of the plugin will be user-more-nmea. So you can modify the files and adapt them to your needs.
-
+ In this case the internal name of the plugin will be user-SegelDisplay. 
 
 
 1. Download the package provided in the releases section or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
@@ -63,8 +62,8 @@ You can use the plugin in 2 different ways.
  sudo dpkg -i avnav-more-nmea-plugin...._all.deb
 
  ```
-2. Add the layline widget in the [Layout Editor](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog) to your map
-3. Add the SegelDisplay overlay https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html to your map
+2. Add the layline widget in the [Layout Editor] to your map [see](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+3. Add the SegelDisplay overlay you can find in the plugin directory under Overlay https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html to your map [see](https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html)
 
 
 
@@ -76,13 +75,11 @@ The plugin registers no [User App](https://www.wellenvogel.net/software/avnav/do
 
 
 
-Configuration (Server)
+**Configuration (Server)**
 
 -------------
 
 No configuration necessary
-
-
 
 
 
@@ -108,8 +105,6 @@ No formatters are included in widget.
 
 ----------------------
 
-
-
 The position of the Laylines in the display depends on the filtered TWD, that one 
 can see by activating the TWDFilt_Indicator
 Laylines on the map are only shown, if a waypoint is active!
@@ -119,8 +114,6 @@ Laylines on the map are only shown, if a waypoint is active!
 ----------------
 
 For a simple package building [NFPM](https://nfpm.goreleaser.com/) is used and started in a docker container (use [buildPkg.sh](buildPkg.sh)). In the [package.yaml](package.yaml) the properties of the packge can be set.
-
-
 
 Additionally a [GitHub workflow](.github/workflows/createPackage.yml) has been set up to create a release and build a package whenever you push to the release branch.
 
