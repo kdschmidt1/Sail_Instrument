@@ -2,7 +2,8 @@
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/c3503c50ce09bfc21681f1f1e58452fd98255a73/Images/avn1.png "Beispielbild")
 ===========================
 
-
+![nur ein Beispiel](xxx "Beispielbild")
+This Plugin only works with a AVNAV-Version including Canvas-Overlays (Pull request already initiated)
 
 This project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
@@ -11,7 +12,6 @@ There is a very good description of the basic functionality in [blauwasser.de](h
  
  
 some Remarks:
-*  The display is only shown if valid GPS data are available
 *  It requires the [more nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
 *  You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml)
 
@@ -30,7 +30,7 @@ The Plugin can either be configured in the avnav-Server.xml with the following p
 | LaylineWP | “True” | Draw Waypoint-Laylines |
 | TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |
 
-or in the Status/Server page under point 10(PluginHandler):
+or in the Status/Server page under PluginHandler:
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/ea65410604be75307a485cd68e3691d6f8c494a5/Images/EditHandler%20vom%202022-04-14%2010-11-23.png "Beispielbild")
 
 
@@ -88,7 +88,7 @@ No configuration necessary
 ------
 
 The plugin provides the LaylineWidget.
-it is necessary to activate periody redraw of the display.
+it is necessary to activate periodic redraw of the display.
 
 
 **Formatter**
