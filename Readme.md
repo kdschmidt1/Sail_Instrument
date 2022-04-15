@@ -3,7 +3,7 @@
 ===========================
 
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/71ac24c061e987fd91be5aa5c0502e03e30a74df/Images/Achtung.png "Beispielbild")
-This Plugin only works with a AVNAV-Version including Canvas-Overlays (Pull request already initiated)
+**This Plugin only works with a AVNAV-Version including Canvas-Overlays (Pull request already initiated)**
 
 This project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
