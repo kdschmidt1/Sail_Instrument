@@ -2,7 +2,7 @@
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/c3503c50ce09bfc21681f1f1e58452fd98255a73/Images/avn1.png "Beispielbild")
 ===========================
 
-![nur ein Beispiel](xxx "Beispielbild")
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/71ac24c061e987fd91be5aa5c0502e03e30a74df/Images/Achtung.png "Beispielbild")
 This Plugin only works with a AVNAV-Version including Canvas-Overlays (Pull request already initiated)
 
 This project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
