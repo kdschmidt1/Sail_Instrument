@@ -1,4 +1,33 @@
 
+
+let Parameter={}
+
+// Plugin-Liste lesen und wenn SegelDisplay gefunden Parameter lesen
+fetch(window.location.origin+"/viewer/avnav_navi.php?request=plugins&command=list")
+.then(function(resp){return resp.json()})
+.then(function(data){
+	plugins=data.data;
+	for(let i=0; i<plugins.length; i++) {
+		if(plugins[i].name.indexOf("SegelDisplay")!=-1) {
+			Laylineplugin_Name=plugins[i].name;
+			if (typeof Laylineplugin_Name !== 'undefined')
+			{
+
+				fetch(window.location.origin+"/plugins/"+Laylineplugin_Name+"/api/parameter")
+					.then(function(resp){return resp.json()})
+					.then(function(data){
+						Parameter=data;
+				})
+				.catch((error) => {
+					avnav.api.showToast("SegelDisplay ERROR: "+error)
+				});
+			}
+		}
+	}
+})
+
+
+
 let TWD_Abweichung = [0,0];
 let old_time=performance.now();
 let ln0_1=Math.log(0.1);
@@ -19,7 +48,7 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 	*  and contains a function "lonlat_to_Canvas([lon,lat])"
 	*  to calculate the canvas-coordinates of a specific map position
 	**/
-	console.log("mycanvas2");
+	console.log("SegelDisplay");
 	ctx=canvas.getContext('2d')
 					ctx.clearRect(0, 0, ctx.canvas.getAttribute("width"), ctx.canvas.getAttribute("height"));
 	sailsteerImageCanvasSource=this; // WIRD BENNÖTIGT IM SAILSTEER PLUGIN
@@ -37,24 +66,10 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 	self=this
 	var id=(new Date()).getTime();
 	this.requestRunning=id;
-	if (typeof Laylineplugin_Name !== 'undefined')
-	{
 
-		fetch(window.location.origin+"/plugins/"+Laylineplugin_Name+"/api/parameter")
-			.then(function(resp){return resp.json()})
-			.then(function(data){
-			if (self.requestRunning==id) {
-				self.requestRunning=undefined;
-				self.parameter=data;
-			}
-		})
-		.catch((error) => {
-			avnav.api.showToast("Mycanvas2 ERROR: "+error)
-		});
-	}
-	if(typeof(this.parameter) != 'undefined' && this.parameter != null){
-		this.parameter.Laylinelength*=1825; //sm in m
-		radius = this.parameter.Displaysize; 
+	if(typeof(Parameter) != 'undefined' && Parameter != null){
+		Parameter.Laylinelength*=1825; //sm in m
+		radius = Parameter.Displaysize; 
 	}
 	else{
 		radius = 100; 
@@ -74,14 +89,14 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 	DrawLaylineArea(ctx, radius, maprotationdeg+gps.LLSB, TWD_Abweichung, ((gps.LLSB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
 	DrawWindpfeilIcon(ctx, radius, maprotationdeg+gps.AWD, "rgb(0,255,0)", 'A')
 	DrawWindpfeilIcon(ctx, radius, maprotationdeg+gps.TWD , "blue", 'T')
-	if(typeof(self.parameter) != 'undefined' && this.parameter.TWDFilt_Indicator=='True')	 
+	if(typeof(Parameter) != 'undefined' && Parameter.TWDFilt_Indicator=='True')	 
 		DrawWindpfeilIcon(ctx, radius, + maprotationdeg+gps.TSS, "yellow", '~');
 	ctx.save();
 	if(typeof(gps.boatposition) != 'undefined')		
 		boatPosition = this.lonlat_to_Canvas([gps.boatposition.lon,gps.boatposition.lat]);
 	//Laylines auf map zeichnen 
 //	if(this.MapLayline)
-	DrawMapLaylines(this, ctx, radius, this.parameter, gps); 
+	DrawMapLaylines(this, ctx, radius, gps); 
 	ctx.restore();
 }
 
@@ -105,7 +120,7 @@ function drawpointcross(cc,coordinates, color){
 
 let calc_LaylineAreas = function(self, props) {
 	try{
-		self.dist_SB = self.dist_BB = self.parameter.Laylinelength
+		self.dist_SB = self.dist_BB = Parameter.Laylinelength
 		b_pos = new LatLon(props.boatposition.lat, props.boatposition.lon);
 		if (props.WPposition) {
 			WP_pos = new LatLon(props.WPposition.lat, props.WPposition.lon);
@@ -118,10 +133,10 @@ let calc_LaylineAreas = function(self, props) {
 				let dist_xx = pos.rhumbDistanceTo(intersection);	// in km
 				if (dist_xx>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
 						return null;
-				if(dist_xx > self.parameter.Laylinelength/1000) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
-				is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), self.parameter.Laylinelength/1000)
-								else if(dist_xx< self.parameter.Laylinelength/1000 && self.parameter.Laylineoverlap=="True")// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
-				is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), self.parameter.Laylinelength/1000)
+				if(dist_xx > Parameter.Laylinelength/1000) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
+				is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), Parameter.Laylinelength/1000)
+								else if(dist_xx< Parameter.Laylinelength/1000 && Parameter.Laylineoverlap=="True")// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
+				is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), Parameter.Laylinelength/1000)
 								else
 									is_xx= intersection;
 				return(is_xx)
@@ -162,8 +177,8 @@ let calc_LaylineAreas = function(self, props) {
 	// Berechnungen für die Laylineareas
 	// Die Breite der Areas (Winkelbereiche) wird über die Refreshzeit abgebaut
 	let reduktionszeit;
-	if(typeof(self.parameter) != 'undefined')
-		reduktionszeit = self.parameter.Laylinerefresh * 60;
+	if(typeof(Parameter) != 'undefined')
+		reduktionszeit = Parameter.Laylinerefresh * 60;
 	else
 		reduktionszeit = 360;
 	let difftime = (performance.now() - old_time) / 1000 // sec
@@ -184,7 +199,7 @@ let calc_LaylineAreas = function(self, props) {
 };
 
 
-let DrawMapLaylines=function(self,ctx, radius, parameter, props) {
+let DrawMapLaylines=function(self,ctx, radius, props) {
 	DrawLine=function(p1,p2,color){	
 		ctx.beginPath();
 		ctx.moveTo(p1[0],p1[1]);   // Move pen to center
@@ -200,7 +215,7 @@ let DrawMapLaylines=function(self,ctx, radius, parameter, props) {
 		ctx.stroke();
 	} 
 	ctx.save();
-	if(typeof(parameter) != 'undefined' && parameter.LaylineBoat=='True')
+	if(typeof(Parameter) != 'undefined' && Parameter.LaylineBoat=='True')
 	{
 		// Layline vom Boot:
 		// BB
@@ -212,7 +227,7 @@ let DrawMapLaylines=function(self,ctx, radius, parameter, props) {
 		p2=self.lonlat_to_Canvas([self.MapLayline.Boat.SB.P2._lon,self.MapLayline.Boat.SB.P2._lat]);
 		DrawLine(p1,p2,((props.LLSB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
 	}
-	if(typeof(parameter) != 'undefined' && parameter.LaylineWP=='True')
+	if(typeof(Parameter) != 'undefined' && Parameter.LaylineWP=='True')
 	{
 		// Layline vom Wegpunkt:
 		// BB
@@ -407,14 +422,3 @@ let DrawKompassring=function(ctx,radius, angle) {
 
 
 
-fetch(window.location.origin+"/viewer/avnav_navi.php?request=plugins&command=list")
-.then(function(resp){return resp.json()})
-.then(function(data){
-	plugins=data.data;
-
-	for(var i=0; i<plugins.length; i++) {
-		if(plugins[i].name.indexOf("SegelDisplay")!=-1) {
-			Laylineplugin_Name=plugins[i].name;
-		}
-	}
-})
