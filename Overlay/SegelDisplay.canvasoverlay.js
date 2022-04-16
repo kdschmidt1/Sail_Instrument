@@ -80,8 +80,8 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 	if(typeof(gps.boatposition) != 'undefined')		
 		boatPosition = this.lonlat_to_Canvas([gps.boatposition.lon,gps.boatposition.lat]);
 	//Laylines auf map zeichnen 
-	if(this.MapLayline)
-		DrawMapLaylines(this, ctx, radius, this.parameter, gps); 
+//	if(this.MapLayline)
+	DrawMapLaylines(this, ctx, radius, this.parameter, gps); 
 	ctx.restore();
 }
 
@@ -200,7 +200,7 @@ let DrawMapLaylines=function(self,ctx, radius, parameter, props) {
 		ctx.stroke();
 	} 
 	ctx.save();
-	if(parameter.LaylineBoat=='True')
+	if(typeof(parameter) != 'undefined' && parameter.LaylineBoat=='True')
 	{
 		// Layline vom Boot:
 		// BB
@@ -212,7 +212,7 @@ let DrawMapLaylines=function(self,ctx, radius, parameter, props) {
 		p2=self.lonlat_to_Canvas([self.MapLayline.Boat.SB.P2._lon,self.MapLayline.Boat.SB.P2._lat]);
 		DrawLine(p1,p2,((props.LLSB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
 	}
-	if(parameter.LaylineWP=='True')
+	if(typeof(parameter) != 'undefined' && parameter.LaylineWP=='True')
 	{
 		// Layline vom Wegpunkt:
 		// BB
@@ -413,7 +413,7 @@ fetch(window.location.origin+"/viewer/avnav_navi.php?request=plugins&command=lis
 	plugins=data.data;
 
 	for(var i=0; i<plugins.length; i++) {
-		if(plugins[i].name.indexOf("Layline")!=-1) {
+		if(plugins[i].name.indexOf("SegelDisplay")!=-1) {
 			Laylineplugin_Name=plugins[i].name;
 		}
 	}
