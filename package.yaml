@@ -21,3 +21,5 @@ contents:
   dst: /usr/lib/avnav/server/plugins/SegelDisplay/
 - src: ./Overlay/*
   dst: /home/pi/avnav/data/overlays/  
+- src: ./bin/*
+  dst: /home/pi/avnav/data/bin/  
