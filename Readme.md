@@ -1,5 +1,5 @@
 **SegelDisplay Plugin**
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/c3503c50ce09bfc21681f1f1e58452fd98255a73/Images/avn1.png "Beispielbild")
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
 ===========================
 
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/71ac24c061e987fd91be5aa5c0502e03e30a74df/Images/Achtung.png "Beispielbild")
