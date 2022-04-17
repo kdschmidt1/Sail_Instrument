@@ -7,9 +7,7 @@
 
 **This Plugin only works with a AVNAV-Version including Canvas-Overlays (Pull request [211](https://github.com/wellenvogel/avnav/pull/211) already initiated) but up to now denied.If you would like to test the functionality anyhow, you can find a debian package in the bin directory. You have to rename it to ..._all.deb (without .py) 
 and install it with 
-sudo dpkg -i avnav...._all.deb 
-
-**
+sudo dpkg -i avnav...._all.deb**
 
 This project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
