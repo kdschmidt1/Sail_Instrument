@@ -61,42 +61,43 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 		//return(null);
 
 
-	let radius;
-	// Parameter auslesen
 	self=this
 	var id=(new Date()).getTime();
 	this.requestRunning=id;
 
-	if(typeof(Parameter) != 'undefined' && Parameter != null){
+	if(typeof(Parameter.Laylinelength) != 'undefined')
 		Parameter.Laylinelength*=1825; //sm in m
-		radius = Parameter.Displaysize; 
-	}
-	else{
-		radius = 100; 
-	}
+	else
+		Parameter.Laylinelength=1825;
+	if(typeof(Parameter.Displaysize) == 'undefined')
+		Parameter.Displaysize=100; 
 
 	ctx.save();
 	maprotationdeg = this.mapholder.olmap.getView().getRotation()/Math.PI*180
 	boatrotationdeg = gps.course;
 
-	calc_LaylineAreas(this, gps)
-	DrawOuterRing(ctx, radius, maprotationdeg+boatrotationdeg);
-	DrawKompassring(ctx, radius, maprotationdeg);
+	if(typeof(gps.boatposition) != 'undefined')	
+		calc_LaylineAreas(this, gps)
+	DrawOuterRing(ctx, Parameter.Displaysize, maprotationdeg+boatrotationdeg);
+	DrawKompassring(ctx, Parameter.Displaysize, maprotationdeg);
 
 	// wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
 	color=((gps.LLBB-gps.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
-	DrawLaylineArea(ctx, radius, maprotationdeg+gps.LLBB, TWD_Abweichung, ((gps.LLBB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-	DrawLaylineArea(ctx, radius, maprotationdeg+gps.LLSB, TWD_Abweichung, ((gps.LLSB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-	DrawWindpfeilIcon(ctx, radius, maprotationdeg+gps.AWD, "rgb(0,255,0)", 'A')
-	DrawWindpfeilIcon(ctx, radius, maprotationdeg+gps.TWD , "blue", 'T')
-	if(typeof(Parameter) != 'undefined' && Parameter.TWDFilt_Indicator=='True')	 
-		DrawWindpfeilIcon(ctx, radius, + maprotationdeg+gps.TSS, "yellow", '~');
+	DrawLaylineArea(ctx, Parameter.Displaysize, maprotationdeg+gps.LLBB, TWD_Abweichung, ((gps.LLBB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+	DrawLaylineArea(ctx, Parameter.Displaysize, maprotationdeg+gps.LLSB, TWD_Abweichung, ((gps.LLSB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+	DrawWindpfeilIcon(ctx, Parameter.Displaysize, maprotationdeg+gps.AWD, "rgb(0,255,0)", 'A')
+	DrawWindpfeilIcon(ctx, Parameter.Displaysize, maprotationdeg+gps.TWD , "blue", 'T')
+	
+	if(typeof(Parameter.TWDFilt_Indicator) != 'undefined' && Parameter.TWDFilt_Indicator=='True')	 
+		DrawWindpfeilIcon(ctx, Parameter.Displaysize, + maprotationdeg+gps.TSS, "yellow", '~');
 	ctx.save();
 	if(typeof(gps.boatposition) != 'undefined')		
+		{
 		boatPosition = this.lonlat_to_Canvas([gps.boatposition.lon,gps.boatposition.lat]);
-	//Laylines auf map zeichnen 
-//	if(this.MapLayline)
-	DrawMapLaylines(this, ctx, radius, gps); 
+		//Laylines auf map zeichnen 
+		if( (typeof(Parameter.LaylineWP) != 'undefined' && Parameter.LaylineWP=='True') || (typeof(Parameter.LaylineBoat) != 'undefined' && Parameter.LaylineBoat=='True')) 
+			DrawMapLaylines(this, ctx, Parameter.Displaysize, gps);
+		} 
 	ctx.restore();
 }
 
@@ -177,7 +178,7 @@ let calc_LaylineAreas = function(self, props) {
 	// Berechnungen für die Laylineareas
 	// Die Breite der Areas (Winkelbereiche) wird über die Refreshzeit abgebaut
 	let reduktionszeit;
-	if(typeof(Parameter) != 'undefined')
+	if(typeof(Parameter.Laylinerefresh) != 'undefined')
 		reduktionszeit = Parameter.Laylinerefresh * 60;
 	else
 		reduktionszeit = 360;
@@ -215,7 +216,7 @@ let DrawMapLaylines=function(self,ctx, radius, props) {
 		ctx.stroke();
 	} 
 	ctx.save();
-	if(typeof(Parameter) != 'undefined' && Parameter.LaylineBoat=='True')
+	if(typeof(Parameter.LaylineBoat) != 'undefined' && Parameter.LaylineBoat=='True' && self.MapLayline != null)
 	{
 		// Layline vom Boot:
 		// BB
@@ -227,7 +228,7 @@ let DrawMapLaylines=function(self,ctx, radius, props) {
 		p2=self.lonlat_to_Canvas([self.MapLayline.Boat.SB.P2._lon,self.MapLayline.Boat.SB.P2._lat]);
 		DrawLine(p1,p2,((props.LLSB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
 	}
-	if(typeof(Parameter) != 'undefined' && Parameter.LaylineWP=='True')
+	if(typeof(Parameter.LaylineWP) != 'undefined' && Parameter.LaylineWP=='True' && self.MapLayline != null)
 	{
 		// Layline vom Wegpunkt:
 		// BB
