@@ -1,8 +1,8 @@
 **SegelDisplay Plugin**
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/c3503c50ce09bfc21681f1f1e58452fd98255a73/Images/avn1.png "Beispielbild")
 ===========================
 
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/71ac24c061e987fd91be5aa5c0502e03e30a74df/Images/Achtung.png "Beispielbild")
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
 
 
 **This Plugin only works with a AVNAV-Version including Canvas-Overlays (Pull request [211](https://github.com/wellenvogel/avnav/pull/211) already initiated) but up to now denied.If you would like to test the functionality anyhow, you can find a debian package in the bin directory. You have to rename it to ..._all.deb (without .py) 
