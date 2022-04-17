@@ -105,9 +105,13 @@ No formatters are included in widget.
 
 ----------------------
 
+The Plugin is checking for the AvNav version. it will not run with wrong versions.
 The position of the Laylines in the display depends on the filtered TWD, that one 
 can see by activating the TWDFilt_Indicator
 Laylines on the map are only shown, if a waypoint is active!
+
+For best viewing i propose to set the Update Time for the Position to the minimum (500ms) in the [settings page](https://www.wellenvogel.net/software/avnav/docs/userdoc/settingspage.html) 
+and on the [Nav page](https://www.wellenvogel.net/software/avnav/docs/userdoc/navpage.html) to activate LockPos and CourseUp.
 
 **Package Building**
 
