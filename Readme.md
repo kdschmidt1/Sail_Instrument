@@ -59,10 +59,10 @@ You can use the plugin in 2 different ways.
 
  ```
 
- sudo dpkg -i avnav-more-nmea-plugin...._all.deb
+ sudo dpkg -i SegelDisplay-plugin...._all.deb
 
  ```
-2. Add the LaylineWidget to your map [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+2. Add the LaylineWidget to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 3. Add the SegelDisplay overlay you can find in the Overlay folder of the plugin directory to your map [overlays](https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html)
 
 
@@ -105,12 +105,12 @@ No formatters are included in widget.
 
 ----------------------
 
-The Plugin is checking for the AvNav version. it will not run with wrong versions.
+The Plugin is checking the AvNav version. it will not run with wrong versions. 
 The position of the Laylines in the display depends on the filtered TWD, that one 
 can see by activating the TWDFilt_Indicator
 Laylines on the map are only shown, if a waypoint is active!
 
-For best viewing i propose to set the Update Time for the Position to the minimum (500ms) in the [settings page](https://www.wellenvogel.net/software/avnav/docs/userdoc/settingspage.html) 
+For best viewing i propose to set the Update Time for the Position to the minimum (500ms) in the [Settings page](https://www.wellenvogel.net/software/avnav/docs/userdoc/settingspage.html) 
 and on the [Nav page](https://www.wellenvogel.net/software/avnav/docs/userdoc/navpage.html) to activate LockPos and CourseUp.
 
 **Package Building**
