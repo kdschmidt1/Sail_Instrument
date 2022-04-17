@@ -10,18 +10,6 @@ fetch(window.location.origin+"/viewer/avnav_navi.php?request=plugins&command=lis
 	for(let i=0; i<plugins.length; i++) {
 		if(plugins[i].name.indexOf("SegelDisplay")!=-1) {
 			Laylineplugin_Name=plugins[i].name;
-			if (typeof Laylineplugin_Name !== 'undefined')
-			{
-
-				fetch(window.location.origin+"/plugins/"+Laylineplugin_Name+"/api/parameter")
-					.then(function(resp){return resp.json()})
-					.then(function(data){
-						Parameter=data;
-				})
-				.catch((error) => {
-					avnav.api.showToast("SegelDisplay ERROR: "+error)
-				});
-			}
 		}
 	}
 })
@@ -38,7 +26,7 @@ fileref.setAttribute("type","text/javascript");
 fileref.setAttribute("src", "libraries/latlon.js");
 document.getElementsByTagName("head")[0].appendChild(fileref)
 
-		function userCanvasFunction(canvas){
+						function userCanvasFunction(canvas){
 	/**
 	* mandatory - Called to draw user defined canvas elements
 	* @param canvas - the Canvas Element, the origin of the drawing context is set 
@@ -49,9 +37,26 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 	*  to calculate the canvas-coordinates of a specific map position
 	**/
 	console.log("SegelDisplay");
-	ctx=canvas.getContext('2d')
-					ctx.clearRect(0, 0, ctx.canvas.getAttribute("width"), ctx.canvas.getAttribute("height"));
-	sailsteerImageCanvasSource=this; // WIRD BENNÖTIGT IM SAILSTEER PLUGIN
+
+	if (typeof Laylineplugin_Name !== 'undefined')
+	{
+
+		fetch(window.location.origin+"/plugins/"+Laylineplugin_Name+"/api/parameter")
+									.then(function(resp){return resp.json()})
+									.then(function(data){
+			Parameter=data;
+		})
+		.catch((error) => {
+			avnav.api.showToast("SegelDisplay ERROR: "+error)
+		});
+	}
+
+
+
+
+		ctx=canvas.getContext('2d')
+							ctx.clearRect(0, 0, ctx.canvas.getAttribute("width"), ctx.canvas.getAttribute("height"));
+		sailsteerImageCanvasSource=this; // WIRD BENNÖTIGT IM SAILSTEER PLUGIN
 	let gps={};
 	mapholder = this.mapholder;
 
