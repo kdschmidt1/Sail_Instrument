@@ -55,14 +55,20 @@ You can use the plugin in 2 different ways.
  In this case the internal name of the plugin will be user-SegelDisplay. 
 
 
-1. Download the package provided in the releases section or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
+1. Download the package provided in the releases section [SegelDisplay](https://github.com/kdschmidt1/SegelDisplay/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
 
  ```
-
  sudo dpkg -i SegelDisplay-plugin...._all.deb
 
  ```
-2. Add the LaylineWidget to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+ 2. If not already installed download the more-nmea package provided in the releases section [avnav-more-nmea-plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin/releases).Install the package using the command
+
+ ```
+sudo dpkg -i avnav-more-nmea-plugin...._all.deb
+
+ ```
+3. Add the LaylineWidget to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+
 3. Add the SegelDisplay overlay you can find in the Overlay folder of the plugin directory to your map [overlays](https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html)
 
 
