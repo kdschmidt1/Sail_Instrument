@@ -13,6 +13,10 @@ import xml.etree.ElementTree as ET
 import urllib.request, urllib.parse, urllib.error
 import json
 
+try:
+  from min_avnav_server_version import MIN_AVNAV_VERSION
+except:
+  pass
 
     #// https://www.rainerstumpe.de/HTML/wind02.html
     #// https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721
@@ -134,6 +138,10 @@ class Plugin(object):
     """
     
     self.api = api # type: AVNApi
+    if(self.api.getAvNavVersion() <= int(MIN_AVNAV_VERSION)):
+        raise Exception("SegelDisplay-Plugin is not available for this AvNav-Version")
+        return 
+
     self.api.registerEditableParameters(self.CONFIG, self.changeParam)
     self.api.registerRestart(self.stop)
 
