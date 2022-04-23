@@ -1,5 +1,6 @@
 
-
+//EditOverlaysDialog 904
+//http://192.168.2.35:8081/viewer/avnav_navi.php?request=api&type=chart&overlayConfig=int%40osm-online.xml.cfg&command=getConfig&expandCharts=true&mergeDefault=true
 
 console.log("layline plugin loaded");
 
@@ -118,8 +119,6 @@ var widget={
             	ctx.restore();
 	           	if(typeof(sailsteerImageCanvasSource) != 'undefined')
             		sailsteerImageCanvasSource.refresh();
-
-            	console.log(self.MapLayline)
     			return;
             },
             /**

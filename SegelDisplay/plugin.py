@@ -31,56 +31,11 @@ class Plugin(object):
 
   CONFIG = [
       {
-      'name':'Displaysize',
-      'description':'Size of the Layline Display \'%\'',
-      'default':100,
-      'type': 'NUMBER'
-      },
-      {
-      'name': 'Laylinerefresh',
-      'description': 'Time in \'min\' to completely clear Layline-Area',
-      'default': '5',
-      'type': 'FLOAT'
-      },
-      {
-      'name':'Laylinelength',
-      'description':'Length of Map-Laylines in nm',
-      'default':100,
-      'type': 'NUMBER'
-      },
-      {
       'name':'TWD_filtFreq',
       'description':'Limit Frequency for PT1-Filter of TWD',
       'default':'0.2',
       'type': 'FLOAT'
       },
-      {
-      'name':'Laylineoverlap',
-      'description':'Extent Laylines over Intersection',
-          'default': False,
-          'type': 'BOOLEAN'
-      },
-      {
-          'name': 'LaylineBoat',
-          'description': 'Draw Ahead-Laylines from Boatposition on Map',
-          'default': True,
-          'type': 'BOOLEAN'
-
-        },
-      {
-          'name': 'LaylineWP',
-          'description': 'Draw Waypoint-Laylines  on Map',
-          'default': True,
-          'type': 'BOOLEAN'
-
-        },
-      {
-          'name': 'TWDFilt_Indicator',
-          'description': 'Show filtered TWD Arrow',
-          'default': False,
-          'type': 'BOOLEAN'
-
-        },
       ]
 
   

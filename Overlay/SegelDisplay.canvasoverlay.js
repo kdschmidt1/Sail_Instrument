@@ -13,7 +13,7 @@ fileref.setAttribute("type","text/javascript");
 fileref.setAttribute("src", "libraries/latlon.js");
 document.getElementsByTagName("head")[0].appendChild(fileref)
 
-		var canvasoverlay={
+		window.canvasoverlay={
 
 		                   name:"SEGELDISPLAY",
 		                   connectedPlugin:"SegelDisplay",
@@ -26,7 +26,7 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 		                   * @returns {string}
 		                   */
 
-		                   initFunction:function(a,b)
+		                   initFunction:function(api)
 		                   {
 		                	   var t=0;
 
