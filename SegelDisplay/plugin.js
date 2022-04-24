@@ -1,26 +1,16 @@
-
-//EditOverlaysDialog 904
-//http://192.168.2.35:8081/viewer/avnav_navi.php?request=api&type=chart&overlayConfig=int%40osm-online.xml.cfg&command=getConfig&expandCharts=true&mergeDefault=true
-
 console.log("layline plugin loaded");
 
-sailsteerImageCanvasSource={};
+// LATLON LIBRARY EINBINDEN
+var fileref=document.createElement('script');
+fileref.setAttribute("type","text/javascript");
+fileref.setAttribute("src", "libraries/latlon.js");
+document.getElementsByTagName("head")[0].appendChild(fileref)
 
-
-//       		window.localStorage.setItem('kds',mycanvasFunction)
-let widgetParameters = 
-{
-formatterParameters: false,
-};
-
-var TWD_Abweichung = [0,0]
-var old_time=performance.now()
-var ln0_1=Math.log(0.1)
-
+						globalThis.globalParameter={};
 
 var widget={
 
-            name:"LaylineWidget",
+            name:"SegelDisplayWidget",
 
             // Editable Parameters
             Displaysize: 100,
@@ -31,6 +21,7 @@ var widget={
             LaylineBoat: true,
             LaylineWP: true,
             TWDFilt_Indicator:false,
+            Opacity:1,
 
 
             initFunction:function(a,b)
@@ -46,12 +37,7 @@ var widget={
             * @param props - the properties you have provided here + the properties you
             *                defined with the storeKeys
             */
-
-
-
-
             renderCanvas:function(canvas,props){
-				let Parameter={};
             	var ctx=canvas.getContext('2d');
             	// Set scale factor for all values
             	var crect=canvas.getBoundingClientRect();
@@ -69,60 +55,43 @@ var widget={
             	ctx.translate(width/2*f1/f,height/2*f2/f); //move the drawing to the middle
 
             	self=this
-            	/*
-            	fetch(AVNAV_BASE_URL+"/api/parameter")
-            	.then(function(resp){return resp.json()})
-            	.then(function(data){
-            		Parameter=data;
-            	})
-            	.catch((error) => {
-            		avnav.api.showToast("SegelDisplay ERROR: "+error)
-            	});
-            	*/
-            	Parameter.Laylinelength=props.Laylinelength*1825;//sm in m
-            	Parameter.Displaysize=props.Displaysize
-            	Parameter.LaylineWP=props.LaylineWP
-            	Parameter.LaylineBoat=props.LaylineBoat
-            	a=1825*props.Laylinelength;
-            	props.Laylinelength=a;
-
-            	// store Parameter for canvasoverlay in internal store
-            	avnav.api.storeData('plugin.Parameter',Parameter);         		
+            	globalParameter.Laylinelength=props.Laylinelength*1825;//sm in m
+            	globalParameter.Displaysize=props.Displaysize
+            	globalParameter.LaylineWP=props.LaylineWP
+            	globalParameter.LaylineBoat=props.LaylineBoat
+            	globalParameter.Laylinerefresh=props.Laylinerefresh
+            	globalParameter.opacity=props.Opacity
+            	globalParameter.Laylineoverlap=props.Laylineoverlap
 
             	ctx.save();
+            	//Fixiere Grösse für Widget
+            	Displaysize = 70;
 
-            	maprotationdeg = props.ActualMapRotation	//this.mapholder.olmap.getView().getRotation()/Math.PI*180
+            	//maprotationdeg = props.ActualMapRotation	//this.mapholder.olmap.getView().getRotation()/Math.PI*180
             	boatrotationdeg = props.course;
-
+            	// get rid of maprotationdeg for widget
+            	if(props.courseup)
+            		maprotationdeg=360-boatrotationdeg;
+            	else 
+            		maprotationdeg=0;
             	calc_LaylineAreas(this, props)
-            	DrawOuterRing(ctx, Parameter.Displaysize, maprotationdeg+boatrotationdeg);
-            	DrawKompassring(ctx, Parameter.Displaysize, maprotationdeg);
+            	DrawOuterRing(ctx, Displaysize, maprotationdeg+boatrotationdeg);
+            	DrawKompassring(ctx, Displaysize, maprotationdeg);
+
 
             	// wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
             	color=((props.LLBB-props.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
-            	DrawLaylineArea(ctx, Parameter.Displaysize, maprotationdeg+props.LLBB, TWD_Abweichung, ((props.LLBB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-            	DrawLaylineArea(ctx, Parameter.Displaysize, maprotationdeg+props.LLSB, TWD_Abweichung, ((props.LLSB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-            	DrawWindpfeilIcon(ctx, Parameter.Displaysize, maprotationdeg+props.AWD, "rgb(0,255,0)", 'A')
-            	DrawWindpfeilIcon(ctx, Parameter.Displaysize, maprotationdeg+props.TWD , "blue", 'T')
+            	DrawLaylineArea(ctx, Displaysize, maprotationdeg+props.LLBB, TWD_Abweichung, ((props.LLBB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+            	DrawLaylineArea(ctx, Displaysize, maprotationdeg+props.LLSB, TWD_Abweichung, ((props.LLSB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+            	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+props.AWD, "rgb(0,255,0)", 'A')
+            	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+props.TWD , "blue", 'T')
 
             	if(typeof(Parameter.TWDFilt_Indicator) != 'undefined' && Parameter.TWDFilt_Indicator=='True')	 
-            		DrawWindpfeilIcon(ctx, Parameter.Displaysize, + maprotationdeg+props.TSS, "yellow", '~');
-            	ctx.save();
-            	
-
-            	if(typeof(props.boatposition) != 'undefined')		
-            	{
-            		let intersections = calc_intersections(self, props, props.Laylinelength*1825)
-            		// store calculated intersections for canvasoverlay in internal store
-            		avnav.api.storeData('plugin.intersections',intersections);         		
-            	} 
-            	ctx.restore();
-	           	if(typeof(sailsteerImageCanvasSource) != 'undefined')
-            		sailsteerImageCanvasSource.refresh();
-    			return;
+            		DrawWindpfeilIcon(ctx, Displaysize, + maprotationdeg+props.TSS, "yellow", '~');
+            	return;
             },
-            /**
-            * the access to the internal store
+            		/**
+            		* the access to the internal store
             * this should be an object where the keys are the names you would like to
             * see as properties when your render functions are called
             * whenever one of the values in the store is changing, your render functions will be called
@@ -136,20 +105,15 @@ var widget={
             	TSS:'nav.gps.TSS',
             	LLSB:'nav.gps.LLSB',
             	LLBB:'nav.gps.LLBB',
-            	valid:'nav.gps.valid',
-            	boatposition: 'nav.gps.position',
-            	WPposition:'nav.wp.position',
-            	MapRotation:'nav.display.mapDirection',
-            	ActualMapRotation:'nav.display.actualmapRotation',
-            	courseup:'nav.map.courseUp',
-            	//config: 'plugin.config',
-            	//intersections:'plugin.intersections'
+            	courseup:'map.courseUp',
             },
             caption: "Laylines",
             unit: "",
 };
 var widgetParameter = {
+
                        Displaysize: {type: 'NUMBER', default: 100},
+                       Opacity: {type: 'NUMBER', default: 1},
                        Laylinerefresh: {type: 'NUMBER', default: 5},
                        Laylinelength: {type: 'NUMBER', default: 100},
                        TWD_filtFreq: {type: 'NUMBER', default: 0.2},
@@ -157,125 +121,307 @@ var widgetParameter = {
                        LaylineBoat: {type: 'BOOLEAN', default: true},
                        LaylineWP: {type: 'BOOLEAN', default: true},
                        TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
+
 };
 
 avnav.api.registerWidget(widget, widgetParameter);
 
 
-function drawpointcross(cc,coordinates, color){
-	cc.beginPath();
-	cc.moveTo(coordinates[0]-100,coordinates[1]);
-	cc.lineTo(coordinates[0]+100,coordinates[1]);
+/*################################################################################################*/
+let SegelDisplay={
 
-	cc.moveTo(coordinates[0],coordinates[1]-100);
-	cc.lineTo(coordinates[0],coordinates[1]+100);
+                  // Editable Parameters
+                  Displaysize: 100,
+                  Opacity:1,
+                  Laylinerefresh: 5,
+                  TWDFilt_Indicator:false,
 
-	cc.stroke();	
-	cc.lineWidth = 5;//0.02*Math.min(x,y)
-	cc.fillStyle = color;
-	cc.strokeStyle = color;
-	cc.stroke();
+                  name: 'SegelDisplay',
+                  storeKeys:{
+                	  boatposition: 'nav.gps.position',
+                	  LLSB:'nav.gps.LLSB',
+                	  LLBB:'nav.gps.LLBB',
+                	  course: 'nav.gps.course',
+                	  AWA:'nav.gps.AWA',
+                	  AWD:'nav.gps.AWD',
+                	  TWA:'nav.gps.TWA',
+                	  TWD:'nav.gps.TWD',
+  	              	  TSS:'nav.gps.TSS',
+
+                  },
+                  initFunction: function(){
+                  },
+                		  finalizeFunction: function(){
+                  },
+                		  renderCanvas: function(canvas,props,center)
+                		  {	
+                	  // Da der UserLayer derzeit keine editierbaren Parameter möglich sind, werden hier
+                	  // die im Segeldisplay-Widget global gespeicherten Parameter zusätzlich zu den storekeys
+                	  // in die übergebenen daten eingespeist
+                	  props.Displaysize=globalParameter.Displaysize
+                	  props.opacity=globalParameter.opacity
+                	  props.Laylinerefresh=globalParameter.Laylinerefresh
+                	  props.TWDFilt_Indicator=globalParameter.TWDFilt_Indicator
+
+
+                	  if(typeof(props.boatposition) != 'undefined')		
+                	  {
+                		  console.log("SegelDisplay");
+                		  let gps=props;
+
+                		  ctx=canvas.getContext('2d')
+															ctx.save();
+                		  // Zum Zeichnen im Center:
+                		  //ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
+                		  // Zum Zeichnen an der Bootsposition:
+                		  if(typeof(gps.boatposition) != 'undefined')	
+                		  {
+                			  coordinates=this.lonLatToPixel(gps.boatposition.lon,gps.boatposition.lat)
+                			  							ctx.translate(coordinates[0],coordinates[1]);
+                		  }
+                		  ctx.globalAlpha*=props.opacity;
+
+                		  maprotationdeg = this.getRotation()/Math.PI*180;
+                		  boatrotationdeg = gps.course;
+
+			              calc_LaylineAreas(this, props)
+                		  DrawOuterRing(ctx, props.Displaysize, maprotationdeg+boatrotationdeg);
+                		  DrawKompassring(ctx, props.Displaysize, maprotationdeg);
+
+                		  // wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
+                		  color=((gps.LLBB-gps.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
+                		  DrawLaylineArea(ctx, props.Displaysize, maprotationdeg+gps.LLBB, TWD_Abweichung, ((gps.LLBB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+                		  DrawLaylineArea(ctx, props.Displaysize, maprotationdeg+gps.LLSB, TWD_Abweichung, ((gps.LLSB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+                		  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.AWD, "rgb(0,255,0)", 'A')
+                		  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.TWD , "blue", 'T')
+
+                		  if(typeof(props.TWDFilt_Indicator) != 'undefined' && props.TWDFilt_Indicator=='True')	 
+                			  DrawWindpfeilIcon(ctx, props.Displaysize, + maprotationdeg+gps.TSS, "yellow", '~');
+                		  ctx.restore();
+
+                	  }
+
+
+                	  ctx=canvas.getContext('2d')
+																											ctx.save();
+                	  testme(this,canvas, props)															
+                	  ctx.restore();
+                		  }
 
 }
 
-let calc_intersections = function(self, props, Laylinelength) {
-	try{
-		//self.dist_SB = self.dist_BB = Parameter.Laylinelength
-		b_pos = new LatLon(props.boatposition.lat, props.boatposition.lon);
-		if (props.WPposition) {
-			WP_pos = new LatLon(props.WPposition.lat, props.WPposition.lon);
 
-			// Intersections berechnen
-			var is_SB = LatLon.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
-			var is_BB = LatLon.intersection(b_pos, props.LLBB, WP_pos, props.LLSB + 180);
-			calc_endpoint = function(intersection, pos) {
-				let is_xx;
-				let dist_xx = pos.rhumbDistanceTo(intersection);	// in km
-				if (dist_xx>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
-						return null;
-				if(dist_xx > Laylinelength/1000) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
-				is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), Laylinelength/1000)
-												else if(dist_xx< Laylinelength/1000 && props.Laylineoverlap=="True")// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
-				is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), Laylinelength/1000)
-												else
-													is_xx= intersection;
-				return(is_xx)
-			};
+var LayLineParameter = {
 
-			is_BB_boat=is_BB_WP = is_SB_boat=is_SB_WP =null;
-			if(is_BB)
-			{
-				is_BB_boat=calc_endpoint(is_BB, b_pos);
-				is_BB_WP = calc_endpoint(is_BB, WP_pos);
-			}
+                        Displaysize: {type: 'NUMBER', default: 100},
+                        Opacity: {type: 'NUMBER', default: 1},
+                        Laylinerefresh: {type: 'NUMBER', default: 5},
+                        TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
+};
 
-			if(is_SB)
-			{
-				is_SB_boat=calc_endpoint(is_SB, b_pos);
-				is_SB_WP = calc_endpoint(is_SB, WP_pos);
-			}
+avnav.api.registerChartOverlay(SegelDisplay);
 
-			if(is_SB_boat && is_SB_WP && is_BB_boat && is_BB_WP){	
-				// es gibt schnittpunkte
-				return({ 
-					Boat: { SB: { P1: b_pos, P2: is_SB_boat, color: 'rgb(0,255,0)' }, 
-						BB: { P1: b_pos, P2: is_BB_boat, color: 'red' } }, 
-						WP:   { SB: { P1: WP_pos, P2: is_SB_WP, color: 'red' }, 
-							BB: { P1: WP_pos, P2: is_BB_WP, color: 'rgb(0,255,0)' } } 
-				})
-			}
-			else
-				// keine schnittpunkte
-			return(null);
+/*##################################################################################################*/
+let LayLines={
+
+              // Editable Parameters
+              Laylinelength: 100,
+              Laylineoverlap: false,
+              LaylineBoat: true,
+              LaylineWP: true,
+
+              name: 'LayLines',
+              storeKeys:{
+            	  boatposition: 'nav.gps.position',
+            	  WPposition:'nav.wp.position',
+            	  LLSB:'nav.gps.LLSB',
+            	  LLBB:'nav.gps.LLBB',
+            	  TWD:'nav.gps.TWD',
+              },
+              initFunction: function(a,b)
+              {},
+              finalizeFunction: function(){},
+              renderCanvas: function(canvas,props,center)
+              {
+            	  // Da der UserLayer im Moment derzeit keine editierbaren Parameter erlaubt, werden hier
+            	  // die im Segeldisplay global gespeicherten Parameter zusätzlich zu den storekeys
+            	  // in die übergebenen daten eingespeist
+            	  props.Laylinelength=globalParameter.Laylinelength
+            	  props.Laylineoverlap=globalParameter.Laylineoverlap
+            	  props.LaylineBoat=globalParameter.LaylineBoat
+            	  props.LaylineWP=globalParameter.LaylineWP
+
+
+            	  if(typeof(props.boatposition) != 'undefined')		
+            	  {
+            		  ctx=canvas.getContext('2d')
+																													ctx.save();
+            		  //Laylines auf map zeichnen 
+            		  let intersections = calc_intersections(self, props)
+		            								  if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true) 
+		            									  if(typeof(intersections) != 'undefined'&&intersections)
+		            										  DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
+            		  ctx.restore();
+            	  }
+
+              },
+
+}
+
+var layerParameter = {
+
+                      Laylinelength: {type: 'NUMBER', default: 100},
+                      Laylineoverlap: {type: 'BOOLEAN', default: false},
+                      LaylineBoat: {type: 'BOOLEAN', default: true},
+                      LaylineWP: {type: 'BOOLEAN', default: true},
+};
+
+avnav.api.registerChartOverlay(LayLines);
+/*##################################################################################################*/
+
+var TWD_Abweichung = [0,0];
+var old_time=performance.now()
+
+let calc_intersections = function(self, props) {
+	b_pos = new LatLon(props.boatposition.lat, props.boatposition.lon);
+	if (props.WPposition) {
+		WP_pos = new LatLon(props.WPposition.lat, props.WPposition.lon);
+
+		// Intersections berechnen
+		var is_SB = LatLon.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
+		var is_BB = LatLon.intersection(b_pos, props.LLBB, WP_pos, props.LLSB + 180);
+		calc_endpoint = function(intersection, pos) {
+			let is_xx;
+			let dist_xx = pos.rhumbDistanceTo(intersection);	// in km
+			if (dist_xx>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
+					return null;
+			if(dist_xx > props.Laylinelength/1000) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
+			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength/1000)
+																								else if(dist_xx< props.Laylinelength/1000 && props.Laylineoverlap=="True")// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
+			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength/1000)
+																								else
+																									is_xx= intersection;
+			return(is_xx)
+		};
+
+		is_BB_boat=is_BB_WP = is_SB_boat=is_SB_WP =null;
+		if(is_BB)
+		{
+			is_BB_boat=calc_endpoint(is_BB, b_pos);
+			is_BB_WP = calc_endpoint(is_BB, WP_pos);
 		}
-	}
-	catch (e) {
-		console.log(e); // Fehler-Objekt an die Error-Funktion geben
-	}
 
+		if(is_SB)
+		{
+			is_SB_boat=calc_endpoint(is_SB, b_pos);
+			is_SB_WP = calc_endpoint(is_SB, WP_pos);
+		}
+
+		if(is_SB_boat && is_SB_WP && is_BB_boat && is_BB_WP){	
+			// es gibt schnittpunkte
+			intersections = 
+			{ 
+			 Boat: { SB: { P1: b_pos, P2: is_SB_boat, color: 'rgb(0,255,0)' }, 
+				 BB: { P1: b_pos, P2: is_BB_boat, color: 'red' } }, 
+				 WP:   { SB: { P1: WP_pos, P2: is_SB_WP, color: 'red' }, 
+					 BB: { P1: WP_pos, P2: is_BB_WP, color: 'rgb(0,255,0)' } } 
+			}
+		}
+		else
+			// keine schnittpunkte
+		intersections = null;
+	}
+	return intersections
 }
+
+
 
 let calc_LaylineAreas = function(self, props) {
 	// Berechnungen für die Laylineareas
 	// Die Breite der Areas (Winkelbereiche) wird über die Refreshzeit abgebaut
 	let reduktionszeit;
+	const ln0_1=Math.log(0.1);
+
 	if(typeof(props.Laylinerefresh) != 'undefined')
 		reduktionszeit = props.Laylinerefresh * 60;
 	else
 		reduktionszeit = 360;
-	let difftime = (performance.now() - old_time) / 1000; // sec
-	old_time = performance.now();
+	let difftime = (performance.now() - old_time) / 1000 // sec
+	old_time = performance.now()
 
-	let k = ln0_1 / reduktionszeit;
-
+																						let k = ln0_1 / reduktionszeit
 	for (var i = 0; i < 2; i++)
-		TWD_Abweichung[i] *= Math.exp(k * difftime);
-	let winkelabweichung = (props.TWD - props.TSS) % 360;
-	winkelabweichung = winkelabweichung < -180 ? winkelabweichung % 180 + 180 : winkelabweichung
+		TWD_Abweichung[i] *= Math.exp(k * difftime)
+
+
+		let winkelabweichung = (props.TWD - props.TSS) % 360;
+	if (Math.abs(winkelabweichung) > 180)
+		winkelabweichung = winkelabweichung < -180 ? winkelabweichung % 180 + 180 : winkelabweichung
 	winkelabweichung = winkelabweichung > 180 ? winkelabweichung % 180 - 180 : winkelabweichung
 	TWD_Abweichung[0] = winkelabweichung < TWD_Abweichung[0] ? winkelabweichung : TWD_Abweichung[0];
 	TWD_Abweichung[1] = winkelabweichung > TWD_Abweichung[1] ? winkelabweichung : TWD_Abweichung[1];
-	//console.log("TWD_PT1: " + self.gps.TSS.toFixed(2) + " TWD " + self.TWD.toFixed(2) + " delta ", + winkelabweichung.toFixed(2) + " Abw: " + self.TWD_Abweichung[0].toFixed(2) + ":" + self.TWD_Abweichung[1].toFixed(2) + " DT " + self.deltat.toFixed(0))
 };
+
+
+let DrawMapLaylines=function(self,ctx, scale, intersections, props) {
+	DrawLine=function(p1,p2,color){	
+		ctx.beginPath();
+		ctx.moveTo(p1[0],p1[1]);   // Move pen to center
+		ctx.lineTo(p2[0],p2[1]);
+		ctx.closePath();
+
+
+		ctx.lineWidth = 5;//0.02*Math.min(x,y)
+		ctx.fillStyle = color
+		ctx.strokeStyle = color;// !!!
+		ctx.setLineDash([10*scale,20*scale])
+		ctx.stroke();
+	} 
+	ctx.save();
+	if(typeof(props.LaylineBoat) != 'undefined' && props.LaylineBoat==true && intersections != null)
+	{
+		// Layline vom Boot:
+		// BB
+		p1=self.lonLatToPixel(intersections.Boat.BB.P1._lon,intersections.Boat.BB.P1._lat);
+		p2=self.lonLatToPixel(intersections.Boat.BB.P2._lon,intersections.Boat.BB.P2._lat);
+		DrawLine(p1,p2,((props.LLBB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
+		// SB
+		p1=self.lonLatToPixel(intersections.Boat.SB.P1._lon,intersections.Boat.SB.P1._lat);
+		p2=self.lonLatToPixel(intersections.Boat.SB.P2._lon,intersections.Boat.SB.P2._lat);
+		DrawLine(p1,p2,((props.LLSB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
+	}
+	if(typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true && intersections != null)
+	{
+		// Layline vom Wegpunkt:
+		// BB
+		p1=self.lonLatToPixel(intersections.WP.BB.P1._lon,intersections.WP.BB.P1._lat);
+		p2=self.lonLatToPixel(intersections.WP.BB.P2._lon,intersections.WP.BB.P2._lat);
+		DrawLine(p1,p2,((props.LLBB-props.TWD)+540)%360-180 > 0  ? "rgb(0,255,0)":"red");
+		// SB
+		p1=self.lonLatToPixel(intersections.WP.SB.P1._lon,intersections.WP.SB.P1._lat);
+		p2=self.lonLatToPixel(intersections.WP.SB.P2._lon,intersections.WP.SB.P2._lat);
+		DrawLine(p1,p2,((props.LLSB-props.TWD)+540)%360-180 > 0  ? "rgb(0,255,0)":"red");
+
+	}
+	ctx.restore()
+}
 
 
 let DrawLaylineArea=function(ctx, radius, angle,TWD_Abweichung, color) {
 
 	// TWA und LL-angle auf pos bereich umrechnen
 	// wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
-
-
 	ctx.save();
 	var radius = 0.9*radius	//0.45*Math.min(x,y)
-									ctx.rotate((angle / 180) * Math.PI)
+																							ctx.rotate((angle / 180) * Math.PI)
 
-									// Laylines
+																							// Laylines
 	ctx.beginPath();
 	ctx.moveTo(0, 0);   // Move pen to center
 	ctx.lineTo(0, -radius);
 	ctx.closePath();
 
-	ctx.lineWidth = radius/20;//5;
+	ctx.lineWidth = 5;//0.02*Math.min(x,y)
 	ctx.fillStyle = color;
 	ctx.strokeStyle = color;
 	let dashes=radius/4
@@ -287,11 +433,11 @@ let DrawLaylineArea=function(ctx, radius, angle,TWD_Abweichung, color) {
 	ctx.beginPath();
 	ctx.moveTo(0, 0);   // Move pen to center
 	ctx.arc(0, 0, radius, Math.PI * (TWD_Abweichung[0] - 90) / 180, Math.PI * (TWD_Abweichung[1] - 90) / 180)
-													ctx.closePath();
+																											ctx.closePath();
 
 	ctx.fillStyle = color;
 	ctx.fill()
-	ctx.restore()
+																							ctx.restore()
 }
 
 
@@ -306,7 +452,7 @@ let DrawWindpfeilIcon=function(ctx, radius,angle, color, Text) {
 
 	ctx.rotate((angle / 180) * Math.PI)
 
-													ctx.beginPath();
+																											ctx.beginPath();
 	if (Text == 'A')
 		ctx.moveTo(0, -radius_kompassring + 0.75*thickness); // Move pen to bottom-center corner
 	else
@@ -336,7 +482,7 @@ let DrawOuterRing=function(ctx,radius, angle){
 	ctx.save();
 	ctx.rotate((angle / 180) * Math.PI)
 
-									var thickness = 0.2*radius
+																							var thickness = 0.2*radius
 	radius*=1.25
 	var someColors = [];
 	someColors.push("#0F0");
@@ -406,10 +552,10 @@ let DrawOuterRing=function(ctx,radius, angle){
 let DrawKompassring=function(ctx,radius, angle) {
 	ctx.save();
 	ctx.rotate((angle / 180) * Math.PI)
-									var thickness = 0.2*radius//1*Math.min(x,y)
-									ctx.beginPath();
+																							var thickness = 0.2*radius//1*Math.min(x,y)
+																							ctx.beginPath();
 	var fontsize=Math.round( radius/100*12 )
-									ctx.arc(0, 0, radius, 0, 2 * Math.PI, false);
+																							ctx.arc(0, 0, radius, 0, 2 * Math.PI, false);
 	ctx.lineWidth = thickness;
 	ctx.strokeStyle = "rgb(255,255,255)";
 	ctx.stroke();
@@ -434,6 +580,5 @@ let DrawKompassring=function(ctx,radius, angle) {
 	}
 	ctx.restore();
 } // Ende Kompassring
-
 
 
