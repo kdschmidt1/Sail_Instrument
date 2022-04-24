@@ -1,0 +1,5 @@
+- upwind/downwind wendewinkel der polardaten im plugin berechnen
+- Strömungspfeil zentral hinzufügen
+- HDG-Display hinzufügen
+- COG-Eieruhr hinzufügen
+- Peilung zum Wegpunkt (gelben Punk) hinzufügen

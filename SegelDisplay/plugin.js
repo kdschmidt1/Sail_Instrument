@@ -116,7 +116,6 @@ var widgetParameter = {
                        Opacity: {type: 'NUMBER', default: 1},
                        Laylinerefresh: {type: 'NUMBER', default: 5},
                        Laylinelength: {type: 'NUMBER', default: 100},
-                       TWD_filtFreq: {type: 'NUMBER', default: 0.2},
                        Laylineoverlap: {type: 'BOOLEAN', default: false},
                        LaylineBoat: {type: 'BOOLEAN', default: true},
                        LaylineWP: {type: 'BOOLEAN', default: true},
