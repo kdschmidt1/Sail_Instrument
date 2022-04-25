@@ -136,6 +136,7 @@ let SegelDisplay={
                   TWDFilt_Indicator:false,
 
                   name: 'SegelDisplay',
+				  type:'map',
                   storeKeys:{
                 	  boatposition: 'nav.gps.position',
                 	  LLSB:'nav.gps.LLSB',
@@ -218,7 +219,7 @@ var LayLineParameter = {
                         TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
 };
 
-avnav.api.registerChartOverlay(SegelDisplay);
+avnav.api.registerWidget(SegelDisplay);
 
 /*##################################################################################################*/
 let LayLines={
@@ -230,6 +231,7 @@ let LayLines={
               LaylineWP: true,
 
               name: 'LayLines',
+			  type: 'map',
               storeKeys:{
             	  boatposition: 'nav.gps.position',
             	  WPposition:'nav.wp.position',
@@ -275,7 +277,7 @@ var layerParameter = {
                       LaylineWP: {type: 'BOOLEAN', default: true},
 };
 
-avnav.api.registerChartOverlay(LayLines);
+avnav.api.registerWidget(LayLines,layerParameter);
 /*##################################################################################################*/
 
 var TWD_Abweichung = [0,0];
