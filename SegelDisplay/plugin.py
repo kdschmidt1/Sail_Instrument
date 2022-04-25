@@ -178,10 +178,9 @@ class Plugin(object):
   def strictly_increasing(L):
         return all(x<y for x, y in zip(L, L[1:]))
   
-  
-  
   def Polare(self, f_name):
-    polare_filename = os.path.join(os.path.dirname(__file__), f_name)
+    #polare_filename = os.path.join(os.path.dirname(__file__), f_name)
+    polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
     tree = ET.parse(polare_filename)
     root = tree.getroot()
     #xmldict = XmlDictConfig(root)
