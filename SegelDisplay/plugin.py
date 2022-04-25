@@ -174,6 +174,11 @@ class Plugin(object):
         roots.extend(t*(b-a)/2 + (b+a)/2)
     return np.array(roots)
   
+ #https://stackoverflow.com/questions/4983258/python-how-to-check-list-monotonicity
+  def strictly_increasing(L):
+        return all(x<y for x, y in zip(L, L[1:]))
+  
+  
   
   def Polare(self, f_name):
     polare_filename = os.path.join(os.path.dirname(__file__), f_name)
