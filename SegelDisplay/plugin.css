@@ -1,5 +1,11 @@
 
-canvas.widgetData {
+
+.SegelDisplayWidget {
+    ￼    display: flex;￼
+    ￼    flex-direction: row;
+}
+
+.SegelDisplayWidget canvas.widgetData {
     width: 100%;
-    height: 10em;
+    flex-grow: 1;
 }
