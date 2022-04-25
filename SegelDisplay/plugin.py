@@ -9,7 +9,8 @@ from datetime import date
 import xml.etree.ElementTree as ET
 #from xml.etree import cElementTree as ElementTree
 #import xmltodict
-#import numpy as np
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
 import urllib.request, urllib.parse, urllib.error
 import json
 
@@ -163,7 +164,15 @@ class Plugin(object):
 
 
 
-  
+  def quadratic_spline_roots(self,spl):
+    roots = []
+    knots = spl.get_knots()
+    for a, b in zip(knots[:-1], knots[1:]):
+        u, v, w = spl(a), spl((a+b)/2), spl(b)
+        t = np.roots([u+w-2*v, w-u, 2*v])
+        t = t[np.isreal(t) & (np.abs(t) <= 1)]
+        roots.extend(t*(b-a)/2 + (b+a)/2)
+    return np.array(roots)
   
   
   def Polare(self, f_name):
@@ -204,7 +213,51 @@ class Plugin(object):
     # whitespaces entfernen
     y="".join(y.split())
     self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
-    
+    spalten=len(self.polare['windspeedvector'])
+    zeilen = (self.polare['windanglevector'])
+    #//erzeuge vektor boatspeed(spaltenindex)
+    #matrix[zeile,spalte]
+    #f = InterpolatedUnivariateSpline(x_axis, y_axis, k=4)
+    # numpy array erzeugen x = np.array(self.polare['boatspeed'])
+    # spalte auswählen: x[:,spalte]
+    # VMG matrix berechnen
+    #    VMGvar = ( self.polare['windspeedvector'][spalte] * 1.94384) * math.cos(x[:,0] * math.pi) / 180)
+
+
+    # https://stackoverflow.com/questions/50371298/find-maximum-minimum-of-a-1d-interpolated-function
+    Wendewinkel_upwind=[]
+    Wendewinkel_downwind=[]
+
+    for i in range(len(self.polare['windspeedvector'])):
+        vmg=[]
+        spalte=i
+        updownindexvalue=next(z for z in self.polare['windanglevector'] if z >=90)
+        updownindex=self.polare['windanglevector'].index(updownindexvalue, 0, -1)
+        x = np.array(self.polare['boatspeed'])
+        windanglerad=np.deg2rad(np.array(self.polare['windanglevector']))
+        coswindanglerad=np.abs(np.cos(windanglerad))
+        vmg.append(np.array(x[0:updownindex,spalte])*coswindanglerad[0:updownindex])
+        vmg.append(np.array(x[updownindex:-1,spalte])*coswindanglerad[updownindex:-1])
+        for j in range(2):
+            if(j==0):
+                f=InterpolatedUnivariateSpline(self.polare['windanglevector'][0:updownindex], vmg[j], k=3)
+            else:
+                f=InterpolatedUnivariateSpline(self.polare['windanglevector'][updownindex:-1], vmg[j], k=3)
+            cr_pts = self.quadratic_spline_roots(f.derivative())
+            if(j==0):
+                cr_pts = np.append(cr_pts, (self.polare['windanglevector'][0], self.polare['windanglevector'][updownindex]))  # also check the endpoints of the interval
+            else:
+                cr_pts = np.append(cr_pts, (self.polare['windanglevector'][updownindex], self.polare['windanglevector'][-1]))  # also check the endpoints of the interval
+            cr_vals = f(cr_pts)
+            min_index = np.argmin(cr_vals)
+            max_index = np.argmax(cr_vals)
+    #print("Maximum value {} at {}\nMinimum value {} at {}".format(cr_vals[max_index], cr_pts[max_index], cr_vals[min_index], cr_pts[min_index]))
+            if(j==0):
+                Wendewinkel_upwind.append(np.round(cr_pts[max_index]))
+            else:
+                Wendewinkel_downwind.append(np.round(cr_pts[max_index]))
+    xx=0
+
     
 #https://appdividend.com/2019/11/12/how-to-convert-python-string-to-list-example/#:~:text=To%20convert%20string%20to%20list,delimiter%E2%80%9D%20as%20the%20delimiter%20string.        
 
