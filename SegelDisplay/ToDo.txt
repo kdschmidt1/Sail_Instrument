@@ -1,4 +1,4 @@
-- upwind/downwind wendewinkel der polardaten im plugin berechnen
+(- upwind/downwind wendewinkel der polardaten im plugin berechnen)->erledigt
 - Strömungspfeil zentral hinzufügen
 - HDG-Display hinzufügen
 - COG-Eieruhr hinzufügen
