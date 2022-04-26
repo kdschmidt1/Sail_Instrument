@@ -6,22 +6,15 @@ fileref.setAttribute("type","text/javascript");
 fileref.setAttribute("src", "libraries/latlon.js");
 document.getElementsByTagName("head")[0].appendChild(fileref)
 
-						globalThis.globalParameter={};
+//globalThis.globalParameter={};
 
 var widget={
 
             name:"SegelDisplayWidget",
 
             // Editable Parameters
-            Displaysize: 100,
             Laylinerefresh: 5,
-            Laylinelength: 100,
-            TWD_filtFreq: 0.2,
-            Laylineoverlap: false,
-            LaylineBoat: true,
-            LaylineWP: true,
             TWDFilt_Indicator:false,
-            Opacity:1,
 
 
             initFunction:function(a,b)
@@ -55,17 +48,9 @@ var widget={
             	ctx.translate(width/2*f1/f,height/2*f2/f); //move the drawing to the middle
 
             	self=this
-            	globalParameter.Laylinelength=props.Laylinelength*1825;//sm in m
-            	globalParameter.Displaysize=props.Displaysize
-            	globalParameter.LaylineWP=props.LaylineWP
-            	globalParameter.LaylineBoat=props.LaylineBoat
-            	globalParameter.Laylinerefresh=props.Laylinerefresh
-            	globalParameter.opacity=props.Opacity
-            	globalParameter.Laylineoverlap=props.Laylineoverlap
-
             	ctx.save();
             	//Fixiere Grösse für Widget
-            	Displaysize = 70;
+            	Displaysize = 65;
 
             	//maprotationdeg = props.ActualMapRotation	//this.mapholder.olmap.getView().getRotation()/Math.PI*180
             	boatrotationdeg = props.course;
@@ -86,7 +71,7 @@ var widget={
             	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+props.AWD, "rgb(0,255,0)", 'A')
             	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+props.TWD , "blue", 'T')
 
-            	if(typeof(Parameter.TWDFilt_Indicator) != 'undefined' && Parameter.TWDFilt_Indicator=='True')	 
+            	if(typeof(props.TWDFilt_Indicator) != 'undefined' && props.TWDFilt_Indicator==true)	 
             		DrawWindpfeilIcon(ctx, Displaysize, + maprotationdeg+props.TSS, "yellow", '~');
             	return;
             },
@@ -111,16 +96,8 @@ var widget={
             unit: "",
 };
 var widgetParameter = {
-
-                       Displaysize: {type: 'NUMBER', default: 100},
-                       Opacity: {type: 'NUMBER', default: 1},
                        Laylinerefresh: {type: 'NUMBER', default: 5},
-                       Laylinelength: {type: 'NUMBER', default: 100},
-                       Laylineoverlap: {type: 'BOOLEAN', default: false},
-                       LaylineBoat: {type: 'BOOLEAN', default: true},
-                       LaylineWP: {type: 'BOOLEAN', default: true},
                        TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
-
 };
 
 avnav.api.registerWidget(widget, widgetParameter);
@@ -155,15 +132,6 @@ let SegelDisplay={
                   },
                 		  renderCanvas: function(canvas,props,center)
                 		  {	
-                	  // Da der UserLayer derzeit keine editierbaren Parameter möglich sind, werden hier
-                	  // die im Segeldisplay-Widget global gespeicherten Parameter zusätzlich zu den storekeys
-                	  // in die übergebenen daten eingespeist
-                	  props.Displaysize=globalParameter.Displaysize
-                	  props.opacity=globalParameter.opacity
-                	  props.Laylinerefresh=globalParameter.Laylinerefresh
-                	  props.TWDFilt_Indicator=globalParameter.TWDFilt_Indicator
-
-
                 	  if(typeof(props.boatposition) != 'undefined')		
                 	  {
                 		  console.log("SegelDisplay");
@@ -179,7 +147,7 @@ let SegelDisplay={
                 			  coordinates=this.lonLatToPixel(gps.boatposition.lon,gps.boatposition.lat)
                 			  							ctx.translate(coordinates[0],coordinates[1]);
                 		  }
-                		  ctx.globalAlpha*=props.opacity;
+                		  ctx.globalAlpha*=props.Opacity;
 
                 		  maprotationdeg = this.getRotation()/Math.PI*180;
                 		  boatrotationdeg = gps.course;
@@ -195,7 +163,7 @@ let SegelDisplay={
                 		  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.AWD, "rgb(0,255,0)", 'A')
                 		  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.TWD , "blue", 'T')
 
-                		  if(typeof(props.TWDFilt_Indicator) != 'undefined' && props.TWDFilt_Indicator=='True')	 
+                		  if(typeof(props.TWDFilt_Indicator) != 'undefined' && props.TWDFilt_Indicator==true)	 
                 			  DrawWindpfeilIcon(ctx, props.Displaysize, + maprotationdeg+gps.TSS, "yellow", '~');
                 		  ctx.restore();
 
@@ -211,7 +179,7 @@ let SegelDisplay={
 }
 
 
-var LayLineParameter = {
+var SegeldisplayParameter = {
 
                         Displaysize: {type: 'NUMBER', default: 100},
                         Opacity: {type: 'NUMBER', default: 1},
@@ -219,13 +187,13 @@ var LayLineParameter = {
                         TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
 };
 
-avnav.api.registerWidget(SegelDisplay);
+avnav.api.registerWidget(SegelDisplay,SegeldisplayParameter );
 
 /*##################################################################################################*/
 let LayLines={
 
               // Editable Parameters
-              Laylinelength: 100,
+              Laylinelength: 10,
               Laylineoverlap: false,
               LaylineBoat: true,
               LaylineWP: true,
@@ -244,15 +212,6 @@ let LayLines={
               finalizeFunction: function(){},
               renderCanvas: function(canvas,props,center)
               {
-            	  // Da der UserLayer im Moment derzeit keine editierbaren Parameter erlaubt, werden hier
-            	  // die im Segeldisplay global gespeicherten Parameter zusätzlich zu den storekeys
-            	  // in die übergebenen daten eingespeist
-            	  props.Laylinelength=globalParameter.Laylinelength
-            	  props.Laylineoverlap=globalParameter.Laylineoverlap
-            	  props.LaylineBoat=globalParameter.LaylineBoat
-            	  props.LaylineWP=globalParameter.LaylineWP
-
-
             	  if(typeof(props.boatposition) != 'undefined')		
             	  {
             		  ctx=canvas.getContext('2d')
@@ -271,7 +230,7 @@ let LayLines={
 
 var layerParameter = {
 
-                      Laylinelength: {type: 'NUMBER', default: 100},
+                      Laylinelength_nm: {type: 'NUMBER', default: 10},
                       Laylineoverlap: {type: 'BOOLEAN', default: false},
                       LaylineBoat: {type: 'BOOLEAN', default: true},
                       LaylineWP: {type: 'BOOLEAN', default: true},
@@ -296,10 +255,10 @@ let calc_intersections = function(self, props) {
 			let dist_xx = pos.rhumbDistanceTo(intersection);	// in km
 			if (dist_xx>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
 					return null;
-			if(dist_xx > props.Laylinelength/1000) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
-			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength/1000)
-																								else if(dist_xx< props.Laylinelength/1000 && props.Laylineoverlap=="True")// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
-			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength/1000)
+			if(dist_xx > props.Laylinelength*1.852) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
+			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
+																								else if(dist_xx< props.Laylinelength*1.852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
+			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
 																								else
 																									is_xx= intersection;
 			return(is_xx)
