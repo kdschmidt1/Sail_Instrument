@@ -193,6 +193,7 @@ avnav.api.registerWidget(SegelDisplay,SegeldisplayParameter );
 let LayLines={
 
               // Editable Parameters
+              Opacity:1,
               Laylinelength: 10,
               Laylineoverlap: false,
               LaylineBoat: true,
@@ -216,6 +217,8 @@ let LayLines={
             	  {
             		  ctx=canvas.getContext('2d')
 																													ctx.save();
+               		  ctx.globalAlpha*=props.Opacity;
+
             		  //Laylines auf map zeichnen 
             		  let intersections = calc_intersections(self, props)
 		            								  if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true) 
@@ -230,6 +233,7 @@ let LayLines={
 
 var layerParameter = {
 
+                      Opacity: {type: 'NUMBER', default: 1},
                       Laylinelength_nm: {type: 'NUMBER', default: 10},
                       Laylineoverlap: {type: 'BOOLEAN', default: false},
                       LaylineBoat: {type: 'BOOLEAN', default: true},
