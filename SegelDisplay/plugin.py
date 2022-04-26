@@ -14,7 +14,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 import urllib.request, urllib.parse, urllib.error
 import json
 
-MIN_AVNAV_VERSION="20220417"
+MIN_AVNAV_VERSION="20220425"
 
     #// https://www.rainerstumpe.de/HTML/wind02.html
     #// https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721
