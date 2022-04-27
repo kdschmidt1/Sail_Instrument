@@ -28,7 +28,7 @@ These two vectors are mandatory for calculation of the laylines.
 
 The Sail-Instrument can be configured with the following parmeters:
 
-![nur ein Beispiel](Link "Beispielbild")| Name | Default Value | Description |
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/InstrumentOverlayconf.png "Beispielbild")
 
 | Name | Default Value | Description |
 | Displaysize| "100" | Size of the Sail-Instrument (%) |
@@ -37,7 +37,7 @@ The Sail-Instrument can be configured with the following parmeters:
 | TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |
 
 For the Laylines-Overlay you can configue
-![nur ein Beispiel](Link "Beispielbild")| Name | Default Value | Description |
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/LaylinesOverlay_conf.png "Beispielbild")
 
 
 | Name | Default Value | Description |
@@ -49,7 +49,7 @@ For the Laylines-Overlay you can configue
 | LaylineWP | “True” | Draw Waypoint-Laylines |
 
 The plugin itself has only one parameter
-![nur ein Beispiel](Link "Beispielbild")| Name | Default Value | Description |
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")
 
 | Name | Default Value | Description |
 | --- | --- | --- |
