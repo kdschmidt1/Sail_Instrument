@@ -5,7 +5,7 @@
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
 
 
-**This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213) with a daily-release already in preparation**  
+**This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213) with a daily-release already in preparation!**  
 The project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
 
@@ -14,19 +14,24 @@ There is a very good description of the basic functionality in [blauwasser.de](h
  
 some Remarks:
 *  It requires the [more nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
-*  You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml).  
-A description how to prepare the polar.xml from other formats will follow soon.  
+*  You have to provide polar data [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml) for your boat to calculate the laylines.  
+  
+  
+A description how to prepare the polar.xml based on other formats will follow soon.  
 
-A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG), thanks to [Segeln-Forum](https://www.segeln-forum.de/thread/61813-messbriefe-und-polardaten-online-nachschauen/)
+A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG), thanks to [Segeln-Forum](https://www.segeln-forum.de/thread/61813-messbriefe-und-polardaten-online-nachschauen/) or
+[Seapilot.com](https://www.seapilot.com/wp-content/uploads/2018/05/All_polar_files.zip) thanks to [free-x](https://github.com/free-x)
 
 in this data you can find  
 beat angle => upwind,  
 run angle => downwind  
-These two vectors are mandatory for calculation of the laylines.
+
+These two vectors are mandatory for calculation of the laylines.  
+The boatspeed Matrix is only used for calculation of VPOL (interpolated speed for actual condition based on polar-data)
 
 **NEW:**  
 
-The Sail-Instrument can be configured with the following parmeters:
+The Sail-Instrument will be shown on the boat position (in future configurable) and can be configured with the following parmeters:
 
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/InstrumentOverlayconf.png "Beispielbild")
 
@@ -36,6 +41,7 @@ The Sail-Instrument can be configured with the following parmeters:
 | Opacity | Opacity in %| Opacity of the Sail-Instrument on the map|
 | Laylinerefresh | "5" | Time in (min) to completely clear Layline-Area |
 | TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |  
+
 
 
 For the Laylines-Overlay you can configue
@@ -51,8 +57,10 @@ For the Laylines-Overlay you can configue
 | LaylineWP | “True” | Draw Waypoint-Laylines |  
 
 
+
 The plugin itself has only one parameter
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
+
 
 | Name | Default Value | Description |
 | --- | --- | --- |
