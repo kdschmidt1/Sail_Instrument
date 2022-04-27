@@ -31,6 +31,7 @@ The Sail-Instrument can be configured with the following parmeters:
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/InstrumentOverlayconf.png "Beispielbild")
 
 | Name | Default Value | Description |
+| --- | --- | --- |
 | Displaysize| "100" | Size of the Sail-Instrument (%) |
 | Opacity | Opacity in %| Opacity of the Sail-Instrument on the map|
 | Laylinerefresh | "5" | Time in (min) to completely clear Layline-Area |
