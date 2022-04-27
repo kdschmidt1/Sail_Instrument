@@ -35,7 +35,8 @@ The Sail-Instrument can be configured with the following parmeters:
 | Displaysize| "100" | Size of the Sail-Instrument (%) |
 | Opacity | Opacity in %| Opacity of the Sail-Instrument on the map|
 | Laylinerefresh | "5" | Time in (min) to completely clear Layline-Area |
-| TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |
+| TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |  
+
 
 For the Laylines-Overlay you can configue
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/LaylinesOverlay_conf.png "Beispielbild")
@@ -47,15 +48,15 @@ For the Laylines-Overlay you can configue
 | Laylinelength | “100” | Length of Laylines (nm) |
 | Laylineoverlap | “False” | Extent Laylines over Intersection |
 | LaylineBoat | “True” | Draw Ahead-Laylines from Boatposition |
-| LaylineWP | “True” | Draw Waypoint-Laylines |
+| LaylineWP | “True” | Draw Waypoint-Laylines |  
+
 
 The plugin itself has only one parameter
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")
 
 | Name | Default Value | Description |
 | --- | --- | --- |
-| TWD_FiltFreq | 0.2 | Limit Frequency of the PT1 Lowpass-Filter |
-
+| TWD_FiltFreq | 0.2 | Limit Frequency of the PT1 Lowpass-Filter |  
 
 
 Please report any Errors to [Issues](https://github.com/kdschmidt1/avnav-more-nmea-plugin/issues)
@@ -117,9 +118,10 @@ No configuration necessary
 
 ------
 
-The plugin provides the Instrument Overlay,
-the Layline Overlay
-In addition also a classic widget with the Instrument Overlay can be found
+The plugin provides the 
+- Instrument Overlay,
+- the Layline Overlay
+- In addition also a classic widget with the Instrument can be found added
 
 
 **Formatter**
