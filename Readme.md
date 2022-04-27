@@ -37,24 +37,25 @@ The Sail-Instrument will be shown on the boat position (in future configurable) 
 
 | Name | Default Value | Description |
 | --- | --- | --- |
-| Displaysize| "100" | Size of the Sail-Instrument (%) |
-| Opacity | Opacity in %| Opacity of the Sail-Instrument on the map|
-| Laylinerefresh | "5" | Time in (min) to completely clear Layline-Area |
-| TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |  
+| Displaysize| 100 | Size of the Sail-Instrument (%) |
+| Opacity | 1.0| Opacity of the Sail-Instrument on the map|
+| Laylinerefresh | 5 | Time in (min) to completely clear Layline-Area |
+| TWDFilt_Indicator | False | Show filtered TWD Arrow (yellow) |  
 
 
 
-For the Laylines-Overlay you can configue
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/LaylinesOverlay_conf.png "Beispielbild")
+For the Laylines-Overlay you can configure
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/LaylinesOverlay_conf.png "Beispielbild")  
+
 
 
 | Name | Default Value | Description |
 | --- | --- | --- |
-| Opacity | Opacity in %| Opacity of the Laylines-Overlay on the map|
-| Laylinelength | “100” | Length of Laylines (nm) |
-| Laylineoverlap | “False” | Extent Laylines over Intersection |
-| LaylineBoat | “True” | Draw Ahead-Laylines from Boatposition |
-| LaylineWP | “True” | Draw Waypoint-Laylines |  
+| Opacity | 1.0 | Opacity of the Laylines-Overlay on the map|
+| Laylinelength | 100 | Length of Laylines (nm) |
+| Laylineoverlap | False | Extent Laylines over Intersection |
+| LaylineBoat | True | Draw Ahead-Laylines from Boatposition |
+| LaylineWP | True | Draw Waypoint-Laylines |  
 
 
 
