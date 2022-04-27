@@ -1,7 +1,7 @@
 #the following import is optional
 #it only allows "intelligent" IDEs (like PyCharm) to support you in using it
 from avnav_api import AVNApi
-from avnav_store import AVNStore
+#from avnav_store import AVNStore
 import math
 import time
 import os
@@ -107,6 +107,8 @@ class Plugin(object):
     self.api.registerRestart(self.stop)
     self.oldtime=0
     self.polare={}
+    if not self.Polare('polare.xml'):
+       return
     self.Polare('polare.xml')
     self.saveAllConfig()
     self.startSequence = 0
@@ -160,10 +162,10 @@ class Plugin(object):
       if 'AWS' in gpsdata and 'AWD' in gpsdata and 'TWA' in gpsdata and 'TWS' in gpsdata:
             if(calcSailsteer(self, gpsdata)):
                 self.api.addData(self.PATHTWDSS,gpsdata['TSS'])
-                calc_Laylines(self,gpsdata)  
-                self.api.setStatus('NMEA', 'computing Laylines/TSS/VPOL')
+                if calc_Laylines(self,gpsdata):  
+                    self.api.setStatus('NMEA', 'computing Laylines/TSS/VPOL')
       else:
-          self.api.setStatus('NMEA', 'Missing AWD, AWD, TWA or TWS, can\'t compute Laylines')
+          self.api.setStatus('ERROR', 'Missing AWD, AWS, TWA or TWS, can\'t compute Laylines')
 
 
 
@@ -184,43 +186,69 @@ class Plugin(object):
   def Polare(self, f_name):
     #polare_filename = os.path.join(os.path.dirname(__file__), f_name)
     polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
-    tree = ET.parse(polare_filename)
-    root = tree.getroot()
-    #xmldict = XmlDictConfig(root)
-    x=ET.tostring(root, encoding='utf8').decode('utf8')
+    try:
+        tree = ET.parse(polare_filename)
+    except:
+        self.api.error(polare_filename+' not found')
+        return(0)
 
-    x=root.find('windspeedvector').text
-    # whitespaces entfernen
-    x="".join(x.split())
-    self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
-    x=root.find('windanglevector').text
-    # whitespaces entfernen
-    x="".join(x.split())
-    self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
         
-    x=root.find('boatspeed').text
+    root = tree.getroot()
+    x=ET.tostring(root, encoding='utf8').decode('utf8')
+    try:
+        x=root.find('windspeedvector').text
     # whitespaces entfernen
-    z="".join(x.split())
-    
-    z=z.split('],[')
-    boatspeed=[]
-    for elem in z:
-        zz=elem.strip('][').split(',')
-        boatspeed.append(list(map(float,zz)))
-    self.polare['boatspeed']=boatspeed
+        x="".join(x.split())
+        self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
+    except:
+        self.api.setStatus('ERROR', 'NO windspeedvector in '+polare_filename)
 
-    x=root.find('wendewinkel')
+    try:
+        x=root.find('windanglevector').text
+    # whitespaces entfernen
+        x="".join(x.split())
+        self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
+    except:
+        self.api.setStatus('ERROR', 'NO windanglevector in '+polare_filename)
+        
+    try:
+        x=root.find('boatspeed').text
+    # whitespaces entfernen
+        z="".join(x.split())
     
-    y=x.find('upwind').text
-    # whitespaces entfernen
-    y="".join(y.split())
-    self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
+        z=z.split('],[')
+        boatspeed=[]
+        for elem in z:
+            zz=elem.strip('][').split(',')
+            boatspeed.append(list(map(float,zz)))
+        self.polare['boatspeed']=boatspeed
+    except:
+        self.api.setStatus('ERROR', 'NO boatspeed in '+polare_filename)
 
-    y=x.find('downwind').text
+    try:
+        x=root.find('wendewinkel')
+    except:
+        self.api.setStatus('ERROR', 'NO wendewinkel in '+polare_filename)
+        return(0)
+    
+    try:
+        y=x.find('upwind').text
     # whitespaces entfernen
-    y="".join(y.split())
-    self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
- 
+        y="".join(y.split())
+        self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
+    except:
+        self.api.setStatus('ERROR', 'NO ww_upwind in '+polare_filename)
+        return(0)
+
+    try:
+        y=x.find('downwind').text
+    # whitespaces entfernen
+        y="".join(y.split())
+        self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
+    except:
+        self.api.setStatus('ERROR', 'NO ww_downwind in '+polare_filename)
+        return(0)
+    return(True)
 
 
     
@@ -352,6 +380,8 @@ def calc_Laylines(self,gpsdata):# // [grad]
         gpsdata['TWA']=gpsdata['TWA']%360
         anglew = 360 - gpsdata['TWA'] if gpsdata['TWA'] > 180 else gpsdata['TWA']
         #in kn
+        if not self.polare['boatspeed']:
+            return 
         SOGPOLvar = bilinear(self,  \
             self.polare['windspeedvector'],    \
             self.polare['windanglevector'],    \
@@ -360,38 +390,6 @@ def calc_Laylines(self,gpsdata):# // [grad]
             anglew  \
         )
         self.api.addData(self.PATHTLL_VPOL,SOGPOLvar*0.514444)
-        # for testing puposes replace measured speed by calc. speed from polare
-        #        (this.gps.speed * 1.94384) = (this.gps.speed * 1.94384) = this.BoatData.SOGPOLvar
-
-    ## avnav_navi.php?request=route&command=getleg
-    #//      Route: {latlon: 0, active: false, dir:0,dist: 0, name:"",wp_name:"",}
-    """
-
-        VMGvar = ((gpsdata['speed'] * 1.94384) * math.cos(gpsdata['TWA'] * math.pi) / 180)
-    rueckgabewert = urllib.request.urlopen('http://localhost:8081/viewer/avnav_navi.php?request=route&command=getleg')
-    route=rueckgabewert.read()
-    inhalt_text = route.decode("UTF-8")
-    d = json.loads(inhalt_text)
-    #print(d)
-
-    if (this.Route.active) {
-        mySVG.get('pathWP').style('display', null)
-        this.Route.dir = this.Position.bearingTo(this.Route.latlonTo)
-        this.Route.dist =
-            this.Position.distanceTo(this.Route.latlonTo) * 0.539957
-        this.Route.VMCvar =
-            (this.gps.speed * 1.94384) *
-            Math.cos(((this.Route.dir - this.gps.course) * Math.PI) / 180)
-    } else {
-        //      mySVG.get('pathWP').style('display', 'none')
-        this.Route.VMCvar = NaN
-    }
-    //    console.log(this.BoatData)
-}
-
-    """
-
-    
     
     
 def calcSailsteer(self, gpsdata):
@@ -420,6 +418,6 @@ def calcSailsteer(self, gpsdata):
         return True
     except Exception:
         gpsdata['TSS']=0
-        self.api.error(" error calculating TSS " + str(gpsdata) + "\n")
+        self.api.error(" error calculating TSS ")
         return False
     
