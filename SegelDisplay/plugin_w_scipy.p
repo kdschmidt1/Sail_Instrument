@@ -9,7 +9,7 @@ from datetime import date
 import xml.etree.ElementTree as ET
 #from xml.etree import cElementTree as ElementTree
 #import xmltodict
-#import numpy as np
+import numpy as np
 #from scipy.interpolate import InterpolatedUnivariateSpline
 import urllib.request, urllib.parse, urllib.error
 import json
@@ -157,13 +157,11 @@ class Plugin(object):
 
     while not self.api.shouldStopMainThread():
       gpsdata=self.api.getDataByPrefix('gps')
-      if 'AWS' in gpsdata and 'AWD' in gpsdata and 'TWA' in gpsdata and 'TWS' in gpsdata:
+      if 'AWS' in gpsdata :
             if(calcSailsteer(self, gpsdata)):
                 self.api.addData(self.PATHTWDSS,gpsdata['TSS'])
                 calc_Laylines(self,gpsdata)  
                 self.api.setStatus('NMEA', 'computing Laylines/TSS/VPOL')
-      else:
-          self.api.setStatus('NMEA', 'Missing AWD, AWD, TWA or TWS, can\'t compute Laylines')
 
 
 
@@ -209,19 +207,50 @@ class Plugin(object):
         boatspeed.append(list(map(float,zz)))
     self.polare['boatspeed']=boatspeed
 
-    x=root.find('wendewinkel')
-    
-    y=x.find('upwind').text
-    # whitespaces entfernen
-    y="".join(y.split())
-    self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
+    x=root.find('wendewinkel2')
 
-    y=x.find('downwind').text
-    # whitespaces entfernen
-    y="".join(y.split())
-    self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
- 
+    if(not x):
+        try:
+            from scipy.interpolate import InterpolatedUnivariateSpline
+        except:
+            print("Geht nicht")
 
+    # https://stackoverflow.com/questions/50371298/find-maximum-minimum-of-a-1d-interpolated-function
+    Wendewinkel_upwind=[]
+    Wendewinkel_downwind=[]
+
+    for i in range(len(self.polare['windspeedvector'])):
+        vmg=[]
+        spalte=i
+        lastindex=len(self.polare['windanglevector'])
+
+        updownindexvalue=next(z for z in self.polare['windanglevector'] if z >=90)
+        updownindex=self.polare['windanglevector'].index(updownindexvalue, 0, lastindex)
+        x = np.array(self.polare['boatspeed'])
+        windanglerad=np.deg2rad(np.array(self.polare['windanglevector']))
+        coswindanglerad=np.abs(np.cos(windanglerad))
+        vmg.append(np.array(x[0:updownindex,spalte])*coswindanglerad[0:updownindex])
+        vmg.append(np.array(x[updownindex:lastindex,spalte])*coswindanglerad[updownindex:lastindex])
+        for j in range(2):
+            if(j==0):
+                f=InterpolatedUnivariateSpline(self.polare['windanglevector'][0:updownindex], vmg[j], k=3)
+            else:
+                f=InterpolatedUnivariateSpline(self.polare['windanglevector'][updownindex:lastindex], vmg[j], k=3)
+            cr_pts = self.quadratic_spline_roots(f.derivative())
+            if(j==0):
+                cr_pts = np.append(cr_pts, (self.polare['windanglevector'][0], self.polare['windanglevector'][updownindex]))  # also check the endpoints of the interval
+            else:
+                cr_pts = np.append(cr_pts, (self.polare['windanglevector'][updownindex], self.polare['windanglevector'][lastindex-1]))  # also check the endpoints of the interval
+            cr_vals = f(cr_pts)
+            min_index = np.argmin(cr_vals)
+            max_index = np.argmax(cr_vals)
+    #print("Maximum value {} at {}\nMinimum value {} at {}".format(cr_vals[max_index], cr_pts[max_index], cr_vals[min_index], cr_pts[min_index]))
+            if(j==0):
+                Wendewinkel_upwind.append(np.round(cr_pts[max_index]))
+            else:
+                Wendewinkel_downwind.append(np.round(cr_pts[max_index]))
+    self.polare['ww_upwind']=Wendewinkel_upwind
+    self.polare['ww_downwind']=Wendewinkel_downwind
 
     
 #https://appdividend.com/2019/11/12/how-to-convert-python-string-to-list-example/#:~:text=To%20convert%20string%20to%20list,delimiter%E2%80%9D%20as%20the%20delimiter%20string.        

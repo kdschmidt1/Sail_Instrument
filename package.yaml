@@ -24,4 +24,4 @@ contents:
 #- src: ./bin/*
 #  dst: /home/pi/avnav/data/bin/  
 - src: ./polardaten/*
-  dst: ~/avnav/data/user/viewer/
+  dst: $HOME/avnav/data/user/viewer/

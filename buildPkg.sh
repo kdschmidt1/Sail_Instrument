@@ -4,7 +4,7 @@ pdir=`dirname $0`
 pdir=`readlink -f "$pdir"`
 #set -x
 config=package.yaml
-version="$1"
+version="$1.0"
 if [ "$version" = "" ] ; then
   version=`date '+%Y%m%d'`
 fi

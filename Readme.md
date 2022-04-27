@@ -5,13 +5,8 @@
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
 
 
-**This Plugin only works with an AVNAV-Version including Canvas-Overlays (Pull request [211](https://github.com/wellenvogel/avnav/pull/211) already initiated but up to now denied). If you would like to test the functionality anyhow, you can find after installation an AvNav debian package in the /home/pi/avnav/data/bin/ directory. You have to rename the package to ..._all.deb (without .txt) 
-and install it with  
-sudo dpkg -i avnav...._all.deb  (!! This will overwrite your current installation !!)  
-The version is based on the original repository from 17th of april, 2022.  
-If you find the plugin helpful, you can support me by commenting in the above mentioned pull request**
-
-This project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
+**This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213) with a daily-release already in preparation**  
+The project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
 
 There is a very good description of the basic functionality in [blauwasser.de](https://www.blauwasser.de/navigation/app-sailsteer-bandg) und [mark-chisnell](https://www.bandg.com/de-de/blog/sailsteer-with-mark-chisnell/)
@@ -19,25 +14,47 @@ There is a very good description of the basic functionality in [blauwasser.de](h
  
 some Remarks:
 *  It requires the [more nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
-*  You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml)
+*  You have to provide polar data of your boat to calculate the laylines. [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml).  
+A description how to prepare the polar.xml from other formats will follow soon.  
+
+A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG), thanks to [Segeln-Forum](https://www.segeln-forum.de/thread/61813-messbriefe-und-polardaten-online-nachschauen/)
+
+in this data you can find  
+beat angle => upwind,  
+run angle => downwind  
+These two vectors are mandatory for calculation of the laylines.
 
 **NEW:**  
 
-The Plugin can either be configured in the avnav-Server.xml with the following parmeters:
+The Sail-Instrument can be configured with the following parmeters:
+
+![nur ein Beispiel](Link "Beispielbild")| Name | Default Value | Description |
+
+| Name | Default Value | Description |
+| Displaysize| "100" | Size of the Sail-Instrument (%) |
+| Opacity | Opacity in %| Opacity of the Sail-Instrument on the map|
+| Laylinerefresh | "5" | Time in (min) to completely clear Layline-Area |
+| TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |
+
+For the Laylines-Overlay you can configue
+![nur ein Beispiel](Link "Beispielbild")| Name | Default Value | Description |
+
 
 | Name | Default Value | Description |
 | --- | --- | --- |
-| Displaysize| "100" | Size of the Layline Display (%) |
-| Laylinerefresh | "5" | Time in (min) to completely clear Layline-Area |
+| Opacity | Opacity in %| Opacity of the Laylines-Overlay on the map|
 | Laylinelength | “100” | Length of Laylines (nm) |
-| TWD_filtFreq | "0.2” | Lowpass Frequency for PT1-filtered TWD |
 | Laylineoverlap | “False” | Extent Laylines over Intersection |
 | LaylineBoat | “True” | Draw Ahead-Laylines from Boatposition |
 | LaylineWP | “True” | Draw Waypoint-Laylines |
-| TWDFilt_Indicator | “False” | Show filtered TWD Arrow (yellow) |
 
-or in the Status/Server page under PluginHandler:
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/ea65410604be75307a485cd68e3691d6f8c494a5/Images/EditHandler%20vom%202022-04-14%2010-11-23.png "Beispielbild")
+The plugin itself has only one parameter
+![nur ein Beispiel](Link "Beispielbild")| Name | Default Value | Description |
+
+| Name | Default Value | Description |
+| --- | --- | --- |
+| TWD_FiltFreq | 0.2 | Limit Frequency of the PT1 Lowpass-Filter |
+
 
 
 Please report any Errors to [Issues](https://github.com/kdschmidt1/avnav-more-nmea-plugin/issues)
@@ -99,8 +116,9 @@ No configuration necessary
 
 ------
 
-The plugin provides the LaylineWidget.
-it is necessary to activate periodic redraw of the display.
+The plugin provides the Instrument Overlay,
+the Layline Overlay
+In addition also a classic widget with the Instrument Overlay can be found
 
 
 **Formatter**
@@ -117,10 +135,10 @@ No formatters are included in widget.
 
 ----------------------
 
-The Plugin is checking the AvNav version. it will not run with wrong versions. 
+The Plugin is checking the AvNav version. it will not run with older versions. 
 The position of the Laylines in the display depends on the filtered TWD, that one 
 can see by activating the TWDFilt_Indicator.  
-Laylines on the map are only shown, if a waypoint is active!
+Laylines on the map are only shown, if a waypoint is active and the course to the WP is in between the Laylines!
 
 For best viewing i propose to set the Update Time for the Position to the minimum (500ms) in the [Settings page](https://www.wellenvogel.net/software/avnav/docs/userdoc/settingspage.html) 
 and on the [Nav page](https://www.wellenvogel.net/software/avnav/docs/userdoc/navpage.html) to activate LockPos and CourseUp.
