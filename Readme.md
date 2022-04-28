@@ -41,7 +41,7 @@ The boatspeed Matrix is only used for calculation of VPOL (interpolated speed fo
 | Opacity | 1.0| Opacity of the Sail-Instrument on the map|
 | Laylinerefresh | 5 | Time in (min) to completely clear Layline-Area |
 | TWDFilt_Indicator | False | Show filtered TWD Arrow (yellow) |  
-If there is no boatposition available the Sail-Instrument will be shown always at the center position!
+If there is no boatposition available the Instrument will always be shown at the center position!
 
                           
                           
