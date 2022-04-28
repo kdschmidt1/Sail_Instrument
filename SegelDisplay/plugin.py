@@ -168,7 +168,7 @@ class Plugin(object):
                 if calc_Laylines(self,gpsdata):  
                     self.api.setStatus('NMEA', 'computing Laylines/TSS/VPOL')
       else:
-          self.api.setStatus('ERROR', 'Missing AWD, AWS, TWA or TWS, can\'t compute Laylines')
+          self.api.setStatus('ERROR', 'Missing Input (AWD, AWS, TWA or TWS), cannot compute Laylines')
 
 
 
@@ -236,10 +236,7 @@ class Plugin(object):
         y="".join(y.split())
         self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
     except Exception as error:
-        raise Exception("polare.xml Error "+error.__str__()+' -> '+e_str)
-
-        #self.api.setStatus('ERROR', error.__str__()+' -> '+e_str)
-        #self.api.error(error.__str__()+' -> '+e_str)
+        raise Exception("polare.xml Error: "+error.__str__()+' -> '+e_str)
         return(False)
 
     return(True)
