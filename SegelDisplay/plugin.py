@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 import urllib.request, urllib.parse, urllib.error
 import json
 from _ast import Try
+import traceback
 
 MIN_AVNAV_VERSION="20220425"
 
@@ -185,10 +186,11 @@ class Plugin(object):
   
   def Polare(self, f_name):
     #polare_filename = os.path.join(os.path.dirname(__file__), f_name)
-    polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
+    polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare2.xml')
     try:
         tree = ET.parse(polare_filename)
-    except:
+    except Exception as error:
+        just_the_string = traceback.format_exc()
         self.api.error(polare_filename+' not found')
         return(0)
 
