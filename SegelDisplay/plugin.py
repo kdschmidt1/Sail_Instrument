@@ -110,6 +110,7 @@ class Plugin(object):
     self.oldtime=0
     self.polare={}
     if not self.Polare('polare.xml'):
+       raise Exception("polare.xml Error")
        return
     self.Polare('polare.xml')
     self.saveAllConfig()
@@ -200,7 +201,6 @@ class Plugin(object):
     # whitespaces entfernen
         x="".join(x.split())
         self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
-        self.api.setStatus('ERROR', 'NO windspeedvector in '+polare_filename)
 
         e_str='windanglevector'
         x=root.find('windanglevector').text
@@ -236,12 +236,11 @@ class Plugin(object):
         y="".join(y.split())
         self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
     except Exception as error:
-        if error.__doc__ == 'Attribute not found.':
-            self.api.error(error.__str__()+' -> '+e_str)
-        else:
-            self.api.error(error.__str__())
-        # AttributeError for missing entry s. error.args
-        return(0)
+        raise Exception("polare.xml Error "+error.__str__()+' -> '+e_str)
+
+        #self.api.setStatus('ERROR', error.__str__()+' -> '+e_str)
+        #self.api.error(error.__str__()+' -> '+e_str)
+        return(False)
 
     return(True)
 
