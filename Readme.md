@@ -31,7 +31,6 @@ The boatspeed Matrix is only used for calculation of VPOL (interpolated speed fo
 
 **NEW:**  
 
-The Sail-Instrument will be shown on the boat position (in future configurable) and can be configured with the following parmeters:
 
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/InstrumentOverlayconf.png "Beispielbild")
 
@@ -42,6 +41,8 @@ The Sail-Instrument will be shown on the boat position (in future configurable) 
 | Opacity | 1.0| Opacity of the Sail-Instrument on the map|
 | Laylinerefresh | 5 | Time in (min) to completely clear Layline-Area |
 | TWDFilt_Indicator | False | Show filtered TWD Arrow (yellow) |  
+If there is no boatposition available the Sail-Instrument will be shown always at the center position!
+
                           
                           
 For the Laylines-Overlay you can configure

@@ -139,13 +139,20 @@ let SegelDisplay={
                 	  ctx=canvas.getContext('2d')
 																	ctx.save();
                 	  if(props.Widgetposition=='Mapcenter')
-                		  // Zum Zeichnen im Center:
+                		  // Zeichne im Center:
                 		  ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
-                		  else if(typeof(props.boatposition) != 'undefined' && props.Widgetposition=='Boatposition')	
+                		  else if(props.Widgetposition=='Boatposition')	
                 		  {
-                			  // Zum Zeichnen an der Bootsposition:
+							if(typeof(props.boatposition) != 'undefined')
+								{ 
+                			  // Zeichne an der Bootsposition
                 			  coordinates=this.lonLatToPixel(gps.boatposition.lon,gps.boatposition.lat)
                 			  ctx.translate(coordinates[0],coordinates[1]);
+                			  }
+                			 else
+                			  // Keine Bootsposition vorhanden -> zeichne im Center
+	                 		  ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
+
                 		  }
                 	  ctx.globalAlpha*=props.Opacity;
 
