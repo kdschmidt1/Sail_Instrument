@@ -44,7 +44,7 @@ The boatspeed Matrix is only used for calculation of VPOL (interpolated speed fo
 If there is no boatposition available the Instrument will always be shown at the center position!
 
                           
-                          
+                        
 For the Laylines-Overlay you can configure
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/LaylinesOverlay_conf.png "Beispielbild")  
 
