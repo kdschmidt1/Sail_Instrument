@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 #from scipy.interpolate import InterpolatedUnivariateSpline
 import urllib.request, urllib.parse, urllib.error
 import json
+import sys
 from _ast import Try
 import traceback
 
@@ -186,34 +187,24 @@ class Plugin(object):
   
   def Polare(self, f_name):
     #polare_filename = os.path.join(os.path.dirname(__file__), f_name)
-    polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare2.xml')
+    polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
     try:
         tree = ET.parse(polare_filename)
-    except Exception as error:
-        just_the_string = traceback.format_exc()
-        self.api.error(polare_filename+' not found')
-        return(0)
 
         
-    root = tree.getroot()
-    x=ET.tostring(root, encoding='utf8').decode('utf8')
-    try:
+        root = tree.getroot()
+        x=ET.tostring(root, encoding='utf8').decode('utf8')
         x=root.find('windspeedvector').text
     # whitespaces entfernen
         x="".join(x.split())
         self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
-    except:
         self.api.setStatus('ERROR', 'NO windspeedvector in '+polare_filename)
 
-    try:
         x=root.find('windanglevector').text
     # whitespaces entfernen
         x="".join(x.split())
         self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
-    except:
-        self.api.setStatus('ERROR', 'NO windanglevector in '+polare_filename)
         
-    try:
         x=root.find('boatspeed').text
     # whitespaces entfernen
         z="".join(x.split())
@@ -224,32 +215,23 @@ class Plugin(object):
             zz=elem.strip('][').split(',')
             boatspeed.append(list(map(float,zz)))
         self.polare['boatspeed']=boatspeed
-    except:
-        self.api.setStatus('ERROR', 'NO boatspeed in '+polare_filename)
 
-    try:
         x=root.find('wendewinkel')
-    except:
-        self.api.setStatus('ERROR', 'NO wendewinkel in '+polare_filename)
-        return(0)
     
-    try:
         y=x.find('upwind').text
     # whitespaces entfernen
         y="".join(y.split())
         self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
-    except:
-        self.api.setStatus('ERROR', 'NO ww_upwind in '+polare_filename)
-        return(0)
 
-    try:
         y=x.find('downwind').text
     # whitespaces entfernen
         y="".join(y.split())
         self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
-    except:
-        self.api.setStatus('ERROR', 'NO ww_downwind in '+polare_filename)
+    except Exception as error:
+        self.api.error(error.__str__())
+        # AttributeError for missing entry s. error.args
         return(0)
+
     return(True)
 
 
@@ -409,7 +391,7 @@ def calcSailsteer(self, gpsdata):
         t_abtast=(time.time()-self.oldtime)
         freq=1/t_abtast
         self.oldtime=time.time()
-
+      
         fgrenz=float(self.getConfigValue('TWD_filtFreq'))
         self.windAngleSailsteer['x']=self.PT_1funk(fgrenz, t_abtast, self.windAngleSailsteer['x'], KaW['x'] - KaB['x'])
         self.windAngleSailsteer['y']=self.PT_1funk(fgrenz, t_abtast, self.windAngleSailsteer['y'], KaW['y'] - KaB['y'])
