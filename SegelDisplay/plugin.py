@@ -189,22 +189,26 @@ class Plugin(object):
     #polare_filename = os.path.join(os.path.dirname(__file__), f_name)
     polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
     try:
+        e_str=polare_filename
         tree = ET.parse(polare_filename)
 
         
         root = tree.getroot()
         x=ET.tostring(root, encoding='utf8').decode('utf8')
+        e_str='windspeedvector'
         x=root.find('windspeedvector').text
     # whitespaces entfernen
         x="".join(x.split())
         self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
         self.api.setStatus('ERROR', 'NO windspeedvector in '+polare_filename)
 
+        e_str='windanglevector'
         x=root.find('windanglevector').text
     # whitespaces entfernen
         x="".join(x.split())
         self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
         
+        e_str='boatspeed'
         x=root.find('boatspeed').text
     # whitespaces entfernen
         z="".join(x.split())
@@ -216,19 +220,26 @@ class Plugin(object):
             boatspeed.append(list(map(float,zz)))
         self.polare['boatspeed']=boatspeed
 
+
+        e_str='wendewinkel'
         x=root.find('wendewinkel')
     
+        e_str='upwind'
         y=x.find('upwind').text
     # whitespaces entfernen
         y="".join(y.split())
         self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
 
+        e_str='downwind'
         y=x.find('downwind').text
     # whitespaces entfernen
         y="".join(y.split())
         self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
     except Exception as error:
-        self.api.error(error.__str__())
+        if error.__doc__ == 'Attribute not found.':
+            self.api.error(error.__str__()+' -> '+e_str)
+        else:
+            self.api.error(error.__str__())
         # AttributeError for missing entry s. error.args
         return(0)
 
