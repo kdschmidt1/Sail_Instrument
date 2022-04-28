@@ -6,7 +6,7 @@ fileref.setAttribute("type","text/javascript");
 fileref.setAttribute("src", "libraries/latlon.js");
 document.getElementsByTagName("head")[0].appendChild(fileref)
 
-//globalThis.globalParameter={};
+		//globalThis.globalParameter={};
 
 var widget={
 
@@ -111,9 +111,10 @@ let SegelDisplay={
                   Opacity:1,
                   Laylinerefresh: 5,
                   TWDFilt_Indicator:false,
+                  Widgetposition:'Boatposition',
 
                   name: 'SegelDisplay',
-				  type:'map',
+                  type:'map',
                   storeKeys:{
                 	  boatposition: 'nav.gps.position',
                 	  LLSB:'nav.gps.LLSB',
@@ -123,7 +124,7 @@ let SegelDisplay={
                 	  AWD:'nav.gps.AWD',
                 	  TWA:'nav.gps.TWA',
                 	  TWD:'nav.gps.TWD',
-  	              	  TSS:'nav.gps.TSS',
+                	  TSS:'nav.gps.TSS',
 
                   },
                   initFunction: function(){
@@ -132,46 +133,43 @@ let SegelDisplay={
                   },
                 		  renderCanvas: function(canvas,props,center)
                 		  {	
-                	  if(typeof(props.boatposition) != 'undefined')		
-                	  {
-                		  console.log("SegelDisplay");
-                		  let gps=props;
+                	  console.log("SegelDisplay");
+                	  let gps=props;
 
-                		  ctx=canvas.getContext('2d')
-															ctx.save();
+                	  ctx=canvas.getContext('2d')
+																	ctx.save();
+                	  if(props.Widgetposition=='Mapcenter')
                 		  // Zum Zeichnen im Center:
-                		  //ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
-                		  // Zum Zeichnen an der Bootsposition:
-                		  if(typeof(gps.boatposition) != 'undefined')	
+                		  ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
+                		  else if(typeof(props.boatposition) != 'undefined' && props.Widgetposition=='Boatposition')	
                 		  {
+                			  // Zum Zeichnen an der Bootsposition:
                 			  coordinates=this.lonLatToPixel(gps.boatposition.lon,gps.boatposition.lat)
-                			  							ctx.translate(coordinates[0],coordinates[1]);
+                			  ctx.translate(coordinates[0],coordinates[1]);
                 		  }
-                		  ctx.globalAlpha*=props.Opacity;
+                	  ctx.globalAlpha*=props.Opacity;
 
-                		  maprotationdeg = this.getRotation()/Math.PI*180;
-                		  boatrotationdeg = gps.course;
+                	  maprotationdeg = this.getRotation()/Math.PI*180;
+                	  boatrotationdeg = gps.course;
 
-			              calc_LaylineAreas(this, props)
-                		  DrawOuterRing(ctx, props.Displaysize, maprotationdeg+boatrotationdeg);
-                		  DrawKompassring(ctx, props.Displaysize, maprotationdeg);
+                	  calc_LaylineAreas(this, props)
+                	  DrawOuterRing(ctx, props.Displaysize, maprotationdeg+boatrotationdeg);
+                	  DrawKompassring(ctx, props.Displaysize, maprotationdeg);
 
-                		  // wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
-                		  color=((gps.LLBB-gps.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
-                		  DrawLaylineArea(ctx, props.Displaysize, maprotationdeg+gps.LLBB, TWD_Abweichung, ((gps.LLBB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-                		  DrawLaylineArea(ctx, props.Displaysize, maprotationdeg+gps.LLSB, TWD_Abweichung, ((gps.LLSB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-                		  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.AWD, "rgb(0,255,0)", 'A')
-                		  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.TWD , "blue", 'T')
+                	  // wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
+                	  color=((gps.LLBB-gps.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
+                	  DrawLaylineArea(ctx, props.Displaysize, maprotationdeg+gps.LLBB, TWD_Abweichung, ((gps.LLBB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+                	  DrawLaylineArea(ctx, props.Displaysize, maprotationdeg+gps.LLSB, TWD_Abweichung, ((gps.LLSB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+                	  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.AWD, "rgb(0,255,0)", 'A')
+                	  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.TWD , "blue", 'T')
 
-                		  if(typeof(props.TWDFilt_Indicator) != 'undefined' && props.TWDFilt_Indicator==true)	 
-                			  DrawWindpfeilIcon(ctx, props.Displaysize, + maprotationdeg+gps.TSS, "yellow", '~');
-                		  ctx.restore();
-
-                	  }
+                	  if(typeof(props.TWDFilt_Indicator) != 'undefined' && props.TWDFilt_Indicator==true)	 
+                		  DrawWindpfeilIcon(ctx, props.Displaysize, + maprotationdeg+gps.TSS, "yellow", '~');
+                	  ctx.restore();
 
 
                 	  ctx=canvas.getContext('2d')
-																											ctx.save();
+																													ctx.save();
                 	  testme(this,canvas, props)															
                 	  ctx.restore();
                 		  }
@@ -180,11 +178,12 @@ let SegelDisplay={
 
 
 var SegeldisplayParameter = {
-
-                        Displaysize: {type: 'NUMBER', default: 100},
-                        Opacity: {type: 'NUMBER', default: 1},
-                        Laylinerefresh: {type: 'NUMBER', default: 5},
-                        TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
+                             Widgetposition: {type:'SELECT',list:['Boatposition','Mapcenter'],default:'Boatposition'},
+                             //myWidgetposition:{type:'SELECT',list:{name:'Boatposition',value:'true',name:'Mapcenter',value:'false'},default:'Boatposition'},
+                             Displaysize: {type: 'NUMBER', default: 100},
+                             Opacity: {type: 'NUMBER', default: 1},
+                             Laylinerefresh: {type: 'NUMBER', default: 5},
+                             TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
 };
 
 avnav.api.registerWidget(SegelDisplay,SegeldisplayParameter );
@@ -200,7 +199,7 @@ let LayLines={
               LaylineWP: true,
 
               name: 'LayLines',
-			  type: 'map',
+              type: 'map',
               storeKeys:{
             	  boatposition: 'nav.gps.position',
             	  WPposition:'nav.wp.position',
@@ -216,14 +215,14 @@ let LayLines={
             	  if(typeof(props.boatposition) != 'undefined')		
             	  {
             		  ctx=canvas.getContext('2d')
-																													ctx.save();
-               		  ctx.globalAlpha*=props.Opacity;
+																															ctx.save();
+            		  ctx.globalAlpha*=props.Opacity;
 
             		  //Laylines auf map zeichnen 
             		  let intersections = calc_intersections(self, props)
-		            								  if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true) 
-		            									  if(typeof(intersections) != 'undefined'&&intersections)
-		            										  DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
+		            										  if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true) 
+		            											  if(typeof(intersections) != 'undefined'&&intersections)
+		            												  DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
             		  ctx.restore();
             	  }
 
@@ -246,7 +245,7 @@ avnav.api.registerWidget(LayLines,layerParameter);
 var TWD_Abweichung = [0,0];
 var old_time=performance.now()
 
-let calc_intersections = function(self, props) {
+		let calc_intersections = function(self, props) {
 	b_pos = new LatLon(props.boatposition.lat, props.boatposition.lon);
 	if (props.WPposition) {
 		WP_pos = new LatLon(props.WPposition.lat, props.WPposition.lon);
@@ -261,10 +260,10 @@ let calc_intersections = function(self, props) {
 					return null;
 			if(dist_xx > props.Laylinelength*1.852) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
 			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
-																								else if(dist_xx< props.Laylinelength*1.852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
+																										else if(dist_xx< props.Laylinelength*1.852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
 			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
-																								else
-																									is_xx= intersection;
+																										else
+																											is_xx= intersection;
 			return(is_xx)
 		};
 
@@ -313,7 +312,7 @@ let calc_LaylineAreas = function(self, props) {
 	let difftime = (performance.now() - old_time) / 1000 // sec
 	old_time = performance.now()
 
-																						let k = ln0_1 / reduktionszeit
+																								let k = ln0_1 / reduktionszeit
 	for (var i = 0; i < 2; i++)
 		TWD_Abweichung[i] *= Math.exp(k * difftime)
 
@@ -377,9 +376,9 @@ let DrawLaylineArea=function(ctx, radius, angle,TWD_Abweichung, color) {
 	// wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
 	ctx.save();
 	var radius = 0.9*radius	//0.45*Math.min(x,y)
-																							ctx.rotate((angle / 180) * Math.PI)
+																									ctx.rotate((angle / 180) * Math.PI)
 
-																							// Laylines
+																									// Laylines
 	ctx.beginPath();
 	ctx.moveTo(0, 0);   // Move pen to center
 	ctx.lineTo(0, -radius);
@@ -397,11 +396,11 @@ let DrawLaylineArea=function(ctx, radius, angle,TWD_Abweichung, color) {
 	ctx.beginPath();
 	ctx.moveTo(0, 0);   // Move pen to center
 	ctx.arc(0, 0, radius, Math.PI * (TWD_Abweichung[0] - 90) / 180, Math.PI * (TWD_Abweichung[1] - 90) / 180)
-																											ctx.closePath();
+																													ctx.closePath();
 
 	ctx.fillStyle = color;
 	ctx.fill()
-																							ctx.restore()
+																									ctx.restore()
 }
 
 
@@ -416,7 +415,7 @@ let DrawWindpfeilIcon=function(ctx, radius,angle, color, Text) {
 
 	ctx.rotate((angle / 180) * Math.PI)
 
-																											ctx.beginPath();
+																													ctx.beginPath();
 	if (Text == 'A')
 		ctx.moveTo(0, -radius_kompassring + 0.75*thickness); // Move pen to bottom-center corner
 	else
@@ -446,7 +445,7 @@ let DrawOuterRing=function(ctx,radius, angle){
 	ctx.save();
 	ctx.rotate((angle / 180) * Math.PI)
 
-																							var thickness = 0.2*radius
+																									var thickness = 0.2*radius
 	radius*=1.25
 	var someColors = [];
 	someColors.push("#0F0");
@@ -516,10 +515,10 @@ let DrawOuterRing=function(ctx,radius, angle){
 let DrawKompassring=function(ctx,radius, angle) {
 	ctx.save();
 	ctx.rotate((angle / 180) * Math.PI)
-																							var thickness = 0.2*radius//1*Math.min(x,y)
-																							ctx.beginPath();
+																									var thickness = 0.2*radius//1*Math.min(x,y)
+																									ctx.beginPath();
 	var fontsize=Math.round( radius/100*12 )
-																							ctx.arc(0, 0, radius, 0, 2 * Math.PI, false);
+																									ctx.arc(0, 0, radius, 0, 2 * Math.PI, false);
 	ctx.lineWidth = thickness;
 	ctx.strokeStyle = "rgb(255,255,255)";
 	ctx.stroke();

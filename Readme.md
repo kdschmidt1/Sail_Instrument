@@ -37,6 +37,7 @@ The Sail-Instrument will be shown on the boat position (in future configurable) 
 
 | Name | Default Value | Description |
 | --- | --- | --- |
+| Widgetposition| Boatposition | Position of the Instrument on the map|
 | Displaysize| 100 | Size of the Sail-Instrument (%) |
 | Opacity | 1.0| Opacity of the Sail-Instrument on the map|
 | Laylinerefresh | 5 | Time in (min) to completely clear Layline-Area |
