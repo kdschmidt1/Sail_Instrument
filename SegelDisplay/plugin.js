@@ -267,24 +267,25 @@ var old_time=performance.now()
 					return null;
 			if(dist_xx > props.Laylinelength*1.852) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
 			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
-																										else if(dist_xx< props.Laylinelength*1.852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
-			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
-																										else
-																											is_xx= intersection;
-			return(is_xx)
+			else if(dist_xx< props.Laylinelength*1.852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
+				is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
+			else
+				is_xx= intersection;
+			return([is_xx, dist_xx])
 		};
 
 		is_BB_boat=is_BB_WP = is_SB_boat=is_SB_WP =null;
 		if(is_BB)
 		{
-			is_BB_boat=calc_endpoint(is_BB, b_pos);
-			is_BB_WP = calc_endpoint(is_BB, WP_pos);
+			[is_BB_boat,dist_BB_boat]=calc_endpoint(is_BB, b_pos);
+			dist
+			[is_BB_WP,dist_BB_WP] = calc_endpoint(is_BB, WP_pos);
 		}
-
 		if(is_SB)
 		{
-			is_SB_boat=calc_endpoint(is_SB, b_pos);
-			is_SB_WP = calc_endpoint(is_SB, WP_pos);
+			[is_SB_boat,dist_SB_boat]=calc_endpoint(is_SB, b_pos);
+			dist
+			[is_SB_WP,dist_SB_WP] = calc_endpoint(is_SB, WP_pos);
 		}
 
 		if(is_SB_boat && is_SB_WP && is_BB_boat && is_BB_WP){	
