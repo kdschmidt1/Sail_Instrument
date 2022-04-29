@@ -221,15 +221,15 @@ let LayLines={
               {
             	  if(typeof(props.boatposition) != 'undefined')		
             	  {
-            		  ctx=canvas.getContext('2d')
+            		ctx=canvas.getContext('2d')
 																															ctx.save();
-            		  ctx.globalAlpha*=props.Opacity;
+            		ctx.globalAlpha*=props.Opacity;
 
             		  //Laylines auf map zeichnen 
-            		  let intersections = calc_intersections(self, props)
-		            										  if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true) 
-		            											  if(typeof(intersections) != 'undefined'&&intersections)
-		            												  DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
+            		let intersections = calc_intersections(self, props)
+		            if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true) 
+		            		if(typeof(intersections) != 'undefined'&&intersections)
+		            			DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
             		  ctx.restore();
             	  }
 
@@ -261,41 +261,39 @@ var old_time=performance.now()
 		var is_SB = LatLon.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
 		var is_BB = LatLon.intersection(b_pos, props.LLBB, WP_pos, props.LLSB + 180);
 		calc_endpoint = function(intersection, pos) {
-			let is_xx;
-			let dist_xx = pos.rhumbDistanceTo(intersection);	// in km
-			if (dist_xx>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
+			let is_xx={};
+			is_xx.dist = pos.rhumbDistanceTo(intersection);	// in km
+			if (is_xx.dist>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
 					return null;
-			if(dist_xx > props.Laylinelength*1.852) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
-			is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
-			else if(dist_xx< props.Laylinelength*1.852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
-				is_xx = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
+			if(is_xx.dist > props.Laylinelength*1.852) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
+			is_xx.pos = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
+			else if(is_xx.dist< props.Laylinelength*1.852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
+				is_xx.pos = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
 			else
-				is_xx= intersection;
-			return([is_xx, dist_xx])
+				is_xx.pos= intersection;
+			return(is_xx)
 		};
 
 		is_BB_boat=is_BB_WP = is_SB_boat=is_SB_WP =null;
 		if(is_BB)
 		{
-			[is_BB_boat,dist_BB_boat]=calc_endpoint(is_BB, b_pos);
-			dist
-			[is_BB_WP,dist_BB_WP] = calc_endpoint(is_BB, WP_pos);
+			is_BB_boat=calc_endpoint(is_BB, b_pos);
+			is_BB_WP = calc_endpoint(is_BB, WP_pos);
 		}
 		if(is_SB)
 		{
-			[is_SB_boat,dist_SB_boat]=calc_endpoint(is_SB, b_pos);
-			dist
-			[is_SB_WP,dist_SB_WP] = calc_endpoint(is_SB, WP_pos);
+			is_SB_boat=calc_endpoint(is_SB, b_pos);
+			is_SB_WP = calc_endpoint(is_SB, WP_pos);
 		}
 
 		if(is_SB_boat && is_SB_WP && is_BB_boat && is_BB_WP){	
 			// es gibt schnittpunkte
 			intersections = 
 			{ 
-			 Boat: { SB: { P1: b_pos, P2: is_SB_boat, color: 'rgb(0,255,0)' }, 
-				 BB: { P1: b_pos, P2: is_BB_boat, color: 'red' } }, 
-				 WP:   { SB: { P1: WP_pos, P2: is_SB_WP, color: 'red' }, 
-					 BB: { P1: WP_pos, P2: is_BB_WP, color: 'rgb(0,255,0)' } } 
+			Boat: { SB: { P1: b_pos, P2: is_SB_boat.pos, color: 'rgb(0,255,0)' ,dist: is_SB_boat.dist}, 
+			BB: { P1: b_pos, P2: is_BB_boat.pos, color: 'red' ,dist: is_BB_boat.dist} }, 
+			WP:   { SB: { P1: WP_pos, P2: is_SB_WP.pos, color: 'red' ,dist: is_SB_WP.dist}, 
+			BB: { P1: WP_pos, P2: is_BB_WP.pos, color: 'rgb(0,255,0)' ,dist: is_BB_WP.dist} } 
 			}
 		}
 		else
