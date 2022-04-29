@@ -372,7 +372,7 @@ def calc_Laylines(self,gpsdata):# // [grad]
         anglew = 360 - gpsdata['TWA'] if gpsdata['TWA'] > 180 else gpsdata['TWA']
         #in kn
         if not self.polare['boatspeed']:
-            return 
+            return False
         SOGPOLvar = bilinear(self,  \
             self.polare['windspeedvector'],    \
             self.polare['windanglevector'],    \
@@ -381,6 +381,7 @@ def calc_Laylines(self,gpsdata):# // [grad]
             anglew  \
         )
         self.api.addData(self.PATHTLL_VPOL,SOGPOLvar*0.514444)
+        return True
     
     
 def calcSailsteer(self, gpsdata):
