@@ -8,6 +8,107 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 
 		//globalThis.globalParameter={};
 
+
+var example4UserParameters = {
+    //formatterParameters is already well known to avnav, so no need for any definition
+    //just tell avnav that the user should be able to set this
+    formatterParameters: true,
+    //we would like to get a value from the internal data store
+    //if we name it "value" avnav already knows how to ask the user about it
+    value: true
+};
+var intersections
+
+const formatLL=function(dist,speed, opt_unit){
+    try{
+        if (! opt_unit || opt_unit.toLowerCase().match("nm")){
+            return avnav.api.formatter.formatDistance(dist,3,1);
+        }
+        if (opt_unit.toLowerCase().match("time")){
+	
+			let dt=dist/1825/(speed*1.944)	//dt=dist[nm]/v[kn] in [hrs]
+            let tval = dt*3600;	// in sec
+            let sign = "";
+            if (tval < 0) {
+                sign = "-";
+                tval = -tval;
+            }
+            let h = Math.floor(tval / 3600);
+            let m = Math.floor((tval - h * 3600) / 60);
+            let s = tval - 3600 * h - 60 * m;
+            return sign + avnav.api.formatter.formatDecimal(h, 2, 0).replace(" ", "0") + ':' + avnav.api.formatter.formatDecimal(m, 2, 0).replace(" ", "0") + ':' + avnav.api.formatter.formatDecimal(s, 2, 0).replace(" ", "0");
+        }
+    }catch(e){
+        return "-----"
+    }
+}
+formatLL.parameters=[
+    {name:'unit',type:'SELECT',list:['nm','time'],default:'nm'}
+]
+
+avnav.api.registerFormatter("mySpecialLL",formatLL);
+
+var example4Widget = {
+    name: "userSpecial2line",
+    //unit: "nm",
+    renderHtml: function (props) {
+		console.log("example4Widget");
+
+        //var fmtParam = ((props.formatterParameters instanceof  Array) && props.formatterParameters.length > 0) ? props.formatterParameters[0] : undefined;
+		if(typeof(intersections) != 'undefined'&&intersections)
+		{
+        var fmtParam = ((props.formatterParameters instanceof  Array) && props.formatterParameters.length > 0) ? props.formatterParameters[0] : undefined;
+        var fv = formatLL(intersections.Boat.BB.dist*1000,props.speed,fmtParam);
+        var fv2 = formatLL(intersections.Boat.SB.dist*1000,props.speed,fmtParam);
+		}
+		else
+		{
+		fv=""
+		fv2=""
+		}
+        return "	\
+        <div class=\"userSpecial2line\"> </div> \
+        <div class=\"resize\"> \
+        <br> \
+        <div class=\"KDInner\"> \
+        	<div class=\" widgetData \" > " + fv + "</div> \
+    	    <div class=\'infoRight\'>nm</div>	\
+        	<div class=\" infoLeft \" > " + "LLBB" + "</div> \
+		</div> \
+        <div class=\"KDInner\"> \
+    	    <div class=\" widgetData \" > " + fv2 + "</div> \
+    	    <div class=\'infoRight\'>nm</div>	\
+	        <div class=\" infoLeft \" > " + "LLSB" + "</div> \
+		</div> \
+		</div> \
+        " 
+    },
+            storeKeys:{
+            	course: 'nav.gps.course',
+            	speed: 'nav.gps.speed',
+                	  boatposition: 'nav.gps.position',
+                	  LLSB:'nav.gps.LLSB',
+                	  LLBB:'nav.gps.LLBB',
+                	  AWA:'nav.gps.AWA',
+                	  AWD:'nav.gps.AWD',
+                	  TWA:'nav.gps.TWA',
+                	  TWD:'nav.gps.TWD',
+                	  TSS:'nav.gps.TSS',
+            },
+            formatter: formatLL,
+};
+/**
+ * uncomment the next line to really register the widget
+ */
+avnav.api.registerWidget(example4Widget,example4UserParameters);
+
+
+
+
+
+
+
+
 var widget={
 
             name:"SegelDisplayWidget",
@@ -226,7 +327,7 @@ let LayLines={
             		ctx.globalAlpha*=props.Opacity;
 
             		  //Laylines auf map zeichnen 
-            		let intersections = calc_intersections(self, props)
+            		intersections = calc_intersections(self, props)
 		            if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true) 
 		            		if(typeof(intersections) != 'undefined'&&intersections)
 		            			DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
@@ -549,5 +650,4 @@ let DrawKompassring=function(ctx,radius, angle) {
 	}
 	ctx.restore();
 } // Ende Kompassring
-
 

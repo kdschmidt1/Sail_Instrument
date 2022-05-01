@@ -9,3 +9,14 @@
     width: 100%;
     flex-grow: 1;
 }
+
+.userSpecial2line {
+    ￼    display: flex;￼
+    ￼    flex-direction: row;
+}
+.userSpecial2line .KDInner {
+    position: relative;
+    padding-top: 0.7em;
+    padding-left: 0.3em;
+    padding-right: 0.3em;
+}
