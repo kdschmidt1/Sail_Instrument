@@ -27,10 +27,17 @@ MIN_AVNAV_VERSION="20220425"
 
 
 class Plugin(object):
+  PATHAWA = "gps.AWA"
+  PATHAWD = "gps.AWD"
+  PATHAWS = "gps.AWS"
+  PATHTWD = "gps.TWD"
+  PATHTWS = "gps.TWS"
+  PATHTWA = "gps.TWA"
   PATHTWDSS="gps.TSS"   #    TrueWindAngle PT1 gefiltert
   PATHTLL_SB="gps.LLSB" #    Winkel Layline Steuerbord
   PATHTLL_BB="gps.LLBB" #    Winkel Layline Backbord
   PATHTLL_VPOL="gps.VPOL" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
+#  PATHTLL_speed="gps.speed" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
 
 
   CONFIG = [
@@ -60,6 +67,31 @@ class Plugin(object):
       'config': cls.CONFIG,
       
       'data': [
+        {
+          'path': cls.PATHAWD,
+          'description': 'apparent Wind direction',
+        },
+        {
+          'path': cls.PATHAWA,
+          'description': 'apparent Wind angle',
+        },
+        {
+          'path': cls.PATHAWS,
+          'description': 'apparent Wind speed',
+        },
+        {
+          'path': cls.PATHTWD,
+          'description': 'true Wind direction',
+        },
+        {
+          'path': cls.PATHTWS,
+          'description': 'true Wind speed',
+        },
+        {
+          'path': cls.PATHTWA,
+          'description': 'true Wind angle',
+        },
+          
 
         {
           'path': cls.PATHTWDSS,
@@ -77,6 +109,10 @@ class Plugin(object):
           'path': cls.PATHTLL_VPOL,
           'description': 'Speed aus Polare',
         },
+ #       {
+  #        'path': cls.PATHTLL_speed,
+   #       'description': 'Speed aus Polare',
+    #    },
 
       ]
     }
@@ -162,6 +198,14 @@ class Plugin(object):
 
     while not self.api.shouldStopMainThread():
       gpsdata=self.api.getDataByPrefix('gps')
+      if not 'AWS' in gpsdata or not 'AWD' in gpsdata or not 'TWA' in gpsdata or not 'TWS' in gpsdata:
+        calcTrueWind(self, gpsdata)          
+        if not 'AWS' in gpsdata and 'windSpeed' in gpsdata:
+            gpsdata['AWS'] = gpsdata['windSpeed']
+            self.api.addData(self.PATHAWS, gpsdata['AWS'],source='SegelDisplay')
+        if not 'AWA' in gpsdata and 'windAngle' in gpsdata:
+            gpsdata['AWA'] = gpsdata['windAngle']
+            self.api.addData(self.PATHAWA, gpsdata['AWA'],source='SegelDisplay')
       if 'AWS' in gpsdata and 'AWD' in gpsdata and 'TWA' in gpsdata and 'TWS' in gpsdata:
             if(calcSailsteer(self, gpsdata)):
                 self.api.addData(self.PATHTWDSS,gpsdata['TSS'])
@@ -381,7 +425,22 @@ def calc_Laylines(self,gpsdata):# // [grad]
             anglew  \
         )
         self.api.addData(self.PATHTLL_VPOL,SOGPOLvar*0.514444)
+        #self.api.ALLOW_KEY_OVERWRITE=True
+        #allowKeyOverwrite=True
+        #self.api.addData("gps.speed",SOGPOLvar*0.514444)
         return True
+        
+        # http://forums.sailinganarchy.com/index.php?/topic/132129-calculating-vmc-vs-vmg/
+#VMG = BS * COS(RADIANS(TWA))
+#VMC = BS * COS(RADIANS(BRG-HDG))
+      
+        #rueckgabewert = urllib.request.urlopen('http://localhost:8081/viewer/avnav_navi.php?request=route&command=getleg')
+        #route=rueckgabewert.read()
+        #inhalt_text = route.decode("UTF-8")
+        #d = json.loads(inhalt_text)
+        #VMCvar = ((gpsdata['speed'] * 1.94384) * math.cos((xx-gpsdata['track']) * math.pi) / 180)
+    #print(d)
+
     
     
 def calcSailsteer(self, gpsdata):
@@ -413,3 +472,59 @@ def calcSailsteer(self, gpsdata):
         self.api.error(" error calculating TSS ")
         return False
     
+def calcTrueWind(self, gpsdata):
+    # https://www.rainerstumpe.de/HTML/wind02.html
+    # https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721      
+        source='SegelDisplay'
+
+        if not 'track' in gpsdata or not 'AWA' in gpsdata:
+            return False
+        try:
+            if(not 'AWD' in gpsdata): 
+                gpsdata['AWD'] = (gpsdata['AWA'] + gpsdata['track']) % 360
+                self.api.addData(self.PATHAWD, gpsdata['AWD'],source=source)
+
+            KaW = toKartesisch(self, gpsdata['AWD'])
+            KaW['x'] *= gpsdata['AWS']  # 'm/s'
+            KaW['y'] *= gpsdata['AWS']  # 'm/s'
+            KaB = toKartesisch(self, gpsdata['track'])
+            KaB['x'] *= gpsdata['speed']  # 'm/s'
+            KaB['y'] *= gpsdata['speed']  # 'm/s'
+
+            if(gpsdata['speed'] == 0 or gpsdata['AWS'] == 0):
+                if(not 'TWD' in gpsdata):
+                     gpsdata['TWD'] = gpsdata['AWD'] 
+                     self.api.addData(self.PATHTWD, gpsdata['TWD'],source=source)
+            else:
+                test= (toPolWinkel(self, KaW['x'] - KaB['x'], KaW['y'] - KaB['y'])) % 360
+                if(not 'TWD' in gpsdata):
+                     gpsdata['TWD'] = (toPolWinkel(self, KaW['x'] - KaB['x'], KaW['y'] - KaB['y'])) % 360
+                     self.api.addData(self.PATHTWD, gpsdata['TWD'],source=source)
+            if(not 'TWS' in gpsdata):
+                 gpsdata['TWS'] = math.sqrt((KaW['x'] - KaB['x']) * (KaW['x'] - KaB['x']) + (KaW['y'] - KaB['y']) * (KaW['y'] - KaB['y']))
+                 self.api.addData(self.PATHTWS, gpsdata['TWS'],source=source)
+
+            if(not 'TWA' in gpsdata):
+                 gpsdata['TWA'] = LimitWinkel(self, gpsdata['TWD'] - gpsdata['track'])
+                 self.api.addData(self.PATHTWA, gpsdata['TWA'],source=source)
+            return True
+        except Exception:
+            self.api.error(" error calculating TrueWind-Data " + str(gpsdata) + "\n")
+        return False
+    
+def LimitWinkel(self, alpha):  # [grad]   
+    alpha %= 360
+    if (alpha > 180): 
+        alpha -= 360;
+    return(alpha)  
+
+def toPolWinkel(self, x, y):  # [grad]
+        return(180 * math.atan2(y, x) / math.pi)
+
+def toKartesisch(self, alpha):  # // [grad]
+        K = {}
+        K['x'] = math.cos((alpha * math.pi) / 180)
+        K['y'] = math.sin((alpha * math.pi) / 180)
+        return(K)    
+
+
