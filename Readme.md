@@ -5,7 +5,7 @@
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
 
 
-**This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213) with a daily-release already in preparation!**  
+**This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213). A daily-release is aleady available [20220426](https://www.wellenvogel.net/software/avnav/downloads/daily/20220426/).**  
 The project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
 
@@ -13,8 +13,7 @@ There is a very good description of the basic functionality in [blauwasser.de](h
  
  
 some Remarks:
-*  It requires the [more nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin
-*  You have to provide polar data [Example](https://github.com/kdschmidt1/SegelDisplay/blob/ca78fc300035ab487aa4f75d74a83fe40c814be1/SegelDisplay/polare.xml) for your boat to calculate the laylines.  
+*  You have to provide polar data [Example](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/SegelDisplay/polare.xml) for your boat to calculate the laylines.  
   
   
 A description how to prepare the polar.xml based on other formats will follow soon.  
@@ -32,7 +31,7 @@ The boatspeed Matrix is only used for calculation of VPOL (interpolated speed fo
 **NEW:**  
 
 
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/InstrumentOverlayconf.png "Beispielbild")
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/InstrumentOverlayconf.png "Beispielbild")
 
 | Name | Default Value | Description |
 | --- | --- | --- |
@@ -46,7 +45,7 @@ If there is no boatposition available the Instrument will always be shown at the
                           
                         
 For the Laylines-Overlay you can configure
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/LaylinesOverlay_conf.png "Beispielbild")  
+![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/LaylinesOverlay_conf.png "Beispielbild")  
 
 
 
@@ -96,13 +95,7 @@ You can use the plugin in 2 different ways.
  sudo dpkg -i SegelDisplay-plugin...._all.deb
 
  ```
- 2. If not already installed download the more-nmea package provided in the releases section [avnav-more-nmea-plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin/releases).Install the package using the command
-
- ```
-sudo dpkg -i avnav-more-nmea-plugin...._all.deb
-
- ```
-3. Add the LaylineWidget to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+2. Add the LaylineWidget to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 
 3. Add the SegelDisplay overlay you can find in the Overlay folder of the SegelDisplay-plugin directory to your map [overlays](https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html)
 
@@ -131,7 +124,7 @@ No configuration necessary
 The plugin provides the 
 - Instrument Overlay,
 - the Layline Overlay
-- In addition also a classic widget with the Instrument can be found added
+- In addition also a classic widget with the Instrument can be installe (Name: SegelDisplayWidget)
 
 
 **Formatter**
@@ -148,7 +141,7 @@ No formatters are included in widget.
 
 ----------------------
 
-The Plugin is checking the AvNav version. it will not run with older versions. 
+The Plugin is checking the AvNav version. it will not run with versions older than 20220426. 
 The position of the Laylines in the display depends on the filtered TWD, that one 
 can see by activating the TWDFilt_Indicator.  
 Laylines on the map are only shown, if a waypoint is active and the course to the WP is in between the Laylines!
