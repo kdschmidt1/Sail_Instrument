@@ -28,8 +28,27 @@ run angle => downwind
 These two vectors are mandatory for calculation of the laylines.  
 The boatspeed Matrix is only used for calculation of VPOL (interpolated speed for actual condition based on polar-data)
 
+If there are "APPARENT" Winddata in the input stream it calculates and stores:
+·  
+
+| Value | Format | Storename | Description |
+| --- | --- | --- | --- |
+| AWA | +/- 180 [°] | gps.AWA | Apparent WindAngle |
+| AWD | 0…360 [°] | gps.AWD | Apparent WindDirection |
+| AWS | 0..∞ [m/s] | gps.AWS | Apparent WindSpeed |
+| TWA | +/- 180 [°] | gps.TWA | True WindAngle |
+| TWD | 0…360 [°] | gps.TWD | True WindDirection |
+| TWS | 0..∞ [m/s] | gps.TWS | True WindSpeed |
+| TSS | 0..∞ [m/s] | gps.TSS | PT1 filtered True WindSpeed |
+| LLSB | 0…360 [°] | gps.LLSB | layline angle Starboard |
+| LLBB | 0…360 [°] | gps.LLBB | layline angle Portside |
+| VPOL | 0..∞ [m/s] | gps.VPOL | calculated polar speed |
+|  |  |  |  |
+
+
 **NEW:**  
 
+For the Instrument-Overlay you can configure
 
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/InstrumentOverlayconf.png "Beispielbild")
 
@@ -125,7 +144,10 @@ The plugin provides the
 - Instrument Overlay,
 - the Layline Overlay
 - In addition also a classic widget with the Instrument can be installed (Name: SegelDisplayWidget)
-
+- SailInstrumentInfo (A Widget you can config to show the distance or the time for each Layline)
+And two widgets showing the cumulated values of SailInstrumentInfo
+- TTW-S (Time to Waypoint Sailing)
+- DTW-S (Distance To Waypoint Sailing)
 
 **Formatter**
 
