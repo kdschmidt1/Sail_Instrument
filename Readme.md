@@ -50,7 +50,7 @@ If there are "APPARENT" Winddata in the input stream it calculates and stores:
 
 For the Instrument-Overlay you can configure
 
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/InstrumentOverlayconf.png "Beispielbild")
+[](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/InstrumentOverlayconf.png "Beispielbild")
 
 | Name | Default Value | Description |
 | --- | --- | --- |
