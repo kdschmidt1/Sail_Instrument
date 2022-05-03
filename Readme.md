@@ -5,11 +5,11 @@
 ![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
 
 
-**This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213). A daily-release is aleady available [20220426](https://www.wellenvogel.net/software/avnav/downloads/daily/20220426/).**  
+**This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213). A daily-release is already available [20220426](https://www.wellenvogel.net/software/avnav/downloads/daily/20220426/)).**  
 The project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
 
-There is a very good description of the basic functionality in [blauwasser.de](https://www.blauwasser.de/navigation/app-sailsteer-bandg) und [mark-chisnell](https://www.bandg.com/de-de/blog/sailsteer-with-mark-chisnell/)
+There is a good description of the basic functionality available at [blauwasser.de](https://www.blauwasser.de/navigation/app-sailsteer-bandg) und [mark-chisnell](https://www.bandg.com/de-de/blog/sailsteer-with-mark-chisnell/)
  
  
 some Remarks:
@@ -18,8 +18,8 @@ some Remarks:
   
 A description how to prepare the polar.xml based on other formats will follow soon.  
 
-A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG), thanks to [Segeln-Forum](https://www.segeln-forum.de/thread/61813-messbriefe-und-polardaten-online-nachschauen/) or
-[Seapilot.com](https://www.seapilot.com/wp-content/uploads/2018/05/All_polar_files.zip) thanks to [free-x](https://github.com/free-x)
+A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG)(thanks to [Segeln-Forum](https://www.segeln-forum.de/thread/61813-messbriefe-und-polardaten-online-nachschauen/)) or
+[Seapilot.com](https://www.seapilot.com/wp-content/uploads/2018/05/All_polar_files.zip)(thanks to [free-x](https://github.com/free-x)).
 
 in this data you can find  
 beat angle => upwind,  
@@ -50,7 +50,7 @@ If there are "APPARENT" Winddata in the input stream it calculates and stores:
 
 For the Instrument-Overlay you can configure
 
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/InstrumentOverlayconf.png "Beispielbild")
+[nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/InstrumentOverlayconf.png "Beispielbild")
 
 | Name | Default Value | Description |
 | --- | --- | --- |
@@ -59,13 +59,13 @@ For the Instrument-Overlay you can configure
 | Opacity | 1.0| Opacity of the Sail-Instrument on the map|
 | Laylinerefresh | 5 | Time in (min) to completely clear Layline-Area |
 | TWDFilt_Indicator | False | Show filtered TWD Arrow (yellow) |  
-|  |  |  |
+|  |  |  |  
 If there is no boatposition available the Instrument will always be shown at the center position!
 
                           
                         
-For the Laylines-Overlay you can configure
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/LaylinesOverlay_conf.png "Beispielbild")  
+For the Laylines-Overlay you can configure  
+[nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/LaylinesOverlay_conf.png "Beispielbild")  
 
 
 
@@ -80,8 +80,8 @@ For the Laylines-Overlay you can configure
 
 
 
-The plugin itself has only one parameter
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
+The plugin itself has only one parameter  
+[nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
 
 
 | Name | Default Value | Description |
