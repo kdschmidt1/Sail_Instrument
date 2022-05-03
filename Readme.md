@@ -82,22 +82,22 @@ License: [MIT](LICENSE.md)
 
 You can use the plugin in 2 different ways.
 
-1. Download the source code as a zip and unpack it into a directory /home/pi/avnav/data/plugins/SegelDisplay.
+1. Download the SegelDisplay code as a zip and unpack the SegelDisplay-Folder into a directory /home/pi/avnav/data/plugins/SegelDisplay.
 
  If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/SegelDisplay.
 
  In this case the internal name of the plugin will be user-SegelDisplay. 
 
 
-1. Download the package provided in the releases section [SegelDisplay](https://github.com/kdschmidt1/SegelDisplay/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
+2. Download the package provided in the releases section [SegelDisplay](https://github.com/kdschmidt1/SegelDisplay/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
 
  ```
  sudo dpkg -i SegelDisplay-plugin...._all.deb
 
  ```
-2. Add the LaylineWidget to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+Add the Laylines to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 
-3. Add the SegelDisplay overlay you can find in the Overlay folder of the SegelDisplay-plugin directory to your map [overlays](https://www.wellenvogel.net/software/avnav/docs/hints/overlays.html)
+Add the SegelDisplay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 
 
 
@@ -124,7 +124,7 @@ No configuration necessary
 The plugin provides the 
 - Instrument Overlay,
 - the Layline Overlay
-- In addition also a classic widget with the Instrument can be installe (Name: SegelDisplayWidget)
+- In addition also a classic widget with the Instrument can be installed (Name: SegelDisplayWidget)
 
 
 **Formatter**

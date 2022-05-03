@@ -7,8 +7,8 @@ import time
 import os
 from datetime import date
 import xml.etree.ElementTree as ET
-#import numpy as np
-#from scipy.interpolate import InterpolatedUnivariateSpline
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
 #from xml.etree import cElementTree as ElementTree
 #import xmltodict
 #import numpy as np
@@ -18,6 +18,7 @@ import json
 import sys
 from _ast import Try
 import traceback
+import avnrouter
 MIN_AVNAV_VERSION="20220425"
 
     #// https://www.rainerstumpe.de/HTML/wind02.html
@@ -28,6 +29,7 @@ MIN_AVNAV_VERSION="20220425"
 
 
 class Plugin(object):
+  PATHWP = "wp.distance"
   PATHAWA = "gps.AWA"
   PATHAWD = "gps.AWD"
   PATHAWS = "gps.AWS"
@@ -77,6 +79,10 @@ class Plugin(object):
       
       'data': [
         {
+          'path': cls.PATHWP,
+          'description': 'apparent Wind direction',
+        },
+        {
           'path': cls.PATHAWD,
           'description': 'apparent Wind direction',
         },
@@ -118,6 +124,11 @@ class Plugin(object):
           'path': cls.PATHTLL_VPOL,
           'description': 'Speed aus Polare',
         },
+        {
+          'path': cls.PATHTLL_speed,
+          'description': 'Speed aus Polare',
+        },
+
       ]
     }
 
@@ -213,6 +224,16 @@ class Plugin(object):
 
 
   
+  def quadratic_spline_roots(self,spl):
+    roots = []
+    knots = spl.get_knots()
+    for a, b in zip(knots[:-1], knots[1:]):
+        u, v, w = spl(a), spl((a+b)/2), spl(b)
+        t = np.roots([u+w-2*v, w-u, 2*v])
+        t = t[np.isreal(t) & (np.abs(t) <= 1)]
+        roots.extend(t*(b-a)/2 + (b+a)/2)
+    return np.array(roots)
+
   
  #https://stackoverflow.com/questions/4983258/python-how-to-check-list-monotonicity
   def strictly_increasing(L):
@@ -270,6 +291,52 @@ class Plugin(object):
     except Exception as error:
         raise Exception("polare.xml Error: "+error.__str__()+' -> '+e_str)
         return(False)
+        
+
+    
+    
+    cWendewinkel_upwind=[]
+    cWendewinkel_downwind=[]
+
+    lastindex=len(self.polare['windanglevector'])
+
+    x = np.array(self.polare['boatspeed'])
+    BRG=42
+    windanglerad=np.deg2rad(BRG-np.array(self.polare['windanglevector']))
+    coswindanglerad=np.abs(np.cos(windanglerad))
+
+    self.cWendewinkel_upwind=[]
+    vmc=[]
+    for i in range(len(self.polare['windspeedvector'])):
+        updownindexvalue=next(z for z in self.polare['windanglevector'] if z >=90)
+        updownindex=self.polare['windanglevector'].index(updownindexvalue, 0, lastindex)
+        spalte=i
+        # vmc=v*cos(BRG-HDG)
+        # HDG = TWD +/- TWA
+        # test: BRG = , TWD=0 --> HDG=-TWA --> vmc=v*cos(BRG+TWA)
+        vmc.append(np.array(x[0:lastindex,spalte])*coswindanglerad[0:lastindex])
+        for j in range(1):
+            if j==0: # Upwind
+                f=InterpolatedUnivariateSpline(self.polare['windanglevector'][0:updownindex], vmc[spalte][0:updownindex], k=3)
+                cr_pts = self.quadratic_spline_roots(f.derivative())
+                cr_pts = np.append(cr_pts, (self.polare['windanglevector'][0], self.polare['windanglevector'][updownindex]))  # also check the endpoints of the interval
+
+            else:    #downwind
+                f=InterpolatedUnivariateSpline(self.polare['windanglevector'][updownindex:lastindex], vmc[spalte][updownindex:lastindex], k=3)
+                cr_pts = self.quadratic_spline_roots(f.derivative())
+                cr_pts = np.append(cr_pts, (self.polare['windanglevector'][upwindindex], self.polare['windanglevector'][lastindex]))  # also check the endpoints of the interval
+                
+            cr_pts = self.quadratic_spline_roots(f.derivative())
+            cr_vals = f(cr_pts)
+            min_index = np.argmin(cr_vals)
+            max_index = np.argmax(cr_vals)
+    #print("Maximum value {} at {}\nMinimum value {} at {}".format(cr_vals[max_index], cr_pts[max_index], cr_vals[min_index], cr_pts[min_index]))
+            if(j==0):
+                pass
+                self.cWendewinkel_upwind.append(cr_pts[max_index])
+
+        
+        
 
     return(True)
 
@@ -413,9 +480,13 @@ def calc_Laylines(self,gpsdata):# // [grad]
             anglew  \
         )
         self.api.addData(self.PATHTLL_VPOL,SOGPOLvar*0.514444)
-        #self.api.ALLOW_KEY_OVERWRITE=True
-        #allowKeyOverwrite=True
-        #self.api.addData("gps.speed",SOGPOLvar*0.514444)
+        # for testing purpuses overwrite gps.speed with SOGPOLvar, needs to set ALLOW_KEY_OVERWRITE=True
+        self.api.addData(self.PATHTLL_speed,SOGPOLvar*0.514444)
+        xx=self.api.getSingleValue('routeHandler.currentLeg')
+        xx=self.api.getDataByPrefix('wp')
+        
+        
+        
         return True
         
         # http://forums.sailinganarchy.com/index.php?/topic/132129-calculating-vmc-vs-vmg/
