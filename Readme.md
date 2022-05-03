@@ -65,7 +65,7 @@ If there is no boatposition available the Instrument will always be shown at the
                           
                         
 For the Laylines-Overlay you can configure  
-[nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/LaylinesOverlay_conf.png "Beispielbild")  
+[](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/LaylinesOverlay_conf.png "Beispielbild")  
 
 
 
@@ -81,7 +81,7 @@ For the Laylines-Overlay you can configure
 
 
 The plugin itself has only one parameter  
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
+[](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
 
 
 | Name | Default Value | Description |
