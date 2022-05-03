@@ -147,8 +147,8 @@ The plugin provides the
 - Instrument Overlay,
 - the Layline Overlay
 - In addition also a classic widget with the Instrument can be installed (Name: SegelDisplayWidget)
-- SailInstrumentInfo (A Widget you can config to show the distance or the time for each Layline)
-And two widgets showing the cumulated values of SailInstrumentInfo
+- SailInstrumentInfo (A Widget you can config to show the distance or the time for each Layline)  
+And two widgets showing the cumulated values of the SailInstrumentInfo  
 - TTW-S (Time to Waypoint Sailing)
 - DTW-S (Distance To Waypoint Sailing)
 
