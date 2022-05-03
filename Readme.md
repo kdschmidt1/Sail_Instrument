@@ -39,7 +39,7 @@ If there are "APPARENT" Winddata in the input stream it calculates and stores:
 | TWA | +/- 180 [°] | gps.TWA | True WindAngle |
 | TWD | 0…360 [°] | gps.TWD | True WindDirection |
 | TWS | 0..∞ [m/s] | gps.TWS | True WindSpeed |
-| TSS | 0..∞ [m/s] | gps.TSS | PT1 filtered True WindSpeed |
+| TSS | 0..∞ [m/s] | gps.TSS | PT1 filtered True WindDirection |
 | LLSB | 0…360 [°] | gps.LLSB | layline angle Starboard |
 | LLBB | 0…360 [°] | gps.LLBB | layline angle Portside |
 | VPOL | 0..∞ [m/s] | gps.VPOL | calculated polar speed |
@@ -59,6 +59,7 @@ For the Instrument-Overlay you can configure
 | Opacity | 1.0| Opacity of the Sail-Instrument on the map|
 | Laylinerefresh | 5 | Time in (min) to completely clear Layline-Area |
 | TWDFilt_Indicator | False | Show filtered TWD Arrow (yellow) |  
+|  |  |  |
 If there is no boatposition available the Instrument will always be shown at the center position!
 
                           
@@ -75,6 +76,7 @@ For the Laylines-Overlay you can configure
 | Laylineoverlap | False | Extent Laylines over Intersection |
 | LaylineBoat | True | Draw Ahead-Laylines from Boatposition |
 | LaylineWP | True | Draw Waypoint-Laylines |  
+|  |  |  |
 
 
 
@@ -85,6 +87,7 @@ The plugin itself has only one parameter
 | Name | Default Value | Description |
 | --- | --- | --- |
 | TWD_FiltFreq | 0.2 | Limit Frequency of the PT1 Lowpass-Filter |  
+|  |  |  |
 
 
 Please report any Errors to [Issues](https://github.com/kdschmidt1/avnav-more-nmea-plugin/issues)
