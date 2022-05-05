@@ -68,8 +68,8 @@ var Sail_InstrumentInfoWidget = {
 		}
 		else
 		{
-		fv=""
-		fv2=""
+		fv=["",""]
+		fv2=["",""]
 		}
         return "	\
         <div class=\"userSpecial2line\"> </div> \
