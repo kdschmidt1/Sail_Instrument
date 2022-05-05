@@ -13,7 +13,7 @@ There is a good description of the basic functionality available at [blauwasser.
  
  
 some Remarks:
-*  You have to provide polar data [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Sail_Instrument/polare.xml) of yor boat in the /home/pi/avnav/user/viewer folder for calculation the laylines.  
+*  You have to provide polar data [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/65a357926932284c8cf6eddd00fa86e13bc51392/polardaten/polare.xml) of yor boat in the /home/pi/avnav/user/viewer folder for calculating the laylines.  
   
   
 A description how to prepare the polar.xml based on other formats will follow soon.  
@@ -90,7 +90,7 @@ The plugin itself has only one parameter
 |  |  |  |
 
 
-Please report any Errors to [Issues](https://github.com/kdschmidt1/avnav-more-nmea-plugin/issues)
+Please report any Errors to [Issues](https://github.com/kdschmidt1/Sail_Instrument/issues)
 
 License: [MIT](LICENSE.md)
 
