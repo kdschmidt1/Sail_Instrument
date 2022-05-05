@@ -72,15 +72,15 @@ var Sail_InstrumentInfoWidget = {
 		fv2=["",""]
 		}
         return "	\
-        <div class=\"userSpecial2line\"> </div> \
+        <div class=\"Sail_InstrumentInfo\"> </div> \
    	    <div class=\'infoRight\'> " + fv[0] + "</div>	\
        	<div class=\" infoLeft \" > " + "Layl." + "</div> \
         <div class=\"resize\"> \
         <br> \
-        <div class=\"KDInner\"> \
+        <div class=\"Sail_InstrumentInfoInner\"> \
         	<div class=\" widgetData \" > " + fv[1] + "</div> \
 		</div> \
-        <div class=\"KDInner\"> \
+        <div class=\"Sail_InstrumentInfoInner\"> \
         	<div class=\" widgetData \" > " + fv2[1] + "</div> \
 		</div> \
 		</div> \

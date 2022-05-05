@@ -13,7 +13,7 @@ There is a good description of the basic functionality available at [blauwasser.
  
  
 some Remarks:
-*  You have to provide polar data [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Sail_Instrument/polare.xml) for your boat to calculate the laylines.  
+*  You have to provide polar data [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Sail_Instrument/polare.xml) of yor boat in the /home/pi/avnav/user/viewer folder for calculation the laylines.  
   
   
 A description how to prepare the polar.xml based on other formats will follow soon.  
@@ -145,7 +145,7 @@ No configuration necessary
 
 The plugin provides the 
 - Sail_Instrument_Overlay,
-- the LayLines_Overlay
+- LayLines_Overlay
 - Sail_InstrumentWidget a classic widget with the Sail_Instrument
 - Sail_InstrumentInfoWidget (A Widget you can config to show the distance or the time for each Layline)  
 And two widgets showing the cumulated values of the SailInstrumentInfo  
