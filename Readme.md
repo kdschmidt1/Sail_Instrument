@@ -119,7 +119,7 @@ You can use the plugin in 2 different ways.
  ```
 Add the Laylines to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 
-Add the Sail_Instrument to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog) (you have to use the new [Button](https://github.com/wellenvogel/avnav/blob/d5cf9802d507bd5c23e1b999b78dbe0c76252fa9/viewer/images/icons-new/assistant_nav.svg)).
 
 
 
@@ -144,13 +144,13 @@ No configuration necessary
 ------
 
 The plugin provides the 
-- Instrument Overlay,
-- the Layline Overlay
-- In addition also a classic widget with the Instrument can be installed (Name: Sail_InstrumentWidget)
-- SailInstrumentInfo (A Widget you can config to show the distance or the time for each Layline)  
+- Sail_Instrument_Overlay,
+- the LayLines_Overlay
+- Sail_InstrumentWidget a classic widget with the Sail_Instrument
+- Sail_InstrumentInfoWidget (A Widget you can config to show the distance or the time for each Layline)  
 And two widgets showing the cumulated values of the SailInstrumentInfo  
-- TTW-S (Time to Waypoint Sailing)
-- DTW-S (Distance To Waypoint Sailing)
+- TTW-S (Time to Waypoint Sailing)	(not yet available)
+- DTW-S (Distance To Waypoint Sailing)	(not yet available)
 
 **Formatter**
 

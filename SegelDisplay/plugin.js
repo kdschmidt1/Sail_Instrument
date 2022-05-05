@@ -9,7 +9,7 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 		//globalThis.globalParameter={};
 
 
-var example4UserParameters = {
+var Sail_InstrumentInfoUserParameters = {
     //formatterParameters is already well known to avnav, so no need for any definition
     //just tell avnav that the user should be able to set this
     formatterParameters: true,
@@ -48,11 +48,11 @@ formatLL.parameters=[
 
 avnav.api.registerFormatter("mySpecialLL",formatLL);
 
-var example4Widget = {
-    name: "userSpecial2line",
+var Sail_InstrumentInfoWidget = {
+    name: "Sail_InstrumentInfo",
     //unit: "nm",
     renderHtml: function (props) {
-		console.log("example4Widget");
+		console.log("Sail_InstrumentInfo");
 
         //var fmtParam = ((props.formatterParameters instanceof  Array) && props.formatterParameters.length > 0) ? props.formatterParameters[0] : undefined;
 		if(typeof(intersections) != 'undefined'&&intersections)
@@ -100,7 +100,7 @@ var example4Widget = {
 /**
  * uncomment the next line to really register the widget
  */
-avnav.api.registerWidget(example4Widget,example4UserParameters);
+avnav.api.registerWidget(Sail_InstrumentInfoWidget,Sail_InstrumentInfoParameters);
 
 
 
@@ -109,7 +109,7 @@ avnav.api.registerWidget(example4Widget,example4UserParameters);
 
 
 
-var widget={
+var Sail_InstrumentWidget={
 
             name:"Sail_InstrumentWidget",
 
@@ -196,16 +196,16 @@ var widget={
             caption: "Laylines",
             unit: "",
 };
-var widgetParameter = {
+var Sail_InstrumentWidgetParameter = {
                        Laylinerefresh: {type: 'NUMBER', default: 5},
                        TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
 };
 
-avnav.api.registerWidget(widget, widgetParameter);
+avnav.api.registerWidget(Sail_InstrumentWidget, Sail_InstrumentWidgetParameter);
 
 
 /*################################################################################################*/
-let Sail_Instrument={
+let Sail_Instrument_Overlay={
 
                   // Editable Parameters
                   Displaysize: 100,
@@ -214,7 +214,7 @@ let Sail_Instrument={
                   TWDFilt_Indicator:false,
                   Widgetposition:'Boatposition',
 
-                  name: 'Sail_Instrument',
+                  name: 'Sail_Instrument_Overlay',
                   type:'map',
                   storeKeys:{
                 	  boatposition: 'nav.gps.position',
@@ -234,7 +234,7 @@ let Sail_Instrument={
                   },
                 		  renderCanvas: function(canvas,props,center)
                 		  {	
-                	  console.log("Sail_Instrument");
+                	  console.log("Sail_Instrument_Overlay");
                 	  let gps=props;
 
                 	  ctx=canvas.getContext('2d')
@@ -285,7 +285,7 @@ let Sail_Instrument={
 }
 
 
-var Sail_InstrumentParameter = {
+var Sail_Instrument_OverlayParameter = {
                              Widgetposition: {type:'SELECT',list:['Boatposition','Mapcenter'],default:'Boatposition'},
                              //myWidgetposition:{type:'SELECT',list:{name:'Boatposition',value:'true',name:'Mapcenter',value:'false'},default:'Boatposition'},
                              Displaysize: {type: 'NUMBER', default: 100},
@@ -294,10 +294,10 @@ var Sail_InstrumentParameter = {
                              TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
 };
 
-avnav.api.registerWidget(Sail_Instrument,Sail_InstrumentParameter );
+avnav.api.registerWidget(Sail_Instrument_Overlay,Sail_Instrument_OverlayParameter );
 
 /*##################################################################################################*/
-let LayLines={
+let LayLines_Overlay={
 
               // Editable Parameters
               Opacity:1,
@@ -338,7 +338,7 @@ let LayLines={
 
 }
 
-var layerParameter = {
+var LayLines_OverlayParameter = {
 
                       Opacity: {type: 'NUMBER', default: 1},
                       Laylinelength_nm: {type: 'NUMBER', default: 10},
@@ -347,7 +347,7 @@ var layerParameter = {
                       LaylineWP: {type: 'BOOLEAN', default: true},
 };
 
-avnav.api.registerWidget(LayLines,layerParameter);
+avnav.api.registerWidget(LayLines_Overlay,LayLines_OverlayParameter);
 /*##################################################################################################*/
 
 var TWD_Abweichung = [0,0];
