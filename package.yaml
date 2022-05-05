@@ -2,7 +2,7 @@
 #
 # check https://nfpm.goreleaser.com/configuration for detailed usage
 #
-name: "Sail_Instrument"
+name: "def"
 arch: "all"
 platform: "linux"
 version: "202204"
@@ -17,7 +17,7 @@ description: |
 homepage: ""
 license: "MIT"
 contents:
-- src: ./Sail_Instrument/*
+- src: ./abc/*
   dst: /usr/lib/avnav/server/plugins/Sail_Instrument/
 #- src: ./Overlay/*
 #  dst: /home/pi/avnav/data/overlays/  
