@@ -9,7 +9,7 @@ document.getElementsByTagName("head")[0].appendChild(fileref)
 		//globalThis.globalParameter={};
 
 
-var Sail_InstrumentInfoUserParameters = {
+var Sail_InstrumentInfoParameters = {
     //formatterParameters is already well known to avnav, so no need for any definition
     //just tell avnav that the user should be able to set this
     formatterParameters: true,
@@ -20,9 +20,12 @@ var Sail_InstrumentInfoUserParameters = {
 var intersections
 
 const formatLL=function(dist,speed, opt_unit){
+	let ret=["",""]
     try{
         if (! opt_unit || opt_unit.toLowerCase().match("nm")){
-            return avnav.api.formatter.formatDistance(dist,3,1);
+            ret[0]="nm"
+            ret[1]=avnav.api.formatter.formatDistance(dist,3,1);
+            return ret
         }
         if (opt_unit.toLowerCase().match("time")){
 	
@@ -36,7 +39,9 @@ const formatLL=function(dist,speed, opt_unit){
             let h = Math.floor(tval / 3600);
             let m = Math.floor((tval - h * 3600) / 60);
             let s = tval - 3600 * h - 60 * m;
-            return sign + avnav.api.formatter.formatDecimal(h, 2, 0).replace(" ", "0") + ':' + avnav.api.formatter.formatDecimal(m, 2, 0).replace(" ", "0") + ':' + avnav.api.formatter.formatDecimal(s, 2, 0).replace(" ", "0");
+            ret[0]="hh:mm:ss"
+            ret[1]=sign + avnav.api.formatter.formatDecimal(h, 2, 0).replace(" ", "0") + ':' + avnav.api.formatter.formatDecimal(m, 2, 0).replace(" ", "0") + ':' + avnav.api.formatter.formatDecimal(s, 2, 0).replace(" ", "0");
+            return ret
         }
     }catch(e){
         return "-----"
@@ -68,17 +73,15 @@ var Sail_InstrumentInfoWidget = {
 		}
         return "	\
         <div class=\"userSpecial2line\"> </div> \
+   	    <div class=\'infoRight\'> " + fv[0] + "</div>	\
+       	<div class=\" infoLeft \" > " + "Layl." + "</div> \
         <div class=\"resize\"> \
         <br> \
         <div class=\"KDInner\"> \
-        	<div class=\" widgetData \" > " + fv + "</div> \
-    	    <div class=\'infoRight\'>nm</div>	\
-        	<div class=\" infoLeft \" > " + "LLBB" + "</div> \
+        	<div class=\" widgetData \" > " + fv[1] + "</div> \
 		</div> \
         <div class=\"KDInner\"> \
-    	    <div class=\" widgetData \" > " + fv2 + "</div> \
-    	    <div class=\'infoRight\'>nm</div>	\
-	        <div class=\" infoLeft \" > " + "LLSB" + "</div> \
+        	<div class=\" widgetData \" > " + fv2[1] + "</div> \
 		</div> \
 		</div> \
         " 
@@ -234,7 +237,7 @@ let Sail_Instrument_Overlay={
                   },
                 		  renderCanvas: function(canvas,props,center)
                 		  {	
-                	  console.log("Sail_Instrument_Overlay");
+                	  console.log("Sail_Instrument-Overlay");
                 	  let gps=props;
 
                 	  ctx=canvas.getContext('2d')
@@ -306,7 +309,7 @@ let LayLines_Overlay={
               LaylineBoat: true,
               LaylineWP: true,
 
-              name: 'LayLines',
+              name: 'LayLines-Overlay',
               type: 'map',
               storeKeys:{
             	  boatposition: 'nav.gps.position',
