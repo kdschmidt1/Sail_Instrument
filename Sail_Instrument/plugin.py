@@ -1,24 +1,17 @@
 #the following import is optional
 #it only allows "intelligent" IDEs (like PyCharm) to support you in using it
 from avnav_api import AVNApi
-#from avnav_store import AVNStore
 import math
 import time
 import os
 from datetime import date
 import xml.etree.ElementTree as ET
-#import numpy as np
-#from scipy.interpolate import InterpolatedUnivariateSpline
-#from xml.etree import cElementTree as ElementTree
-#import xmltodict
-#import numpy as np
-#from scipy.interpolate import InterpolatedUnivariateSpline
 import urllib.request, urllib.parse, urllib.error
 import json
 import sys
 from _ast import Try
 import traceback
-MIN_AVNAV_VERSION="20220425"
+MIN_AVNAV_VERSION="20220426"
 
     #// https://www.rainerstumpe.de/HTML/wind02.html
     #// https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721
@@ -105,8 +98,6 @@ class Plugin(object):
           'path': cls.PATHTWA,
           'description': 'true Wind angle',
         },
-          
-
         {
           'path': cls.PATHTWDSS,
           'description': 'TWD PT1 for Laylines',
@@ -190,7 +181,6 @@ class Plugin(object):
     pass
 
   def PT_1funk(self, f_grenz, t_abtast, oldvalue, newvalue):
-    #const t_abtast= globalStore.getData(keys.properties.positionQueryTimeout)/1000 //[ms->s]
     T = 1 / (2*math.pi*f_grenz)
     tau = 1 / ((T / t_abtast) + 1)
     return(oldvalue + tau * (newvalue - oldvalue))
@@ -306,18 +296,32 @@ class Plugin(object):
       return(b)
     return {'status','unknown request'}
 
-def toPolWinkel(self, x,y): # [grad]
+
+    """
+    change kartesian koordinates to a polar angle
+    @param x,y: kartesian koordinates
+    @return: angle in degrees
+    """
+def toPolWinkel(self, x,y): # alpha in deg
     return(180*math.atan2(y,x)/math.pi)
 
 
-def toKartesisch(self, alpha):# // [grad]
+    """
+    change angle in kartesian koordinates
+    @param alpha: angle in degrees
+    @return: an objekt with the kartesian components x and y
+    """
+def toKartesisch(self, alpha):# alpha in deg
   K={}
   K['x']=math.cos((alpha * math.pi) / 180)
   K['y']=math.sin((alpha * math.pi) / 180)
   return(K)    
   
-  
-
+"""
+    bilinear interpolation
+    @param alpha: vector x-axis, vector y-axis, matrix v, coordinates x and y
+    @return: interpolated z
+"""
 def bilinear(self,xv, yv, zv, x, y) :
     #ws = xv
  try:
@@ -359,6 +363,11 @@ def bilinear(self,xv, yv, zv, x, y) :
         return(0)
 
   
+"""
+    linear interpolation
+    @param alpha: x-value, vector x-axis, vector y-axis
+    @return: interpolated y
+"""
 def linear(x, x_vector, y_vector):
 
     #var x2i = x_vector.findIndex(this.checkfunc, x)
@@ -384,6 +393,12 @@ def linear(x, x_vector, y_vector):
         return 0
     return y
 
+
+"""
+    calculation of laylines and VPOL
+    @param gpsdata from store
+"""
+
 def calc_Laylines(self,gpsdata):# // [grad]
     
     
@@ -393,9 +408,6 @@ def calc_Laylines(self,gpsdata):# // [grad]
             wendewinkel = linear((gpsdata['TWS'] / 0.514),self.polare['windspeedvector'],self.polare['ww_downwind']) * 2
         else:
             wendewinkel = linear((gpsdata['TWS'] / 0.514),self.polare['windspeedvector'],self.polare['ww_upwind']) * 2
-
-        #LL_SB = (gpsdata['TWD'] + wendewinkel / 2) % 360
-        #LL_BB = (gpsdata['TWD'] - wendewinkel / 2) % 360
 
         LL_SB = (gpsdata['TSS'] + wendewinkel / 2) % 360
         LL_BB = (gpsdata['TSS'] - wendewinkel / 2) % 360
@@ -418,24 +430,13 @@ def calc_Laylines(self,gpsdata):# // [grad]
             anglew  \
         )
         self.api.addData(self.PATHTLL_VPOL,SOGPOLvar*0.514444)
-        #self.api.ALLOW_KEY_OVERWRITE=True
-        #allowKeyOverwrite=True
-        #self.api.addData(self.PATHTLL_speed,SOGPOLvar*0.514444)
         return True
         
-        # http://forums.sailinganarchy.com/index.php?/topic/132129-calculating-vmc-vs-vmg/
-#VMG = BS * COS(RADIANS(TWA))
-#VMC = BS * COS(RADIANS(BRG-HDG))
-      
-        #rueckgabewert = urllib.request.urlopen('http://localhost:8081/viewer/avnav_navi.php?request=route&command=getleg')
-        #route=rueckgabewert.read()
-        #inhalt_text = route.decode("UTF-8")
-        #d = json.loads(inhalt_text)
-        #VMCvar = ((gpsdata['speed'] * 1.94384) * math.cos((xx-gpsdata['track']) * math.pi) / 180)
-    #print(d)
-
     
-    
+"""
+    calculation of filtered TWD
+    @param gpsdata from store
+"""
 def calcSailsteer(self, gpsdata):
     rt=gpsdata
     if not 'track' in gpsdata or not 'AWD' in gpsdata:
@@ -465,6 +466,10 @@ def calcSailsteer(self, gpsdata):
         self.api.error(" error calculating TSS ")
         return False
     
+"""
+    calculation of true wind-data
+    @param gpsdata from store
+"""
 def calcTrueWind(self, gpsdata):
     # https://www.rainerstumpe.de/HTML/wind02.html
     # https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721      
@@ -509,14 +514,4 @@ def LimitWinkel(self, alpha):  # [grad]
     if (alpha > 180): 
         alpha -= 360;
     return(alpha)  
-
-def toPolWinkel(self, x, y):  # [grad]
-        return(180 * math.atan2(y, x) / math.pi)
-
-def toKartesisch(self, alpha):  # // [grad]
-        K = {}
-        K['x'] = math.cos((alpha * math.pi) / 180)
-        K['y'] = math.sin((alpha * math.pi) / 180)
-        return(K)    
-
 
