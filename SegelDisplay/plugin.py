@@ -77,6 +77,11 @@ class Plugin(object):
       
       'data': [
         {
+          'path': cls.PATHTLL_speed,
+          'description': 'apparent Wind direction',
+        },
+          
+        {
           'path': cls.PATHAWD,
           'description': 'apparent Wind direction',
         },
@@ -135,7 +140,7 @@ class Plugin(object):
     
     self.api = api # type: AVNApi
     if(self.api.getAvNavVersion() < int(MIN_AVNAV_VERSION)):
-        raise Exception("SegelDisplay-Plugin is not available for this AvNav-Version")
+        raise Exception("Sail_Instrument-Plugin is not available for this AvNav-Version")
         return 
 
     self.api.registerEditableParameters(self.CONFIG, self.changeParam)
@@ -415,7 +420,7 @@ def calc_Laylines(self,gpsdata):# // [grad]
         self.api.addData(self.PATHTLL_VPOL,SOGPOLvar*0.514444)
         #self.api.ALLOW_KEY_OVERWRITE=True
         #allowKeyOverwrite=True
-        #self.api.addData("gps.speed",SOGPOLvar*0.514444)
+        #self.api.addData(self.PATHTLL_speed,SOGPOLvar*0.514444)
         return True
         
         # http://forums.sailinganarchy.com/index.php?/topic/132129-calculating-vmc-vs-vmg/
@@ -463,7 +468,7 @@ def calcSailsteer(self, gpsdata):
 def calcTrueWind(self, gpsdata):
     # https://www.rainerstumpe.de/HTML/wind02.html
     # https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721      
-        source='SegelDisplay'
+        source='Sail_Instrument'
 
         if not 'track' in gpsdata or not 'windAngle' in gpsdata:
             return False

@@ -111,7 +111,7 @@ avnav.api.registerWidget(example4Widget,example4UserParameters);
 
 var widget={
 
-            name:"SegelDisplayWidget",
+            name:"Sail_InstrumentWidget",
 
             // Editable Parameters
             Laylinerefresh: 5,
@@ -205,7 +205,7 @@ avnav.api.registerWidget(widget, widgetParameter);
 
 
 /*################################################################################################*/
-let SegelDisplay={
+let Sail_Instrument={
 
                   // Editable Parameters
                   Displaysize: 100,
@@ -214,7 +214,7 @@ let SegelDisplay={
                   TWDFilt_Indicator:false,
                   Widgetposition:'Boatposition',
 
-                  name: 'SegelDisplay',
+                  name: 'Sail_Instrument',
                   type:'map',
                   storeKeys:{
                 	  boatposition: 'nav.gps.position',
@@ -234,7 +234,7 @@ let SegelDisplay={
                   },
                 		  renderCanvas: function(canvas,props,center)
                 		  {	
-                	  console.log("SegelDisplay");
+                	  console.log("Sail_Instrument");
                 	  let gps=props;
 
                 	  ctx=canvas.getContext('2d')
@@ -285,7 +285,7 @@ let SegelDisplay={
 }
 
 
-var SegeldisplayParameter = {
+var Sail_InstrumentParameter = {
                              Widgetposition: {type:'SELECT',list:['Boatposition','Mapcenter'],default:'Boatposition'},
                              //myWidgetposition:{type:'SELECT',list:{name:'Boatposition',value:'true',name:'Mapcenter',value:'false'},default:'Boatposition'},
                              Displaysize: {type: 'NUMBER', default: 100},
@@ -294,7 +294,7 @@ var SegeldisplayParameter = {
                              TWDFilt_Indicator: {type: 'BOOLEAN', default: false},
 };
 
-avnav.api.registerWidget(SegelDisplay,SegeldisplayParameter );
+avnav.api.registerWidget(Sail_Instrument,Sail_InstrumentParameter );
 
 /*##################################################################################################*/
 let LayLines={

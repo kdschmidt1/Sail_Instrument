@@ -1,8 +1,8 @@
-**SegelDisplay Plugin**
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/c3503c50ce09bfc21681f1f1e58452fd98255a73/Images/avn1.png "Beispielbild")
+**Sail_Instrument Plugin**
+![nur ein Beispiel](https://github.com/kdschmidt1/Sail_Instrument/blob/c3503c50ce09bfc21681f1f1e58452fd98255a73/Images/avn1.png "Beispielbild")
 ===========================
 
-![nur ein Beispiel](https://github.com/kdschmidt1/SegelDisplay/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
+![nur ein Beispiel](https://github.com/kdschmidt1/Sail_Instrument/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
 
 
 **This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213). A daily-release is already available [20220426](https://www.wellenvogel.net/software/avnav/downloads/daily/20220426/)).**  
@@ -13,7 +13,7 @@ There is a good description of the basic functionality available at [blauwasser.
  
  
 some Remarks:
-*  You have to provide polar data [Example](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/SegelDisplay/polare.xml) for your boat to calculate the laylines.  
+*  You have to provide polar data [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Sail_Instrument/polare.xml) for your boat to calculate the laylines.  
   
   
 A description how to prepare the polar.xml based on other formats will follow soon.  
@@ -50,7 +50,7 @@ If there are "APPARENT" Winddata in the input stream it calculates and stores:
 
 For the Instrument-Overlay you can configure
 
-[](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/InstrumentOverlayconf.png "Beispielbild")
+[](https://github.com/kdschmidt1/Sail_Instrument/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/InstrumentOverlayconf.png "Beispielbild")
 
 | Name | Default Value | Description |
 | --- | --- | --- |
@@ -65,7 +65,7 @@ If there is no boatposition available the Instrument will always be shown at the
                           
                         
 For the Laylines-Overlay you can configure  
-[](https://github.com/kdschmidt1/SegelDisplay/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/LaylinesOverlay_conf.png "Beispielbild")  
+[](https://github.com/kdschmidt1/Sail_Instrument/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/LaylinesOverlay_conf.png "Beispielbild")  
 
 
 
@@ -81,7 +81,7 @@ For the Laylines-Overlay you can configure
 
 
 The plugin itself has only one parameter  
-[](https://github.com/kdschmidt1/SegelDisplay/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
+[](https://github.com/kdschmidt1/Sail_Instrument/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
 
 
 | Name | Default Value | Description |
@@ -104,22 +104,22 @@ License: [MIT](LICENSE.md)
 
 You can use the plugin in 2 different ways.
 
-1. Download the SegelDisplay code as a zip and unpack the SegelDisplay-Folder into a directory /home/pi/avnav/data/plugins/SegelDisplay.
+1. Download the Sail_Instrument code as a zip and unpack the Sail_Instrument-Folder into a directory /home/pi/avnav/data/plugins/Sail_Instrument.
 
- If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/SegelDisplay.
+ If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/Sail_Instrument.
 
- In this case the internal name of the plugin will be user-SegelDisplay. 
+ In this case the internal name of the plugin will be user-Sail_Instrument. 
 
 
-2. Download the package provided in the releases section [SegelDisplay](https://github.com/kdschmidt1/SegelDisplay/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
+2. Download the package provided in the releases section [Sail_Instrument](https://github.com/kdschmidt1/Sail_Instrument/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
 
  ```
- sudo dpkg -i SegelDisplay-plugin...._all.deb
+ sudo dpkg -i Sail_Instrument-plugin...._all.deb
 
  ```
 Add the Laylines to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 
-Add the SegelDisplay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+Add the Sail_Instrument to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 
 
 
@@ -146,7 +146,7 @@ No configuration necessary
 The plugin provides the 
 - Instrument Overlay,
 - the Layline Overlay
-- In addition also a classic widget with the Instrument can be installed (Name: SegelDisplayWidget)
+- In addition also a classic widget with the Instrument can be installed (Name: Sail_InstrumentWidget)
 - SailInstrumentInfo (A Widget you can config to show the distance or the time for each Layline)  
 And two widgets showing the cumulated values of the SailInstrumentInfo  
 - TTW-S (Time to Waypoint Sailing)

@@ -2,7 +2,7 @@
 #
 # check https://nfpm.goreleaser.com/configuration for detailed usage
 #
-name: "SegelDisplay-plugin"
+name: "Sail_Instrument-plugin"
 arch: "all"
 platform: "linux"
 version: "202204"
@@ -17,8 +17,8 @@ description: |
 homepage: ""
 license: "MIT"
 contents:
-- src: ./SegelDisplay/*
-  dst: /usr/lib/avnav/server/plugins/SegelDisplay/
+- src: ./Sail_Instrument/*
+  dst: /usr/lib/avnav/server/plugins/Sail_Instrument/
 #- src: ./Overlay/*
 #  dst: /home/pi/avnav/data/overlays/  
 #- src: ./bin/*

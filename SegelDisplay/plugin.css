@@ -1,11 +1,11 @@
 
 
-.SegelDisplayWidget {
+.Sail_InstrumentWidget {
     ￼    display: flex;￼
     ￼    flex-direction: row;
 }
 
-.SegelDisplayWidget canvas.widgetData {
+.Sail_InstrumentWidget canvas.widgetData {
     width: 100%;
     flex-grow: 1;
 }
