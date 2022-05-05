@@ -2,26 +2,18 @@
 #
 # check https://nfpm.goreleaser.com/configuration for detailed usage
 #
-name: "def"
-arch: "all"
-platform: "linux"
-version: "202205"
-keep_version: true
-section: "default"
-priority: "extra"
-depends:
-- avnav
-maintainer: "Klaus D. Schmidt <kdschmidt@bluewin.ch>"
-description: |
-  AvNav plugin to show a sailsteer display and Laylines on the map
-homepage: ""
-license: "MIT"
-contents:
-- src: ./Sail_Instrument/*
-  dst: /usr/lib/avnav/server/plugins/Sail_Instrument/
-#- src: ./Overlay/*
-#  dst: /home/pi/avnav/data/overlays/  
-#- src: ./bin/*
-#  dst: /home/pi/avnav/data/bin/  
-- src: ./polardaten/*
-  dst: $HOME/avnav/data/user/viewer/
+  - name: build
+    run: make build
+  - name: version
+    run: echo "::set-output name=version::$(./bin/azblogfilter --version)"
+    id: version
+  - name: release
+    uses: actions/create-release@v1
+    id: create_release
+    with:
+      draft: false
+      prerelease: false
+      release_name: ${{ steps.version.outputs.version }}
+      tag_name: ${{ github.ref }}
+      body_path: CHANGELOG.md
+    env:
