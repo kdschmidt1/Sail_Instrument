@@ -13,7 +13,7 @@ There is a good description of the basic functionality available at [blauwasser.
  
  
 some Remarks:
-*  You have to provide polar data [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/65a357926932284c8cf6eddd00fa86e13bc51392/polardaten/polare.xml) of yor boat in the /home/pi/avnav/user/viewer folder for calculating the laylines.  
+*  You have to provide polar data [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/65a357926932284c8cf6eddd00fa86e13bc51392/polardaten/polare.xml) of yor boat in the /home/pi/avnav/user/viewer folder for calculating the laylines. If there is no polar.xml file in the user folder, the plugin will copy its own file to this location and you can use it as a template for your own polar data.  
   
   
 A description how to prepare the polar.xml based on other formats will follow soon.  
@@ -28,7 +28,7 @@ run angle => downwind
 These two vectors are mandatory for calculation of the laylines.  
 The boatspeed Matrix is only used for calculation of VPOL (interpolated speed for actual condition based on polar-data)
 
-If there are "APPARENT" Winddata in the input stream it calculates and stores:
+If there is "APPARENT" Winddata in the input stream it calculates and stores:
 ·  
 
 | Value | Format | Storename | Description |
@@ -80,13 +80,14 @@ For the Laylines-Overlay you can configure
 
 
 
-The plugin itself has only one parameter  
+The plugin itself has two  parameter  
 [](https://github.com/kdschmidt1/Sail_Instrument/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
 
 
 | Name | Default Value | Description |
 | --- | --- | --- |
 | TWD_FiltFreq | 0.2 | Limit Frequency of the PT1 Lowpass-Filter |  
+| allowKeyOverwrite | "True" | allow overwriting of existing data in the store |  
 |  |  |  |
 
 
