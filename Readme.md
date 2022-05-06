@@ -6,21 +6,23 @@
 
 
 **This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213). A daily-release is already available [20220426](https://www.wellenvogel.net/software/avnav/downloads/daily/20220426/)).**  
-The project provides a plugin showing a display on a map overlay that is inspired by B&Gs sailsteer  
+Idea of this plugin is to show an Instrument, that contains all basic informations needed for sailing.
+With the possibility to show this Display directly on the map at the boatposition the sailor has all informations in view. The Laylines will inform you about the fastest bearing to a waypoint upwind and if displayed on the map you can follow these lines. 
+The Instrument is inspired by B&Gs sailsteer.  
+
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
 
 There is a good description of the basic functionality available at [blauwasser.de](https://www.blauwasser.de/navigation/app-sailsteer-bandg) und [mark-chisnell](https://www.bandg.com/de-de/blog/sailsteer-with-mark-chisnell/)
  
  
-some Remarks:
-*  You have to provide polar data [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/65a357926932284c8cf6eddd00fa86e13bc51392/polardaten/polare.xml) of yor boat in the /home/pi/avnav/user/viewer folder for calculating the laylines. If there is no polar.xml file in the user folder, the plugin will copy its own file to this location and you can use it as a template for your own polar data.  
+**Remarks**:
+*  You have to provide polar data (see [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/65a357926932284c8cf6eddd00fa86e13bc51392/polardaten/polare.xml)) of yor boat in the /home/pi/avnav/user/viewer folder for calculating the laylines. If there is no polar.xml file in the user folder, the plugin will copy its own file to this location and you can use it as a template for your own polar data and edit for example directly on the [Files/Download](https://www.wellenvogel.net/software/avnav/docs/userdoc/downloadpage.html) page.  
   
   
 A description how to prepare the polar.xml based on other formats will follow soon.  
 
 A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG)(thanks to [Segeln-Forum](https://www.segeln-forum.de/thread/61813-messbriefe-und-polardaten-online-nachschauen/)) or
 [Seapilot.com](https://www.seapilot.com/wp-content/uploads/2018/05/All_polar_files.zip)(thanks to [free-x](https://github.com/free-x)).
-
 in this data you can find  
 beat angle => upwind,  
 run angle => downwind  
@@ -39,7 +41,7 @@ If there is "APPARENT" Winddata in the input stream it calculates and stores:
 | TWA | +/- 180 [°] | gps.TWA | True WindAngle |
 | TWD | 0…360 [°] | gps.TWD | True WindDirection |
 | TWS | 0..∞ [m/s] | gps.TWS | True WindSpeed |
-| TSS | 0..∞ [m/s] | gps.TSS | PT1 filtered True WindDirection |
+| TSS | 0…360 [°] | gps.TSS | PT1 filtered True WindDirection |
 | LLSB | 0…360 [°] | gps.LLSB | layline angle Starboard |
 | LLBB | 0…360 [°] | gps.LLBB | layline angle Portside |
 | VPOL | 0..∞ [m/s] | gps.VPOL | calculated polar speed |
@@ -149,6 +151,7 @@ The plugin provides the
 - LayLines_Overlay
 - Sail_InstrumentWidget a classic widget with the Sail_Instrument
 - Sail_InstrumentInfoWidget (A Widget you can config to show the distance or the time for each Layline)  
+
 And two widgets showing the cumulated values of the SailInstrumentInfo  
 - TTW-S (Time to Waypoint Sailing)	(not yet available)
 - DTW-S (Distance To Waypoint Sailing)	(not yet available)
