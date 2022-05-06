@@ -146,9 +146,7 @@ class Plugin(object):
     self.oldtime=0
     self.polare={}
     if not self.Polare('polare.xml'):
-       raise Exception("polare.xml Error")
-       return
-    self.Polare('polare.xml')
+        return
     self.saveAllConfig()
     self.startSequence = 0
 
@@ -210,7 +208,7 @@ class Plugin(object):
   
   
  #https://stackoverflow.com/questions/4983258/python-how-to-check-list-monotonicity
-  def strictly_increasing(L):
+  def strictly_increasing(self, L):
         return all(x<y for x, y in zip(L, L[1:]))
   
   def Polare(self, f_name):
@@ -220,12 +218,11 @@ class Plugin(object):
     try:
         tree = ET.parse(polare_filename)
     except:
-        try:
             source=os.path.join(os.path.dirname(__file__), f_name)
             dest=os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
             with open(source, 'rb') as src, open(dest, 'wb') as dst: dst.write(src.read())
             tree = ET.parse(polare_filename)
-            
+    finally:
             root = tree.getroot()
             x=ET.tostring(root, encoding='utf8').decode('utf8')
             e_str='windspeedvector'
@@ -233,12 +230,18 @@ class Plugin(object):
         # whitespaces entfernen
             x="".join(x.split())
             self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
-    
+            if not self.strictly_increasing(self.polare['windspeedvector']):
+                raise Exception("windspeedvector in polare.xml IS NOT STRICTLY INCREASING!")
+                return(False)
+
             e_str='windanglevector'
             x=root.find('windanglevector').text
         # whitespaces entfernen
             x="".join(x.split())
             self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
+            if not self.strictly_increasing(self.polare['windanglevector']):
+                raise Exception("windanglevector in polare.xml IS NOT STRICTLY INCREASING!")
+                return(False)
             
             e_str='boatspeed'
             x=root.find('boatspeed').text
@@ -267,10 +270,6 @@ class Plugin(object):
         # whitespaces entfernen
             y="".join(y.split())
             self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
-        except Exception as error:
-            raise Exception("polare.xml Error: "+error.__str__()+' -> '+e_str)
-            return(False)
-
     return(True)
 
 
