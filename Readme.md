@@ -16,7 +16,7 @@ There is a good description of the basic functionality available at [blauwasser.
  
  
 **Remarks**:
-*  You have to provide polar data (see [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/65a357926932284c8cf6eddd00fa86e13bc51392/polardaten/polare.xml)) of yor boat in the /home/pi/avnav/user/viewer folder for calculating the laylines. If there is no polar.xml file in the user folder, the plugin will copy its own file to this location and you can use it as a template for your own polar data and edit for example directly on the [Files/Download](https://www.wellenvogel.net/software/avnav/docs/userdoc/downloadpage.html) page.  
+*  You have to provide polar data (see [Example](https://github.com/kdschmidt1/Sail_Instrument/blob/65a357926932284c8cf6eddd00fa86e13bc51392/polardaten/polare.xml)) of yor boat in the /home/pi/avnav/user/viewer folder for calculating the laylines. If there is no polar.xml file in the user folder, the plugin will copy its own file to this location and you can use it as a template for your own polar data and edit for example directly on the [Files/Download](https://www.wellenvogel.net/software/avnav/docs/userdoc/downloadpage.html) page in the section [DownloadPageUser](https://www.wellenvogel.net/software/avnav/docs/userdoc/downloadpage.html#userfiles).  
   
   
 A description how to prepare the polar.xml based on other formats will follow soon.  
@@ -150,9 +150,9 @@ The plugin provides the
 - Sail_Instrument_Overlay,
 - LayLines_Overlay
 - Sail_InstrumentWidget a classic widget with the Sail_Instrument
-- Sail_InstrumentInfoWidget (A Widget you can config to show the distance or the time for each Layline)  
+- Sail_InstrumentInfo-Widget (A Widget you can config to show the distance or the time for each Layline)  
 
-And two widgets showing the cumulated values of the SailInstrumentInfo  
+And two widgets showing the cumulated values of the Sail_InstrumentInfo  
 - TTW-S (Time to Waypoint Sailing)	(not yet available)
 - DTW-S (Distance To Waypoint Sailing)	(not yet available)
 
