@@ -197,7 +197,7 @@ To trigger a package build at GitHub after forking just create a release branch 
 
 To understand the technical background of the Laylines one has first to have a understanding of the terms VMG & VMC.
 VMG (Velocity made good against wind) is defined as VMG = Boatspeed * COS(TWA), so meaning the fastest course to a waypoint directly in wind direction.
-VMC (Velocity made good on course) is defined as VMC = Boatspeed * COS(BRG-HDG); meaning the fastest course to your waypoint.
+VMC (Velocity made good on course) is defined as VMC = Boatspeed * COS(BRG-HDG), meaning the fastest course to your waypoint.
 Unfortunately there is a lot of confusion on these two terms, and also most of the commercial products are mixing the two items and indicate VMG but showing in reality VMC (and so does also AvNav as one can see in the source code (navcompute.js line 210: let vmgapp = gps.speed * Math.cos(Math.PI / 180 * coursediff), with cousediff= BRG-HDG ).
 So have in mind, that VMG in AvNav means in reality VMC!
 The calculation of Laylines is based on the Upwind and Downwind vectors in your polar file, which are indicating the maximum VMG (and in this case really VMG!) for a given true windspeed.
@@ -208,18 +208,18 @@ Based on a true wind direction of 0° (directly from North) and a Waypoint in 10
 **Following the direct course**  
 
 Your speed (acc. Polar-data) will be 3.8 knots. For the 10 nm to the waypoint you would need 10nm/3.8kts ~ 2.63hrs.
-(The indication of the LaylineInfo Panels is useless in this moment, because they take into account your actual speed, and the distance to the waypont would be 9.7 + 1.9 nm --> 11.6 nm)
+(The indication of the LaylineInfo Panels is useless in this moment, because they take into account your actual speed, and the distance to the waypoint would be 9.7 + 1.9 nm --> 11.6 nm)
 ![direct course](https://github.com/kdschmidt1/Sail_Instrument/blob/9f54c7d21a16f81bd08985cf77718e07762b62a3/Images/directCourse.png)
 
 **Following the Laylines**  
 
-But, if you change course on the Layline your speed (acc. Polar-data) will increase to 4.8 knots. You have to travel 9,7 nm on starboard and 1.9 nm on port (with the same speed), so you would need 11.6nm/4.8kts ~ 2.41 hrs, an advantage of approx. 13 minutes (not taking into account the additional time for the turn maneuver).  
+But, if you change course on the Layline your speed (acc. Polar-data) will increase to 4.9 knots. You have to travel 9,7 nm on starboard and 1.9 nm on port (with the same speed), so you would need 11.6nm/4.8kts ~ 2.41 hrs, an advantage of approx. 13 minutes (not taking into account the additional time for the turn maneuver).  
 
 ![Follow Laylines](https://github.com/kdschmidt1/Sail_Instrument/blob/9f54c7d21a16f81bd08985cf77718e07762b62a3/Images/followLL.png)
 
 **Best VMC**  
 
-As mentioned before, the layline calculation is based on VMG, not VMC. So best VMC with this strategy is only valid, if your Waypoint is directly against the true wind direction. One can calculate also a best VMC course, which in this case would be 63 degrees as shown in the picture with an actual speed (acc. Polar-data) of 5.9 knots resulting in an VMC (or, as indicated with VMG in AvNav) of 5.0 knots. This calculation is actually not integrated in the actual release, because it needs aditional libraries that are currently not available for the rasperry pi (Introduction under preparation).  
+As mentioned before, the layline calculation is based on VMG, not VMC. So best VMC with this strategy is only valid, if your Waypoint is directly against the true wind direction. One can calculate also a best VMC course, which in this case would be 63 degrees as shown in the picture with an actual speed (acc. Polar-data) of 5.9 knots resulting in an VMC (or, as indicated as VMG in AvNav) of 5.0 knots. This calculation is actually not integrated in the release, because aditional libraries are necessary, that are currently not available for the rasperry pi (Introduction under preparation).  
 ![Best VMC](https://github.com/kdschmidt1/Sail_Instrument/blob/9f54c7d21a16f81bd08985cf77718e07762b62a3/Images/bestVMC.png)  
 
 But take into account, that following the Laylines is the easier way, because the course will not change along the Layline as long as the true wind direction is not changing (remember VMG = Boatspeed * COS(TWA) ) while following the best VMC is resulting in course changes along your way (remember VMC = Boatspeed * COS(BRG-HDG), and BRG is changing along yor way!!). 
