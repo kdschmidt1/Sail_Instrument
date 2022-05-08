@@ -57,14 +57,16 @@ var Sail_InstrumentInfoWidget = {
     name: "Sail_InstrumentInfo",
     //unit: "nm",
     renderHtml: function (props) {
+		let gpsdata= {...props};	// https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
+
 		console.log("Sail_InstrumentInfo");
 
-        //var fmtParam = ((props.formatterParameters instanceof  Array) && props.formatterParameters.length > 0) ? props.formatterParameters[0] : undefined;
+        //var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
 		if(typeof(intersections) != 'undefined'&&intersections)
 		{
-        var fmtParam = ((props.formatterParameters instanceof  Array) && props.formatterParameters.length > 0) ? props.formatterParameters[0] : undefined;
-        var fv = formatLL(intersections.Boat.BB.dist*1000,props.speed,fmtParam);
-        var fv2 = formatLL(intersections.Boat.SB.dist*1000,props.speed,fmtParam);
+        var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
+        var fv = formatLL(intersections.Boat.BB.dist*1000,gpsdata.speed,fmtParam);
+        var fv2 = formatLL(intersections.Boat.SB.dist*1000,gpsdata.speed,fmtParam);
 		}
 		else
 		{
@@ -78,9 +80,11 @@ var Sail_InstrumentInfoWidget = {
         <div class=\"resize\"> \
         <br> \
         <div class=\"Sail_InstrumentInfoInner\"> \
+        	<div class=\" infoLeft \" > " + "LLBB" + "</div> \
         	<div class=\" widgetData \" > " + fv[1] + "</div> \
 		</div> \
         <div class=\"Sail_InstrumentInfoInner\"> \
+        	<div class=\" infoLeft \" > " + "LLSB" + "</div> \
         	<div class=\" widgetData \" > " + fv2[1] + "</div> \
 		</div> \
 		</div> \
@@ -92,10 +96,6 @@ var Sail_InstrumentInfoWidget = {
                 	  boatposition: 'nav.gps.position',
                 	  LLSB:'nav.gps.LLSB',
                 	  LLBB:'nav.gps.LLBB',
-                	  AWA:'nav.gps.AWA',
-                	  AWD:'nav.gps.AWD',
-                	  TWA:'nav.gps.TWA',
-                	  TWD:'nav.gps.TWD',
                 	  TSS:'nav.gps.TSS',
             },
             formatter: formatLL,
@@ -135,6 +135,8 @@ var Sail_InstrumentWidget={
             *                defined with the storeKeys
             */
             renderCanvas:function(canvas,props){
+				let gpsdata= {...props};	// https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
+
             	var ctx=canvas.getContext('2d');
             	// Set scale factor for all values
             	var crect=canvas.getBoundingClientRect();
@@ -156,27 +158,28 @@ var Sail_InstrumentWidget={
             	//Fixiere Grösse für Widget
             	Displaysize = 65;
 
-            	//maprotationdeg = props.ActualMapRotation	//this.mapholder.olmap.getView().getRotation()/Math.PI*180
-            	boatrotationdeg = props.course;
+            	//maprotationdeg = gpsdata.ActualMapRotation	//this.mapholder.olmap.getView().getRotation()/Math.PI*180
+            	boatrotationdeg = gpsdata.course;
             	// get rid of maprotationdeg for widget
-            	if(props.courseup)
+            	if(gpsdata.courseup)
             		maprotationdeg=360-boatrotationdeg;
             	else 
             		maprotationdeg=0;
-            	calc_LaylineAreas(this, props)
+            	calcTrueWind(gpsdata)
+            	calc_LaylineAreas(this, gpsdata)
             	DrawOuterRing(ctx, Displaysize, maprotationdeg+boatrotationdeg);
             	DrawKompassring(ctx, Displaysize, maprotationdeg);
 
 
             	// wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
-            	color=((props.LLBB-props.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
-            	DrawLaylineArea(ctx, Displaysize, maprotationdeg+props.LLBB, TWD_Abweichung, ((props.LLBB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-            	DrawLaylineArea(ctx, Displaysize, maprotationdeg+props.LLSB, TWD_Abweichung, ((props.LLSB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-            	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+props.AWD, "rgb(0,255,0)", 'A')
-            	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+props.TWD , "blue", 'T')
+            	color=((gpsdata.LLBB-gpsdata.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
+            	DrawLaylineArea(ctx, Displaysize, maprotationdeg+gpsdata.LLBB, TWD_Abweichung, ((gpsdata.LLBB-gpsdata.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+            	DrawLaylineArea(ctx, Displaysize, maprotationdeg+gpsdata.LLSB, TWD_Abweichung, ((gpsdata.LLSB-gpsdata.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+            	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+gpsdata.AWD, "rgb(0,255,0)", 'A')
+            	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+gpsdata.TWD , "blue", 'T')
 
-            	if(typeof(props.TWDFilt_Indicator) != 'undefined' && props.TWDFilt_Indicator==true)	 
-            		DrawWindpfeilIcon(ctx, Displaysize, + maprotationdeg+props.TSS, "yellow", '~');
+            	if(typeof(gpsdata.TWDFilt_Indicator) != 'undefined' && gpsdata.TWDFilt_Indicator==true)	 
+            		DrawWindpfeilIcon(ctx, Displaysize, + maprotationdeg+gpsdata.TSS, "yellow", '~');
             	return;
             },
             		/**
@@ -187,10 +190,9 @@ var Sail_InstrumentWidget={
             */
             storeKeys:{
             	course: 'nav.gps.course',
-            	AWA:'nav.gps.AWA',
-            	AWD:'nav.gps.AWD',
-            	TWA:'nav.gps.TWA',
-            	TWD:'nav.gps.TWD',
+            	speed: 'nav.gps.speed',
+            	windAngle:'nav.gps.windAngle',
+            	windSpeed:'nav.gps.windSpeed',
             	TSS:'nav.gps.TSS',
             	LLSB:'nav.gps.LLSB',
             	LLBB:'nav.gps.LLBB',
@@ -224,11 +226,13 @@ let Sail_Instrument_Overlay={
                 	  LLSB:'nav.gps.LLSB',
                 	  LLBB:'nav.gps.LLBB',
                 	  course: 'nav.gps.course',
-                	  AWA:'nav.gps.AWA',
-                	  AWD:'nav.gps.AWD',
-                	  TWA:'nav.gps.TWA',
-                	  TWD:'nav.gps.TWD',
                 	  TSS:'nav.gps.TSS',
+                	  course: 'nav.gps.course',
+            		speed: 'nav.gps.speed',
+            		windAngle:'nav.gps.windAngle',
+            		windSpeed:'nav.gps.windSpeed',
+            		courseup:'map.courseUp',
+
 
                   },
                   initFunction: function(){
@@ -237,20 +241,22 @@ let Sail_Instrument_Overlay={
                   },
                 		  renderCanvas: function(canvas,props,center)
                 		  {	
+							let gpsdata= {...props};	// https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
+							calcTrueWind(gpsdata);
+
                 	  console.log("Sail_Instrument-Overlay");
-                	  let gps=props;
 
                 	  ctx=canvas.getContext('2d')
 																	ctx.save();
-                	  if(props.Widgetposition=='Mapcenter')
+                	  if(gpsdata.Widgetposition=='Mapcenter')
                 		  // Zeichne im Center:
                 		  ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
-                		  else if(props.Widgetposition=='Boatposition')	
+                		  else if(gpsdata.Widgetposition=='Boatposition')	
                 		  {
-							if(typeof(props.boatposition) != 'undefined')
+							if(typeof(gpsdata.boatposition) != 'undefined')
 								{ 
                 			  // Zeichne an der Bootsposition
-                			  coordinates=this.lonLatToPixel(gps.boatposition.lon,gps.boatposition.lat)
+                			  coordinates=this.lonLatToPixel(gpsdata.boatposition.lon,gpsdata.boatposition.lat)
                 			  ctx.translate(coordinates[0],coordinates[1]);
                 			  }
                 			 else
@@ -258,30 +264,30 @@ let Sail_Instrument_Overlay={
 	                 		  ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
 
                 		  }
-                	  ctx.globalAlpha*=props.Opacity;
+                	  ctx.globalAlpha*=gpsdata.Opacity;
 
                 	  maprotationdeg = this.getRotation()/Math.PI*180;
-                	  boatrotationdeg = gps.course;
+                	  boatrotationdeg = gpsdata.course;
 
-                	  calc_LaylineAreas(this, props)
-                	  DrawOuterRing(ctx, props.Displaysize, maprotationdeg+boatrotationdeg);
-                	  DrawKompassring(ctx, props.Displaysize, maprotationdeg);
+                	  calc_LaylineAreas(this, gpsdata)
+                	  DrawOuterRing(ctx, gpsdata.Displaysize, maprotationdeg+boatrotationdeg);
+                	  DrawKompassring(ctx, gpsdata.Displaysize, maprotationdeg);
 
                 	  // wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
-                	  color=((gps.LLBB-gps.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
-                	  DrawLaylineArea(ctx, props.Displaysize, maprotationdeg+gps.LLBB, TWD_Abweichung, ((gps.LLBB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-                	  DrawLaylineArea(ctx, props.Displaysize, maprotationdeg+gps.LLSB, TWD_Abweichung, ((gps.LLSB-gps.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-                	  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.AWD, "rgb(0,255,0)", 'A')
-                	  DrawWindpfeilIcon(ctx, props.Displaysize, maprotationdeg+gps.TWD , "blue", 'T')
+                	  color=((gpsdata.LLBB-gpsdata.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
+                	  DrawLaylineArea(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.LLBB, TWD_Abweichung, ((gpsdata.LLBB-gpsdata.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+                	  DrawLaylineArea(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.LLSB, TWD_Abweichung, ((gpsdata.LLSB-gpsdata.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
+                	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.AWD, "rgb(0,255,0)", 'A')
+                	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.TWD , "blue", 'T')
 
-                	  if(typeof(props.TWDFilt_Indicator) != 'undefined' && props.TWDFilt_Indicator==true)	 
-                		  DrawWindpfeilIcon(ctx, props.Displaysize, + maprotationdeg+gps.TSS, "yellow", '~');
+                	  if(typeof(gpsdata.TWDFilt_Indicator) != 'undefined' && gpsdata.TWDFilt_Indicator==true)	 
+                		  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, + maprotationdeg+gpsdata.TSS, "yellow", '~');
                 	  ctx.restore();
 
 
                 	  ctx=canvas.getContext('2d')
 																													ctx.save();
-                	  testme(this,canvas, props)															
+                	  testme(this,canvas, gpsdata)															
                 	  ctx.restore();
                 		  }
 
@@ -654,3 +660,67 @@ let DrawKompassring=function(ctx,radius, angle) {
 	ctx.restore();
 } // Ende Kompassring
 
+
+
+class polar
+{
+	constructor(r, alpha) {
+		this.r = r;
+		this.alpha = alpha;
+	}
+	toKartesisch()
+	{
+		let K = {};
+		K['x'] = this.r*Math.cos((this.alpha * Math.PI) / 180);
+        K['y'] = this.r*Math.sin((this.alpha * Math.PI) / 180);
+        return(K);
+	}    
+}
+
+class kartesisch
+{
+	constructor(x, y)  // [alpha in deg] 
+	{
+		this.x=x
+		this.y=y
+	}
+	toPolar()
+	{
+		return(180 * Math.atan2(this.y, this.x) / Math.PI)
+	}
+}
+
+
+
+
+
+
+
+let calcTrueWind=function(gpsdata)
+{
+
+	//# https://www.rainerstumpe.de/HTML/wind02.html
+	//# https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721      
+
+
+	if(typeof(gpsdata['course']) != 'undefined' &&  typeof(gpsdata['windAngle']) != 'undefined')
+	{
+		gpsdata['AWA']=gpsdata['windAngle']
+		gpsdata['AWS']=gpsdata['windSpeed']
+
+		{
+			gpsdata['AWD'] = (gpsdata['AWA'] + gpsdata['course']) % 360
+			KaW = new polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
+            KaB = new polar(gpsdata['speed'], gpsdata['course']).toKartesisch()
+
+            if(gpsdata['speed'] == 0 || gpsdata['AWS'] == 0)
+            	gpsdata['TWD'] = gpsdata['AWD'] 
+            else
+            	gpsdata['TWD'] = new kartesisch(KaW['x'] - KaB['x'], KaW['y'] - KaB['y']).toPolar() % 360
+			gpsdata['TWS'] = Math.sqrt((KaW['x'] - KaB['x']) * (KaW['x'] - KaB['x']) + (KaW['y'] - KaB['y']) * (KaW['y'] - KaB['y']))
+
+            gpsdata['TWA'] = gpsdata['TWD'] - gpsdata['course']
+            return true;
+            }
+	}
+}
