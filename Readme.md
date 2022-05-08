@@ -7,7 +7,7 @@
 
 **This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213). A daily-release is already available [20220426](https://www.wellenvogel.net/software/avnav/downloads/daily/20220426/)).**  
 Idea of this plugin is to show an Instrument, that contains all basic informations needed for sailing.
-With the possibility to show this Display directly on the map at the boatposition the sailor has all informations in view. The Laylines will inform you about the fastest bearing to a waypoint upwind and if displayed on the map you can follow these lines. (The advantage is shown at the end of this Readme)  
+With the possibility to show this Display directly on the map at the boatposition the sailor has all informations in view. The Laylines will inform you about the fastest bearing to a waypoint upwind and if displayed on the map you can follow these lines. (The advantage is shown at the end of this Readme [Use Case](#usecase))  
 The Instrument is inspired by B&Gs sailsteer.  
 
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
@@ -190,7 +190,7 @@ Additionally a [GitHub workflow](.github/workflows/createPackage.yml) has been s
 So when you fork this repository you can create a package even without a local environment.
 To trigger a package build at GitHub after forking just create a release branch and push this.
 
-**Technical implementation and Use-Case**
+**<a name="#usecase"></a>Technical implementation and Use-Case**
 
 ----------------
 !! This is not for the old seadogs, this is for technical interested hobby-sailors  !!
@@ -213,7 +213,7 @@ Your speed (acc. Polar-data) will be 3.8 knots. For the 10 nm to the waypoint yo
 
 **Following the Laylines**  
 
-But, if you change course on the Layline your speed (acc. Polar-data) will increase to 4.9 knots. You have to travel 9,7 nm on starboard and 1.9 nm on port (with the same speed), so you would need 11.6nm/4.8kts ~ 2.41 hrs, an advantage of approx. 13 minutes (not taking into account the additional time for the turn maneuver).  
+But, if you change course to the Layline your speed (acc. Polar-data) will increase to 4.9 knots. You have to travel 9,7 nm on starboard and 1.9 nm on port (with the same speed), so you would need 11.6nm/4.8kts ~ 2.41 hrs, an advantage of approx. 13 minutes (not taking into account the additional time for the turn maneuver).  
 
 ![Follow Laylines](https://github.com/kdschmidt1/Sail_Instrument/blob/9f54c7d21a16f81bd08985cf77718e07762b62a3/Images/followLL.png)
 
