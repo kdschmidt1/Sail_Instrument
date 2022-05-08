@@ -41,13 +41,6 @@ class Plugin(object):
       'default':'0.2',
       'type': 'FLOAT'
       },
-              {
-          'name': 'allowKeyOverwrite',
-          'description': 'necessary to be able to set our time directly from canboat',
-          'default': False,
-          'type': 'BOOLEAN'
-        },
-
       ]
 
   
