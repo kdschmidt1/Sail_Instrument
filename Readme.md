@@ -190,7 +190,7 @@ Additionally a [GitHub workflow](.github/workflows/createPackage.yml) has been s
 So when you fork this repository you can create a package even without a local environment.
 To trigger a package build at GitHub after forking just create a release branch and push this.
 
-**<a name="#usecase"></a>Technical implementation and Use-Case**
+**<a name="usecase"></a>Technical implementation and Use-Case**
 
 ----------------
 !! This is not for the old seadogs, this is for technical interested hobby-sailors  !!
