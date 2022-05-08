@@ -13,7 +13,7 @@ from _ast import Try
 import traceback
 try:
     from avnrouter import AVNRouter, WpData
-    from avnav_worker import AVNWorker  #, WorkerParameter, WorkerStatus
+    from avnav_worker import AVNWorker, WorkerParameter, WorkerStatus
 except:
     pass
 MIN_AVNAV_VERSION="20220426"
@@ -26,15 +26,7 @@ MIN_AVNAV_VERSION="20220426"
 
 
 class Plugin(object):
-  PATHWP = "wp.position"
-  PATHAWA = "gps.AWA"
-  PATHAWD = "gps.AWD"
-  PATHAWS = "gps.AWS"
-  PATHTWD = "gps.TWD"
-  PATHTWS = "gps.TWS"
-  PATHTWA = "gps.TWA"
-  PATHTLL_speed="gps.speed"
-  PATHTWDSS="gps.TSS"   #    TrueWindAngle PT1 gefiltert
+  PATHTSS="gps.TSS"   #    TrueWindAngle PT1 gefiltert
   PATHTLL_SB="gps.LLSB" #    Winkel Layline Steuerbord
   PATHTLL_BB="gps.LLBB" #    Winkel Layline Backbord
   PATHTLL_VPOL="gps.VPOL" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
@@ -77,46 +69,12 @@ class Plugin(object):
       
       'data': [
         {
+          'path': cls.PATHTSS,
+          'description': 'TrueWindAngle PT1 filtered',
+        },
+        {
           'path': cls.PATHTLL_OPTVMC,
           'description': 'optimum vmc direction',
-        },
-        {
-          'path': cls.PATHWP,
-          'description': 'Waypont position',
-        },
-        {
-          'path': cls.PATHTLL_speed,
-          'description': 'apparent Wind direction',
-        },
-        {
-          'path': cls.PATHAWD,
-          'description': 'apparent Wind direction',
-        },
-        {
-          'path': cls.PATHAWA,
-          'description': 'apparent Wind angle',
-        },
-        {
-          'path': cls.PATHAWS,
-          'description': 'apparent Wind speed',
-        },
-        {
-          'path': cls.PATHTWD,
-          'description': 'true Wind direction',
-        },
-        {
-          'path': cls.PATHTWS,
-          'description': 'true Wind speed',
-        },
-        {
-          'path': cls.PATHTWA,
-          'description': 'true Wind angle',
-        },
-          
-
-        {
-          'path': cls.PATHTWDSS,
-          'description': 'TWD PT1 for Laylines',
         },
         {
           'path': cls.PATHTLL_SB,
@@ -217,11 +175,11 @@ class Plugin(object):
       if 'AWS' in gpsdata and 'AWD' in gpsdata and 'TWA' in gpsdata and 'TWS' in gpsdata:
             best_vmc_angle(self,gpsdata)
             if(calcSailsteer(self, gpsdata)):
-                self.api.addData(self.PATHTWDSS,gpsdata['TSS'])
+                self.api.addData(self.PATHTSS,gpsdata['TSS'])
                 if calc_Laylines(self,gpsdata):  
                     self.api.setStatus('NMEA', 'computing Laylines/TSS/VPOL')
       else:
-          self.api.setStatus('ERROR', 'Missing Input (AWD, AWS, TWA or TWS), cannot compute Laylines')
+          self.api.setStatus('ERROR', 'Missing Input (windAngle or windSpeed), cannot compute Laylines')
 
 
   
