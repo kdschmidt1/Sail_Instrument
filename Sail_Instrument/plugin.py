@@ -11,6 +11,11 @@ import json
 import sys
 from _ast import Try
 import traceback
+try:
+    from avnrouter import AVNRouter, WpData
+    from avnav_worker import AVNWorker  #, WorkerParameter, WorkerStatus
+except:
+    pass
 MIN_AVNAV_VERSION="20220426"
 
     #// https://www.rainerstumpe.de/HTML/wind02.html
@@ -21,6 +26,7 @@ MIN_AVNAV_VERSION="20220426"
 
 
 class Plugin(object):
+  PATHWP = "wp.position"
   PATHAWA = "gps.AWA"
   PATHAWD = "gps.AWD"
   PATHAWS = "gps.AWS"
@@ -32,6 +38,7 @@ class Plugin(object):
   PATHTLL_SB="gps.LLSB" #    Winkel Layline Steuerbord
   PATHTLL_BB="gps.LLBB" #    Winkel Layline Backbord
   PATHTLL_VPOL="gps.VPOL" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
+  PATHTLL_OPTVMC="gps.OPTVMC" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
 #  PATHTLL_speed="gps.speed" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
 
 
@@ -70,10 +77,17 @@ class Plugin(object):
       
       'data': [
         {
+          'path': cls.PATHTLL_OPTVMC,
+          'description': 'optimum vmc direction',
+        },
+        {
+          'path': cls.PATHWP,
+          'description': 'Waypont position',
+        },
+        {
           'path': cls.PATHTLL_speed,
           'description': 'apparent Wind direction',
         },
-          
         {
           'path': cls.PATHAWD,
           'description': 'apparent Wind direction',
@@ -98,6 +112,8 @@ class Plugin(object):
           'path': cls.PATHTWA,
           'description': 'true Wind angle',
         },
+          
+
         {
           'path': cls.PATHTWDSS,
           'description': 'TWD PT1 for Laylines',
@@ -131,7 +147,7 @@ class Plugin(object):
     
     self.api = api # type: AVNApi
     if(self.api.getAvNavVersion() < int(MIN_AVNAV_VERSION)):
-        raise Exception("Sail_Instrument-Plugin is not available for this AvNav-Version")
+        raise Exception("SegelDisplay-Plugin is not available for this AvNav-Version")
         return 
 
     self.api.registerEditableParameters(self.CONFIG, self.changeParam)
@@ -146,7 +162,8 @@ class Plugin(object):
     self.oldtime=0
     self.polare={}
     if not self.Polare('polare.xml'):
-        return
+       raise Exception("polare.xml Error")
+       return
     self.saveAllConfig()
     self.startSequence = 0
 
@@ -179,6 +196,7 @@ class Plugin(object):
     pass
 
   def PT_1funk(self, f_grenz, t_abtast, oldvalue, newvalue):
+    #const t_abtast= globalStore.getData(keys.properties.positionQueryTimeout)/1000 //[ms->s]
     T = 1 / (2*math.pi*f_grenz)
     tau = 1 / ((T / t_abtast) + 1)
     return(oldvalue + tau * (newvalue - oldvalue))
@@ -197,6 +215,7 @@ class Plugin(object):
       gpsdata=self.api.getDataByPrefix('gps')
       calcTrueWind(self, gpsdata)          
       if 'AWS' in gpsdata and 'AWD' in gpsdata and 'TWA' in gpsdata and 'TWS' in gpsdata:
+            best_vmc_angle(self,gpsdata)
             if(calcSailsteer(self, gpsdata)):
                 self.api.addData(self.PATHTWDSS,gpsdata['TSS'])
                 if calc_Laylines(self,gpsdata):  
@@ -208,68 +227,63 @@ class Plugin(object):
   
   
  #https://stackoverflow.com/questions/4983258/python-how-to-check-list-monotonicity
-  def strictly_increasing(self, L):
+  def strictly_increasing(L):
         return all(x<y for x, y in zip(L, L[1:]))
+  
   
   def Polare(self, f_name):
     #polare_filename = os.path.join(os.path.dirname(__file__), f_name)
     polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
-    e_str=polare_filename
     try:
+        e_str=polare_filename
         tree = ET.parse(polare_filename)
-    except:
-            source=os.path.join(os.path.dirname(__file__), f_name)
-            dest=os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
-            with open(source, 'rb') as src, open(dest, 'wb') as dst: dst.write(src.read())
-            tree = ET.parse(polare_filename)
-    finally:
-            root = tree.getroot()
-            x=ET.tostring(root, encoding='utf8').decode('utf8')
-            e_str='windspeedvector'
-            x=root.find('windspeedvector').text
-        # whitespaces entfernen
-            x="".join(x.split())
-            self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
-            if not self.strictly_increasing(self.polare['windspeedvector']):
-                raise Exception("windspeedvector in polare.xml IS NOT STRICTLY INCREASING!")
-                return(False)
 
-            e_str='windanglevector'
-            x=root.find('windanglevector').text
-        # whitespaces entfernen
-            x="".join(x.split())
-            self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
-            if not self.strictly_increasing(self.polare['windanglevector']):
-                raise Exception("windanglevector in polare.xml IS NOT STRICTLY INCREASING!")
-                return(False)
-            
-            e_str='boatspeed'
-            x=root.find('boatspeed').text
-        # whitespaces entfernen
-            z="".join(x.split())
         
-            z=z.split('],[')
-            boatspeed=[]
-            for elem in z:
-                zz=elem.strip('][').split(',')
-                boatspeed.append(list(map(float,zz)))
-            self.polare['boatspeed']=boatspeed
-    
-    
-            e_str='wendewinkel'
-            x=root.find('wendewinkel')
+        root = tree.getroot()
+        x=ET.tostring(root, encoding='utf8').decode('utf8')
+        e_str='windspeedvector'
+        x=root.find('windspeedvector').text
+    # whitespaces entfernen
+        x="".join(x.split())
+        self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
+
+        e_str='windanglevector'
+        x=root.find('windanglevector').text
+    # whitespaces entfernen
+        x="".join(x.split())
+        self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
         
-            e_str='upwind'
-            y=x.find('upwind').text
-        # whitespaces entfernen
-            y="".join(y.split())
-            self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
+        e_str='boatspeed'
+        x=root.find('boatspeed').text
+    # whitespaces entfernen
+        z="".join(x.split())
     
-            e_str='downwind'
-            y=x.find('downwind').text
-        # whitespaces entfernen
-            y="".join(y.split())
-            self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
+        z=z.split('],[')
+        boatspeed=[]
+        for elem in z:
+            zz=elem.strip('][').split(',')
+            boatspeed.append(list(map(float,zz)))
+        self.polare['boatspeed']=boatspeed
+
+
+        e_str='wendewinkel'
+        x=root.find('wendewinkel')
+    
+        e_str='upwind'
+        y=x.find('upwind').text
+    # whitespaces entfernen
+        y="".join(y.split())
+        self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
+
+        e_str='downwind'
+        y=x.find('downwind').text
+    # whitespaces entfernen
+        y="".join(y.split())
+        self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
+    except Exception as error:
+        raise Exception("polare.xml Error: "+error.__str__()+' -> '+e_str)
+        return(False)
+
     return(True)
 
 
@@ -301,31 +315,6 @@ class Plugin(object):
     return {'status','unknown request'}
 
 
-    """
-    change kartesian koordinates to a polar angle
-    @param x,y: kartesian koordinates
-    @return: angle in degrees
-    """
-def toPolWinkel(self, x,y): # alpha in deg
-    return(180*math.atan2(y,x)/math.pi)
-
-
-    """
-    change angle in kartesian koordinates
-    @param alpha: angle in degrees
-    @return: an objekt with the kartesian components x and y
-    """
-def toKartesisch(self, alpha):# alpha in deg
-  K={}
-  K['x']=math.cos((alpha * math.pi) / 180)
-  K['y']=math.sin((alpha * math.pi) / 180)
-  return(K)    
-  
-"""
-    bilinear interpolation
-    @param alpha: vector x-axis, vector y-axis, matrix v, coordinates x and y
-    @return: interpolated z
-"""
 def bilinear(self,xv, yv, zv, x, y) :
     #ws = xv
  try:
@@ -367,11 +356,6 @@ def bilinear(self,xv, yv, zv, x, y) :
         return(0)
 
   
-"""
-    linear interpolation
-    @param alpha: x-value, vector x-axis, vector y-axis
-    @return: interpolated y
-"""
 def linear(x, x_vector, y_vector):
 
     #var x2i = x_vector.findIndex(this.checkfunc, x)
@@ -397,12 +381,6 @@ def linear(x, x_vector, y_vector):
         return 0
     return y
 
-
-"""
-    calculation of laylines and VPOL
-    @param gpsdata from store
-"""
-
 def calc_Laylines(self,gpsdata):# // [grad]
     
     
@@ -412,6 +390,9 @@ def calc_Laylines(self,gpsdata):# // [grad]
             wendewinkel = linear((gpsdata['TWS'] / 0.514),self.polare['windspeedvector'],self.polare['ww_downwind']) * 2
         else:
             wendewinkel = linear((gpsdata['TWS'] / 0.514),self.polare['windspeedvector'],self.polare['ww_upwind']) * 2
+
+        #LL_SB = (gpsdata['TWD'] + wendewinkel / 2) % 360
+        #LL_BB = (gpsdata['TWD'] - wendewinkel / 2) % 360
 
         LL_SB = (gpsdata['TSS'] + wendewinkel / 2) % 360
         LL_BB = (gpsdata['TSS'] - wendewinkel / 2) % 360
@@ -434,24 +415,32 @@ def calc_Laylines(self,gpsdata):# // [grad]
             anglew  \
         )
         self.api.addData(self.PATHTLL_VPOL,SOGPOLvar*0.514444)
+        #self.api.ALLOW_KEY_OVERWRITE=True
+        #allowKeyOverwrite=True
+        #self.api.addData(self.PATHTLL_speed,SOGPOLvar*0.514444)
         return True
         
+        # http://forums.sailinganarchy.com/index.php?/topic/132129-calculating-vmc-vs-vmg/
+#VMG = BS * COS(RADIANS(TWA))
+#VMC = BS * COS(RADIANS(BRG-HDG))
+      
+        #rueckgabewert = urllib.request.urlopen('http://localhost:8081/viewer/avnav_navi.php?request=route&command=getleg')
+        #route=rueckgabewert.read()
+        #inhalt_text = route.decode("UTF-8")
+        #d = json.loads(inhalt_text)
+        #VMCvar = ((gpsdata['speed'] * 1.94384) * math.cos((xx-gpsdata['track']) * math.pi) / 180)
+    #print(d)
+
     
-"""
-    calculation of filtered TWD
-    @param gpsdata from store
-"""
+    
 def calcSailsteer(self, gpsdata):
     rt=gpsdata
     if not 'track' in gpsdata or not 'AWD' in gpsdata:
         return False
     try:
-        KaW=toKartesisch(self,gpsdata['AWD']);
-        KaW['x'] *= gpsdata['AWS'] #'m/s'
-        KaW['y'] *= gpsdata['AWS'] #'m/s'
-        KaB=toKartesisch(self, gpsdata['track']);
-        KaB['x'] *= gpsdata['speed']  #'m/s'
-        KaB['y'] *= gpsdata['speed']  #'m/s'
+        KaW=polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
+        KaB = polar(gpsdata['speed'], gpsdata['track']).toKartesisch()
+
 
         t_abtast=(time.time()-self.oldtime)
         freq=1/t_abtast
@@ -461,7 +450,7 @@ def calcSailsteer(self, gpsdata):
         self.windAngleSailsteer['x']=self.PT_1funk(fgrenz, t_abtast, self.windAngleSailsteer['x'], KaW['x'] - KaB['x'])
         self.windAngleSailsteer['y']=self.PT_1funk(fgrenz, t_abtast, self.windAngleSailsteer['y'], KaW['y'] - KaB['y'])
       # zurück in Polaren Winkel
-        self.windAngleSailsteer['alpha']=toPolWinkel(self,self.windAngleSailsteer['x'],self.windAngleSailsteer['y']) # [grad]
+        self.windAngleSailsteer['alpha']=kartesisch(self.windAngleSailsteer['x'],self.windAngleSailsteer['y']).toPolar()
         gpsdata['TSS']=self.windAngleSailsteer['alpha']
         
         return True
@@ -470,44 +459,34 @@ def calcSailsteer(self, gpsdata):
         self.api.error(" error calculating TSS ")
         return False
     
-"""
-    calculation of true wind-data
-    @param gpsdata from store
-"""
 def calcTrueWind(self, gpsdata):
     # https://www.rainerstumpe.de/HTML/wind02.html
     # https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721      
-        source='Sail_Instrument'
+        source='SegelDisplay'
 
         if not 'track' in gpsdata or not 'windAngle' in gpsdata:
             return False
         gpsdata['AWA']=gpsdata['windAngle']
         gpsdata['AWS']=gpsdata['windSpeed']
-        self.api.addData(self.PATHAWA, gpsdata['AWA'],source=source)
-        self.api.addData(self.PATHAWS, gpsdata['AWS'],source=source)
+        #self.api.addData(self.PATHAWA, gpsdata['AWA'],source=source)
+        #self.api.addData(self.PATHAWS, gpsdata['AWS'],source=source)
         try:
             gpsdata['AWD'] = (gpsdata['AWA'] + gpsdata['track']) % 360
-            self.api.addData(self.PATHAWD, gpsdata['AWD'],source=source)
-
-            KaW = toKartesisch(self, gpsdata['AWD'])
-            KaW['x'] *= gpsdata['AWS']  # 'm/s'
-            KaW['y'] *= gpsdata['AWS']  # 'm/s'
-            KaB = toKartesisch(self, gpsdata['track'])
-            KaB['x'] *= gpsdata['speed']  # 'm/s'
-            KaB['y'] *= gpsdata['speed']  # 'm/s'
+            #self.api.addData(self.PATHAWD, gpsdata['AWD'],source=source)
+            KaW=polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
+            KaB = polar(gpsdata['speed'], gpsdata['track']).toKartesisch()
 
             if(gpsdata['speed'] == 0 or gpsdata['AWS'] == 0):
                 gpsdata['TWD'] = gpsdata['AWD'] 
-                self.api.addData(self.PATHTWD, gpsdata['TWD'],source=source)
+                #self.api.addData(self.PATHTWD, gpsdata['TWD'],source=source)
             else:
-                test= (toPolWinkel(self, KaW['x'] - KaB['x'], KaW['y'] - KaB['y'])) % 360
-                gpsdata['TWD'] = (toPolWinkel(self, KaW['x'] - KaB['x'], KaW['y'] - KaB['y'])) % 360
-            self.api.addData(self.PATHTWD, gpsdata['TWD'],source=source)
+                gpsdata['TWD'] = kartesisch(KaW['x'] - KaB['x'], KaW['y'] - KaB['y']).toPolar() % 360
+            #self.api.addData(self.PATHTWD, gpsdata['TWD'],source=source)
             gpsdata['TWS'] = math.sqrt((KaW['x'] - KaB['x']) * (KaW['x'] - KaB['x']) + (KaW['y'] - KaB['y']) * (KaW['y'] - KaB['y']))
-            self.api.addData(self.PATHTWS, gpsdata['TWS'],source=source)
+            #self.api.addData(self.PATHTWS, gpsdata['TWS'],source=source)
 
             gpsdata['TWA'] = LimitWinkel(self, gpsdata['TWD'] - gpsdata['track'])
-            self.api.addData(self.PATHTWA, gpsdata['TWA'],source=source)
+            #self.api.addData(self.PATHTWA, gpsdata['TWA'],source=source)
             return True
         except Exception:
             self.api.error(" error calculating TrueWind-Data " + str(gpsdata) + "\n")
@@ -519,3 +498,117 @@ def LimitWinkel(self, alpha):  # [grad]
         alpha -= 360;
     return(alpha)  
 
+
+
+class polar(object):
+    def __init__(self,r, alpha):  # [alpha in deg] 
+        self.r=r
+        self.alpha=alpha
+    def toKartesisch(self):
+        K = {}
+        K['x'] = self.r*math.cos((self.alpha * math.pi) / 180)
+        K['y'] = self.r*math.sin((self.alpha * math.pi) / 180)
+        return(K)    
+        
+class kartesisch(object):
+    def __init__(self,x, y):  # [alpha in deg] 
+        self.x=x
+        self.y=y
+    def toPolar(self):
+        return(180 * math.atan2(self.y, self.x) / math.pi)
+        K = {}
+        K['x'] = self.r*math.cos((self.alpha * math.pi) / 180)
+        K['y'] = self.r*math.sin((self.alpha * math.pi) / 180)
+        return(K)    
+
+
+
+
+
+
+
+try:
+  import numpy as np
+  from scipy.interpolate import InterpolatedUnivariateSpline
+
+  def quadratic_spline_roots(self,spl):
+    roots = []
+    knots = spl.get_knots()
+    for a, b in zip(knots[:-1], knots[1:]):
+        u, v, w = spl(a), spl((a+b)/2), spl(b)
+        t = np.roots([u+w-2*v, w-u, 2*v])
+        t = t[np.isreal(t) & (np.abs(t) <= 1)]
+        roots.extend(t*(b-a)/2 + (b+a)/2)
+    return np.array(roots)
+
+       
+
+    
+  def best_vmc_angle(self, gps):
+    try:
+      router=AVNWorker.findHandlerByName(AVNRouter.getConfigName())
+      if router is None:
+        return False
+      wpData=router.getWpData()
+      if wpData is None:
+        return False
+      if not wpData.validData and self.ownWpOffSent:
+        return True
+    except:
+        return False
+
+      
+      
+      
+      
+    #if avnr.AVNRouter.currentLeg:
+    #avnr.AVNRouter.getCurrentLeg(avnr.AVNRouter)
+    #xy=avnr.WpData(avnr.AVNRouter.currentLeg,gps['lat'],gps['lon'],gps['speed'])
+    #rueckgabewert = urllib.request.urlopen('http://localhost:8081/viewer/avnav_navi.php?request=route&command=getWPData')
+    #route=rueckgabewert.read()
+    #inhalt_text = route.decode("UTF-8")
+    #d = json.loads(inhalt_text)
+    #return True
+
+    try:
+        self.cWendewinkel_upwind=[]
+        self.cWendewinkel_downwind=[]
+    
+        lastindex=len(self.polare['windanglevector'])
+    
+        x = np.array(self.polare['boatspeed'])
+        BRG=wpData.dstBearing
+        windanglerad=np.deg2rad(BRG-gps['TWD']+np.array(self.polare['windanglevector']))
+        coswindanglerad=np.abs(np.cos(windanglerad))
+    
+        self.cWendewinkel_upwind=[]
+        vmc=[]
+        for i in range(len(self.polare['windspeedvector'])):
+            updownindexvalue=next(z for z in self.polare['windanglevector'] if z >=90)
+            updownindex=self.polare['windanglevector'].index(updownindexvalue, 0, lastindex)
+            spalte=i
+            # vmc=v*cos(BRG-HDG)
+            # HDG = TWD +/- TWA
+            # test: BRG = , TWD=0 --> HDG=-TWA --> vmc=v*cos(BRG+TWA)
+            vmc.append(np.array(x[0:lastindex,spalte])*coswindanglerad[0:lastindex])
+            f=InterpolatedUnivariateSpline(self.polare['windanglevector'][0:updownindex], vmc[spalte][0:updownindex], k=3)
+            cr_pts = quadratic_spline_roots(self, f.derivative())
+            cr_vals = f(cr_pts)
+            min_index = np.argmin(cr_vals)
+            max_index = np.argmax(cr_vals)
+        #print("Maximum value {} at {}\nMinimum value {} at {}".format(cr_vals[max_index], cr_pts[max_index], cr_vals[min_index], cr_pts[min_index]))
+            self.cWendewinkel_upwind.append(cr_pts[max_index])
+        wendewinkel = linear((gps['TWS'] / 0.514),self.polare['windspeedvector'],self.cWendewinkel_upwind)
+        self.api.addData(self.PATHTLL_OPTVMC, BRG+wendewinkel,source='SegelDisplay')
+    except:
+        pass
+
+    return(True)
+
+
+
+except:
+  def best_vmc_angle(self,gps):
+      return False;
+  pass    
+    

@@ -30,17 +30,9 @@ run angle => downwind
 These two vectors are mandatory for calculation of the laylines.  
 The boatspeed Matrix is only used for calculation of VPOL (interpolated speed for actual condition based on polar-data)
 
-If there is "APPARENT" Winddata in the input stream it calculates and stores:
-·  
 
 | Value | Format | Storename | Description |
 | --- | --- | --- | --- |
-| AWA | +/- 180 [°] | gps.AWA | Apparent WindAngle |
-| AWD | 0…360 [°] | gps.AWD | Apparent WindDirection |
-| AWS | 0..∞ [m/s] | gps.AWS | Apparent WindSpeed |
-| TWA | +/- 180 [°] | gps.TWA | True WindAngle |
-| TWD | 0…360 [°] | gps.TWD | True WindDirection |
-| TWS | 0..∞ [m/s] | gps.TWS | True WindSpeed |
 | TSS | 0…360 [°] | gps.TSS | PT1 filtered True WindDirection |
 | LLSB | 0…360 [°] | gps.LLSB | layline angle Starboard |
 | LLBB | 0…360 [°] | gps.LLBB | layline angle Portside |
@@ -89,7 +81,6 @@ The plugin itself has two  parameter
 | Name | Default Value | Description |
 | --- | --- | --- |
 | TWD_FiltFreq | 0.2 | Limit Frequency of the PT1 Lowpass-Filter |  
-| allowKeyOverwrite | "True" | allow overwriting of existing data in the store |  
 |  |  |  |
 
 
