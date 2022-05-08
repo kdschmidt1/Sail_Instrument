@@ -7,7 +7,7 @@
 
 **This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213). A daily-release is already available [20220426](https://www.wellenvogel.net/software/avnav/downloads/daily/20220426/)).**  
 Idea of this plugin is to show an Instrument, that contains all basic informations needed for sailing.
-With the possibility to show this Display directly on the map at the boatposition the sailor has all informations in view. The Laylines will inform you about the fastest bearing to a waypoint upwind and if displayed on the map you can follow these lines. (The advantage is shown at the end of this Readme [Use Case](#usecase))  
+With the possibility to show this Display directly on the map at the boatposition the sailor has all informations in view. The Laylines will inform you about the fastest bearing to a waypoint upwind and if displayed on the map you can follow these lines. (The advantage you can get using laylines is shown at the [end of this Readme](#usecase)).  
 The Instrument is inspired by B&Gs sailsteer.  
 
 Basically this plugin uses the [AvNav Plugin Interface](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html?lang=en).
