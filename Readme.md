@@ -204,7 +204,7 @@ Your speed (acc. Polar-data) will be 3.8 knots. For the 10 nm to the waypoint yo
 
 **Following the Laylines**  
 
-But, if you change course to the Layline your speed (acc. Polar-data) will increase to 4.9 knots. You have to travel 9,7 nm on starboard and 1.9 nm on port (with the same speed), so you would need 11.6nm/4.8kts ~ 2.41 hrs, an advantage of approx. 13 minutes (not taking into account the additional time for the turn maneuver).  
+But, if you change course to the Layline your speed (acc. Polar-data) will increase to 4.9 knots. You have to travel 9,7 nm on starboard and 1.9 nm on port (with the same speed), so you would need 11.6nm/4.9kts ~ 2.37 hrs, an advantage of approx. 15 minutes (not taking into account the additional time for the turn maneuver).  
 
 ![Follow Laylines](https://github.com/kdschmidt1/Sail_Instrument/blob/9f54c7d21a16f81bd08985cf77718e07762b62a3/Images/followLL.png)
 
