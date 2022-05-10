@@ -267,7 +267,7 @@ let Sail_Instrument_Overlay={
                 	  ctx.globalAlpha*=gpsdata.Opacity;
 
                 	  maprotationdeg = this.getRotation()/Math.PI*180;
-                	  boatrotationdeg = gpsdata.course;
+                	  boatrotationdeg = gpsdata.course;	// Hier muss eigentlich HDG hinein!!
 
                 	  calc_LaylineAreas(this, gpsdata)
                 	  DrawOuterRing(ctx, gpsdata.Displaysize, maprotationdeg+boatrotationdeg);
@@ -279,6 +279,8 @@ let Sail_Instrument_Overlay={
                 	  DrawLaylineArea(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.LLSB, TWD_Abweichung, ((gpsdata.LLSB-gpsdata.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
                 	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.AWD, "rgb(0,255,0)", 'A')
                 	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.TWD , "blue", 'T')
+                	  DrawEierUhr(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.course , "rgb(255,128,0", 'T')	// zeigt COG an
+                	  DrawCourseBox(ctx, gpsdata.Displaysize,maprotationdeg+boatrotationdeg, "red", gpsdata.course)
 
                 	  if(typeof(gpsdata.TWDFilt_Indicator) != 'undefined' && gpsdata.TWDFilt_Indicator==true)	 
                 		  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, + maprotationdeg+gpsdata.TSS, "yellow", '~');
@@ -519,6 +521,75 @@ let DrawLaylineArea=function(ctx, radius, angle,TWD_Abweichung, color) {
 																									ctx.restore()
 }
 
+
+let DrawCourseBox=function(ctx, radius,angle, color, Text) {
+	ctx.save();
+	ctx.rotate((angle / 180) * Math.PI)
+
+
+	let roundRect=function(x, y, w, h, radius)
+	{
+		var r = x + w;
+		var b = y + h;
+		ctx.beginPath();
+		ctx.strokeStyle="black";
+		ctx.lineWidth="4";
+		ctx.moveTo(x+radius, y);
+		ctx.lineTo(r-radius, y);
+		ctx.quadraticCurveTo(r, y, r, y+radius);
+		ctx.lineTo(r, y+h-radius);
+		ctx.quadraticCurveTo(r, b, r-radius, b);
+		ctx.lineTo(x+radius, b);
+		ctx.quadraticCurveTo(x, b, x, b-radius);
+		ctx.lineTo(x, y+radius);
+		ctx.quadraticCurveTo(x, y, x+radius, y);
+		ctx.stroke();
+	}
+	let Muster="888"
+			ctx.font = "bold "+radius/5+"px Arial";
+	metrics = ctx.measureText(Muster);
+	w=metrics.width
+	h=(metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+	roundRect(-1.2*w/2, -radius-1.2*h/2, 1.2*w, 1.2*h, 0.1*radius/4);
+	ctx.fillStyle = "rgb(255,255,255)";
+	ctx.fill();
+	ctx.textAlign = "center";
+	ctx.font = "bold "+radius/5+"px Arial";
+	ctx.fillStyle = "rgb(0,0,0)";
+	ctx.fillText(Text, 0, -radius+h/2);
+	ctx.restore();
+
+}
+
+let DrawEierUhr=function(ctx, radius,angle, color, Text) {
+	ctx.save();
+
+	var radius_kompassring = radius	//0.525*Math.min(x,y);
+	var radius_outer_ring = radius *1.3//= 0.65*Math.min(x,y);
+	var thickness = radius/4;
+
+	ctx.rotate((angle / 180) * Math.PI)
+	let lx=-0.4*thickness
+	let rx=+0.4*thickness
+	let topy=-radius+0.9*thickness
+	let boty=-radius-0.9*thickness
+	ctx.beginPath();
+	ctx.moveTo(lx, boty); // move to bottom left corner
+	ctx.lineTo(rx, topy); // line to top right corner
+	ctx.lineTo(lx, topy); // line to top left corner
+	ctx.lineTo(rx, boty); // line to bottom right corner
+	//ctx.lineTo(lx, boty); // line to bottom left corner
+	ctx.closePath()
+	ctx.fillStyle = color;
+	ctx.lineWidth = 0.05*thickness;
+	ctx.strokeStyle = color;
+	ctx.fill();
+	ctx.strokeStyle = "rgb(0,0,0)";
+	ctx.stroke(); // Render the path				ctx.fillStyle='rgb(255,255,255)';
+
+	ctx.restore();
+
+}
 
 
 
