@@ -113,7 +113,7 @@ class Plugin(object):
     self.oldtime=0
     self.polare={}
     if not self.Polare('polare.xml'):
-       raise Exception("polare.xml Error")
+       raise Exception("polare.xml not found Error")
        return
     self.saveAllConfig()
     self.startSequence = 0
@@ -172,7 +172,7 @@ class Plugin(object):
                 if calc_Laylines(self,gpsdata):  
                     self.api.setStatus('NMEA', 'computing Laylines/TSS/VPOL')
       else:
-          self.api.setStatus('ERROR', 'Missing Input (windAngle or windSpeed), cannot compute Laylines')
+          self.api.setStatus('INACTIVE', 'Missing Input of windAngle and/or windSpeed, cannot compute Laylines')
 
 
   
@@ -188,11 +188,16 @@ class Plugin(object):
     try:
         tree = ET.parse(polare_filename)
     except:
-            source=os.path.join(os.path.dirname(__file__), f_name)
-            dest=os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
-            with open(source, 'rb') as src, open(dest, 'wb') as dst: dst.write(src.read())
-            tree = ET.parse(polare_filename)
+            try:
+                source=os.path.join(os.path.dirname(__file__), f_name)
+                dest=os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
+                with open(source, 'rb') as src, open(dest, 'wb') as dst: dst.write(src.read())
+                tree = ET.parse(polare_filename)
+            except:
+                return False
     finally:
+            if not 'tree' in locals():
+                return False
             root = tree.getroot()
             x=ET.tostring(root, encoding='utf8').decode('utf8')
             e_str='windspeedvector'
