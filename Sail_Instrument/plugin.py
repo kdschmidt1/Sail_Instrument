@@ -178,7 +178,7 @@ class Plugin(object):
   
   
  #https://stackoverflow.com/questions/4983258/python-how-to-check-list-monotonicity
-  def strictly_increasing(L):
+  def strictly_increasing(self, L):
         return all(x<y for x, y in zip(L, L[1:]))
   
   
@@ -186,57 +186,61 @@ class Plugin(object):
     #polare_filename = os.path.join(os.path.dirname(__file__), f_name)
     polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
     try:
-        e_str=polare_filename
         tree = ET.parse(polare_filename)
+    except:
+            source=os.path.join(os.path.dirname(__file__), f_name)
+            dest=os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
+            with open(source, 'rb') as src, open(dest, 'wb') as dst: dst.write(src.read())
+            tree = ET.parse(polare_filename)
+    finally:
+            root = tree.getroot()
+            x=ET.tostring(root, encoding='utf8').decode('utf8')
+            e_str='windspeedvector'
+            x=root.find('windspeedvector').text
+        # whitespaces entfernen
+            x="".join(x.split())
+            self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
+            if not self.strictly_increasing(self.polare['windspeedvector']):
+                raise Exception("windspeedvector in polare.xml IS NOT STRICTLY INCREASING!")
+                return(False)
 
+            e_str='windanglevector'
+            x=root.find('windanglevector').text
+        # whitespaces entfernen
+            x="".join(x.split())
+            self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
+            if not self.strictly_increasing(self.polare['windanglevector']):
+                raise Exception("windanglevector in polare.xml IS NOT STRICTLY INCREASING!")
+                return(False)
+            
+            e_str='boatspeed'
+            x=root.find('boatspeed').text
+        # whitespaces entfernen
+            z="".join(x.split())
         
-        root = tree.getroot()
-        x=ET.tostring(root, encoding='utf8').decode('utf8')
-        e_str='windspeedvector'
-        x=root.find('windspeedvector').text
-    # whitespaces entfernen
-        x="".join(x.split())
-        self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
-
-        e_str='windanglevector'
-        x=root.find('windanglevector').text
-    # whitespaces entfernen
-        x="".join(x.split())
-        self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
+            z=z.split('],[')
+            boatspeed=[]
+            for elem in z:
+                zz=elem.strip('][').split(',')
+                boatspeed.append(list(map(float,zz)))
+            self.polare['boatspeed']=boatspeed
+    
+    
+            e_str='wendewinkel'
+            x=root.find('wendewinkel')
         
-        e_str='boatspeed'
-        x=root.find('boatspeed').text
-    # whitespaces entfernen
-        z="".join(x.split())
+            e_str='upwind'
+            y=x.find('upwind').text
+        # whitespaces entfernen
+            y="".join(y.split())
+            self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
     
-        z=z.split('],[')
-        boatspeed=[]
-        for elem in z:
-            zz=elem.strip('][').split(',')
-            boatspeed.append(list(map(float,zz)))
-        self.polare['boatspeed']=boatspeed
-
-
-        e_str='wendewinkel'
-        x=root.find('wendewinkel')
-    
-        e_str='upwind'
-        y=x.find('upwind').text
-    # whitespaces entfernen
-        y="".join(y.split())
-        self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
-
-        e_str='downwind'
-        y=x.find('downwind').text
-    # whitespaces entfernen
-        y="".join(y.split())
-        self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
-    except Exception as error:
-        raise Exception("polare.xml Error: "+error.__str__()+' -> '+e_str)
-        return(False)
-
+            e_str='downwind'
+            y=x.find('downwind').text
+        # whitespaces entfernen
+            y="".join(y.split())
+            self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
     return(True)
-
 
     
 #https://appdividend.com/2019/11/12/how-to-convert-python-string-to-list-example/#:~:text=To%20convert%20string%20to%20list,delimiter%E2%80%9D%20as%20the%20delimiter%20string.        
