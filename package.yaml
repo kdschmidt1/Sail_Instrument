@@ -2,7 +2,7 @@
 #
 # check https://nfpm.goreleaser.com/configuration for detailed usage
 #
-name: "Sail_Instrument-plugin"
+name: "avnav-sailinstrument-plugin"
 arch: "all"
 platform: "linux"
 version: "202204"
@@ -10,7 +10,7 @@ keep_version: true
 section: "default"
 priority: "extra"
 depends:
-- avnav
+- avnav (>=20220426)
 maintainer: "Klaus D. Schmidt <kdschmidt@bluewin.ch>"
 description: |
   AvNav plugin to show a sailsteer display and Laylines on the map
