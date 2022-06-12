@@ -300,7 +300,7 @@ let Sail_Instrument_Overlay={
                 	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.AWD, "rgb(0,255,0)", 'A')
                 	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.TWD , "blue", 'T')
                 	  DrawEierUhr(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.course , "rgb(255,128,0", 'T')	// zeigt COG an
-                	  DrawCourseBox(ctx, gpsdata.Displaysize,maprotationdeg+boatrotationdeg, "red", gpsdata.course)
+                	  DrawCourseBox(ctx, gpsdata.Displaysize,maprotationdeg+boatrotationdeg, "red", int(gpsdata.course))
 
                 	  if(typeof(gpsdata.TWDFilt_Indicator) != 'undefined' && gpsdata.TWDFilt_Indicator==true)	 
                 		  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, + maprotationdeg+gpsdata.TSS, "yellow", '~');
@@ -349,22 +349,6 @@ let LayLines_Overlay={
             	  windAngle:'nav.gps.windAngle',
             	  windSpeed:'nav.gps.windSpeed',
               },
-              /*
-                  storeKeys:{
-                	  boatposition: 'nav.gps.position',
-            	  		WPposition:'nav.wp.position',
-                	  LLSB:'nav.gps.LLSB',
-                	  LLBB:'nav.gps.LLBB',
-                	  course: 'nav.gps.course',
-                	  TSS:'nav.gps.TSS',
-                	  course: 'nav.gps.course',
-            		speed: 'nav.gps.speed',
-            		windAngle:'nav.gps.windAngle',
-            		windSpeed:'nav.gps.windSpeed',
-            		courseup:'map.courseUp',
-                  },
-                  */
-              
               initFunction: function(a,b)
               {},
               finalizeFunction: function(){},
@@ -405,8 +389,8 @@ avnav.api.registerWidget(LayLines_Overlay,LayLines_OverlayParameter);
 
 var TWD_Abweichung = [0,0];
 var old_time=performance.now()
-
 		let calc_intersections = function(self, props) {
+	intersections = null;
 	b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
 	if (props.WPposition) {
 		WP_pos = avnav.api.createLatLon(props.WPposition.lat, props.WPposition.lon);
