@@ -74,7 +74,7 @@ For the Laylines-Overlay you can configure
 
 
 
-The plugin itself has two  parameter  
+The plugin itself has one parameter  
 [](https://github.com/kdschmidt1/Sail_Instrument/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
 
 
@@ -141,12 +141,9 @@ No configuration necessary
 The plugin provides the 
 - Sail_Instrument_Overlay,
 - LayLines_Overlay
-- Sail_InstrumentWidget a classic widget with the Sail_Instrument
-- Sail_InstrumentInfo-Widget (A Widget you can config to show the distance or the time for each Layline)  
+- Sail_InstrumentWidget (a classic widget with the Sail_Instrument)
+- Sail_InstrumentInfo-Widget (A Widget you can configure with fmt:unit to show the distance [nm] or the time for each Layline separate or with cum_.. for both Laylines together)  
 
-And two widgets showing the cumulated values of the Sail_InstrumentInfo  
-- TTW-S (Time to Waypoint Sailing)	(not yet available)
-- DTW-S (Distance To Waypoint Sailing)	(not yet available)
 
 **Formatter**
 
