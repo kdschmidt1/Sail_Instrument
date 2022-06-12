@@ -1,10 +1,14 @@
 console.log("layline plugin loaded");
 
+/*
 // LATLON LIBRARY EINBINDEN
 var fileref=document.createElement('script');
 fileref.setAttribute("type","text/javascript");
 fileref.setAttribute("src", "libraries/latlon.js");
 document.getElementsByTagName("head")[0].appendChild(fileref)
+*/
+
+
 
 		//globalThis.globalParameter={};
 
@@ -22,7 +26,7 @@ var intersections
 const formatLL=function(dist,speed, opt_unit){
 	let ret=["",""]
     try{
-        if (! opt_unit || opt_unit.toLowerCase().match("nm")){
+        if (! opt_unit || opt_unit.toLowerCase().match("dist")){
             ret[0]="nm"
             ret[1]=avnav.api.formatter.formatDistance(dist,3,1);
             return ret
@@ -48,7 +52,7 @@ const formatLL=function(dist,speed, opt_unit){
     }
 }
 formatLL.parameters=[
-    {name:'unit',type:'SELECT',list:['nm','time'],default:'nm'}
+    {name:'unit',type:'SELECT',list:['dist','cum_dist','time','cum_time'],default:'dist'}
 ]
 
 avnav.api.registerFormatter("mySpecialLL",formatLL);
@@ -65,20 +69,34 @@ var Sail_InstrumentInfoWidget = {
 		if(typeof(intersections) != 'undefined'&&intersections)
 		{
         var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
-        var fv = formatLL(intersections.Boat.BB.dist*1000,gpsdata.speed,fmtParam);
-        var fv2 = formatLL(intersections.Boat.SB.dist*1000,gpsdata.speed,fmtParam);
+        var fv = formatLL(intersections.Boat.BB.dist,gpsdata.speed,fmtParam);
+        var fv2 = formatLL(intersections.Boat.SB.dist,gpsdata.speed,fmtParam);
+        var fvges = formatLL(intersections.Boat.SB.dist+intersections.Boat.BB.dist,gpsdata.speed,fmtParam);
 		}
 		else
 		{
-		fv=["",""]
-		fv2=["",""]
+		fv=fv2=fvges=["",""]
 		}
-        return "	\
+        ret= "	\
         <div class=\"Sail_InstrumentInfo\"> </div> \
    	    <div class=\'infoRight\'> " + fv[0] + "</div>	\
        	<div class=\" infoLeft \" > " + "Layl." + "</div> \
         <div class=\"resize\"> \
         <br> \
+        "
+        if( fmtParam.toLowerCase().match("cum"))
+        {
+        ret += "	\
+        <div class=\"Sail_InstrumentInfoInner\"> \
+        	<div class=\" infoLeft \" > " + "LLcum" + "</div> \
+        	<div class=\" widgetData \" > " + fvges[1] + "</div> \
+		</div> \
+		</div> \
+        "
+		}
+		else
+		{
+        ret += "	\
         <div class=\"Sail_InstrumentInfoInner\"> \
         	<div class=\" infoLeft \" > " + "LLBB" + "</div> \
         	<div class=\" widgetData \" > " + fv[1] + "</div> \
@@ -88,7 +106,9 @@ var Sail_InstrumentInfoWidget = {
         	<div class=\" widgetData \" > " + fv2[1] + "</div> \
 		</div> \
 		</div> \
-        " 
+        "
+        } 
+        return(ret)
     },
             storeKeys:{
             	course: 'nav.gps.course',
@@ -312,7 +332,7 @@ let LayLines_Overlay={
 
               // Editable Parameters
               Opacity:1,
-              Laylinelength: 10,
+              Laylinelength_nm: 10,
               Laylineoverlap: false,
               LaylineBoat: true,
               LaylineWP: true,
@@ -324,13 +344,35 @@ let LayLines_Overlay={
             	  WPposition:'nav.wp.position',
             	  LLSB:'nav.gps.LLSB',
             	  LLBB:'nav.gps.LLBB',
-            	  TWD:'nav.gps.TWD',
+                  course: 'nav.gps.course',
+            	  speed: 'nav.gps.speed',
+            	  windAngle:'nav.gps.windAngle',
+            	  windSpeed:'nav.gps.windSpeed',
               },
+              /*
+                  storeKeys:{
+                	  boatposition: 'nav.gps.position',
+            	  		WPposition:'nav.wp.position',
+                	  LLSB:'nav.gps.LLSB',
+                	  LLBB:'nav.gps.LLBB',
+                	  course: 'nav.gps.course',
+                	  TSS:'nav.gps.TSS',
+                	  course: 'nav.gps.course',
+            		speed: 'nav.gps.speed',
+            		windAngle:'nav.gps.windAngle',
+            		windSpeed:'nav.gps.windSpeed',
+            		courseup:'map.courseUp',
+                  },
+                  */
+              
               initFunction: function(a,b)
               {},
               finalizeFunction: function(){},
               renderCanvas: function(canvas,props,center)
               {
+				let gpsdata= {...props};	// https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
+				calcTrueWind(gpsdata);
+
             	  if(typeof(props.boatposition) != 'undefined')		
             	  {
             		ctx=canvas.getContext('2d')
@@ -341,7 +383,7 @@ let LayLines_Overlay={
             		intersections = calc_intersections(self, props)
 		            if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true) 
 		            		if(typeof(intersections) != 'undefined'&&intersections)
-		            			DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
+		            			DrawMapLaylines(this, ctx, this.getScale(), intersections, props,gpsdata.TWD);
             		  ctx.restore();
             	  }
 
@@ -365,22 +407,22 @@ var TWD_Abweichung = [0,0];
 var old_time=performance.now()
 
 		let calc_intersections = function(self, props) {
-	b_pos = new LatLon(props.boatposition.lat, props.boatposition.lon);
+	b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
 	if (props.WPposition) {
-		WP_pos = new LatLon(props.WPposition.lat, props.WPposition.lon);
+		WP_pos = avnav.api.createLatLon(props.WPposition.lat, props.WPposition.lon);
 
 		// Intersections berechnen
-		var is_SB = LatLon.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
-		var is_BB = LatLon.intersection(b_pos, props.LLBB, WP_pos, props.LLSB + 180);
+		var is_SB = avnav.api.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
+		var is_BB = avnav.api.intersection(b_pos, props.LLBB, WP_pos, props.LLSB + 180);
 		calc_endpoint = function(intersection, pos) {
 			let is_xx={};
-			is_xx.dist = pos.rhumbDistanceTo(intersection);	// in km
-			if (is_xx.dist>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
+			is_xx.dist = pos.rhumbDistanceTo(intersection);	// in m
+			if (is_xx.dist/1000>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
 					return null;
-			if(is_xx.dist > props.Laylinelength*1.852) // wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
-			is_xx.pos = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
-			else if(is_xx.dist< props.Laylinelength*1.852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
-				is_xx.pos = pos.rhumbDestinationPoint(pos.rhumbBearingTo(intersection), props.Laylinelength*1.852)
+			if(is_xx.dist > props.Laylinelength_nm*1852) // beides in m// wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
+			is_xx.pos = pos.rhumbDestinationPoint(props.Laylinelength_nm*1852,pos.rhumbBearingTo(intersection)) // abstand in m
+			else if(is_xx.dist< props.Laylinelength*1852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
+				is_xx.pos = pos.rhumbDestinationPoint(props.Laylinelength_nm*1852,pos.rhumbBearingTo(intersection)) // abstand in m
 			else
 				is_xx.pos= intersection;
 			return(is_xx)
@@ -444,7 +486,7 @@ let calc_LaylineAreas = function(self, props) {
 };
 
 
-let DrawMapLaylines=function(self,ctx, scale, intersections, props) {
+let DrawMapLaylines=function(self,ctx, scale, intersections, props,TWD) {
 	DrawLine=function(p1,p2,color){	
 		ctx.beginPath();
 		ctx.moveTo(p1[0],p1[1]);   // Move pen to center
@@ -465,11 +507,11 @@ let DrawMapLaylines=function(self,ctx, scale, intersections, props) {
 		// BB
 		p1=self.lonLatToPixel(intersections.Boat.BB.P1._lon,intersections.Boat.BB.P1._lat);
 		p2=self.lonLatToPixel(intersections.Boat.BB.P2._lon,intersections.Boat.BB.P2._lat);
-		DrawLine(p1,p2,((props.LLBB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
+		DrawLine(p1,p2,((props.LLBB-TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
 		// SB
 		p1=self.lonLatToPixel(intersections.Boat.SB.P1._lon,intersections.Boat.SB.P1._lat);
 		p2=self.lonLatToPixel(intersections.Boat.SB.P2._lon,intersections.Boat.SB.P2._lat);
-		DrawLine(p1,p2,((props.LLSB-props.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
+		DrawLine(p1,p2,((props.LLSB-TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
 	}
 	if(typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true && intersections != null)
 	{
@@ -477,11 +519,11 @@ let DrawMapLaylines=function(self,ctx, scale, intersections, props) {
 		// BB
 		p1=self.lonLatToPixel(intersections.WP.BB.P1._lon,intersections.WP.BB.P1._lat);
 		p2=self.lonLatToPixel(intersections.WP.BB.P2._lon,intersections.WP.BB.P2._lat);
-		DrawLine(p1,p2,((props.LLBB-props.TWD)+540)%360-180 > 0  ? "rgb(0,255,0)":"red");
+		DrawLine(p1,p2,((props.LLBB-TWD)+540)%360-180 > 0  ? "rgb(0,255,0)":"red");
 		// SB
 		p1=self.lonLatToPixel(intersections.WP.SB.P1._lon,intersections.WP.SB.P1._lat);
 		p2=self.lonLatToPixel(intersections.WP.SB.P2._lon,intersections.WP.SB.P2._lat);
-		DrawLine(p1,p2,((props.LLSB-props.TWD)+540)%360-180 > 0  ? "rgb(0,255,0)":"red");
+		DrawLine(p1,p2,((props.LLSB-TWD)+540)%360-180 > 0  ? "rgb(0,255,0)":"red");
 
 	}
 	ctx.restore()
