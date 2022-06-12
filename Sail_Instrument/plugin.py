@@ -539,7 +539,7 @@ try:
         x = np.array(self.polare['boatspeed'])
         BRG=wpData.dstBearing
         windanglerad=np.deg2rad(BRG-gps['TWD']+np.array(self.polare['windanglevector']))
-        coswindanglerad=np.abs(np.cos(windanglerad))
+        coswindanglerad=np.cos(windanglerad)
     
         self.cWendewinkel_upwind=[]
         vmc=[]
@@ -551,15 +551,23 @@ try:
             # HDG = TWD +/- TWA
             # test: BRG = , TWD=0 --> HDG=-TWA --> vmc=v*cos(BRG+TWA)
             vmc.append(np.array(x[0:lastindex,spalte])*coswindanglerad[0:lastindex])
-            f=InterpolatedUnivariateSpline(self.polare['windanglevector'][0:updownindex], vmc[spalte][0:updownindex], k=3)
+            f=InterpolatedUnivariateSpline(self.polare['windanglevector'], vmc[spalte][:], k=3)
             cr_pts = quadratic_spline_roots(self, f.derivative())
             cr_vals = f(cr_pts)
             min_index = np.argmin(cr_vals)
             max_index = np.argmax(cr_vals)
         #print("Maximum value {} at {}\nMinimum value {} at {}".format(cr_vals[max_index], cr_pts[max_index], cr_vals[min_index], cr_pts[min_index]))
             self.cWendewinkel_upwind.append(cr_pts[max_index])
+        #Der TWA mit der höschsten VMC
+        spl=InterpolatedUnivariateSpline(self.polare['windspeedvector'], self.cWendewinkel_upwind, k=3)
         wendewinkel = linear((gps['TWS'] / 0.514),self.polare['windspeedvector'],self.cWendewinkel_upwind)
-        self.api.addData(self.PATHTLL_OPTVMC, BRG+wendewinkel,source='SegelDisplay')
+        opttwa=spl(gps['TWS'] / 0.514)
+        opthdg=(gps['TWD']-opttwa)%360
+        diff1=abs((gps['TWD']-wendewinkel)%360-(gps['TWD']-opttwa)%360)
+        print(diff1)
+        # aus WA=WD-HDG folgt HDG = WD-WA
+        #self.api.addData(self.PATHTLL_OPTVMC, (gps['TWD']-wendewinkel)%360,source='SegelDisplay')
+        self.api.addData(self.PATHTLL_OPTVMC, (opthdg)%360,source='SegelDisplay')
     except:
         pass
 

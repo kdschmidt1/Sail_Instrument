@@ -2,8 +2,9 @@
 <Data xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<schiffstyp>'Oceanis31'</schiffstyp>
 	<windspeedvector>[4,6,8,10,12,14,16,20,25,30]</windspeedvector>
-	<windanglevector>[32,36,40,45,52,60,70,80,90,100,110,120,135,150,160,170,180]</windanglevector>
+	<windanglevector>[0,32,36,40,45,52,60,70,80,90,100,110,120,135,150,160,170,180]</windanglevector>
 	<boatspeed>[
+				[0,0,0,0,0,0,0,0,0,0],
 				[1.97,2.95,3.79,4.34,4.68,4.89,5,5.09,5.03,4.58],
 				[2.26,3.37,4.27,4.82,5.14,5.34,5.47,5.63,5.66,5.54],
 				[2.51,3.72,4.66,5.21,5.53,5.72,5.85,5.96,6.1,6.08],
