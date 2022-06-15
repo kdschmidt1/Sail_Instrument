@@ -517,19 +517,6 @@ try:
     except:
         return False
 
-      
-      
-      
-      
-    #if avnr.AVNRouter.currentLeg:
-    #avnr.AVNRouter.getCurrentLeg(avnr.AVNRouter)
-    #xy=avnr.WpData(avnr.AVNRouter.currentLeg,gps['lat'],gps['lon'],gps['speed'])
-    #rueckgabewert = urllib.request.urlopen('http://localhost:8081/viewer/avnav_navi.php?request=route&command=getWPData')
-    #route=rueckgabewert.read()
-    #inhalt_text = route.decode("UTF-8")
-    #d = json.loads(inhalt_text)
-    #return True
-
     try:
         self.cWendewinkel_upwind=[]
         self.cWendewinkel_downwind=[]
@@ -564,7 +551,6 @@ try:
         opttwa=spl(gps['TWS'] / 0.514)
         opthdg=(gps['TWD']-opttwa)%360
         diff1=abs((gps['TWD']-wendewinkel)%360-(gps['TWD']-opttwa)%360)
-        print(diff1)
         # aus WA=WD-HDG folgt HDG = WD-WA
         #self.api.addData(self.PATHTLL_OPTVMC, (gps['TWD']-wendewinkel)%360,source='SegelDisplay')
         self.api.addData(self.PATHTLL_OPTVMC, (opthdg)%360,source='SegelDisplay')
