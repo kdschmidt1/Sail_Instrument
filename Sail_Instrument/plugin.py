@@ -161,7 +161,7 @@ class Plugin(object):
     seq=0
     self.api.log("started")
     self.api.setStatus('STARTED', 'running')
-
+    gpsdata={}
     while not self.api.shouldStopMainThread():
       #gpsdata=self.api.getDataByPrefix('gps')
       gpsdata['track']=self.api.getSingleValue('gps.track')
