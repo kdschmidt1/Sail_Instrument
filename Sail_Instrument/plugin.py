@@ -163,7 +163,12 @@ class Plugin(object):
     self.api.setStatus('STARTED', 'running')
 
     while not self.api.shouldStopMainThread():
-      gpsdata=self.api.getDataByPrefix('gps')
+      #gpsdata=self.api.getDataByPrefix('gps')
+      gpsdata['track']=self.api.getSingleValue('gps.track')
+      gpsdata['windAngle']=self.api.getSingleValue('gps.windAngle')
+      gpsdata['windSpeed']=self.api.getSingleValue('gps.windSpeed')
+      gpsdata['speed']=self.api.getSingleValue('gps.speed')
+
       calcTrueWind(self, gpsdata)          
       if 'AWS' in gpsdata and 'AWD' in gpsdata and 'TWA' in gpsdata and 'TWS' in gpsdata:
             best_vmc_angle(self,gpsdata)
@@ -181,7 +186,7 @@ class Plugin(object):
   def strictly_increasing(self, L):
         return all(x<y for x, y in zip(L, L[1:]))
   
-  
+
   def Polare(self, f_name):
     #polare_filename = os.path.join(os.path.dirname(__file__), f_name)
     polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
@@ -424,7 +429,7 @@ def calcTrueWind(self, gpsdata):
     # https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721      
         source='SegelDisplay'
 
-        if not 'track' in gpsdata or not 'windAngle' in gpsdata:
+        if not 'track' in gpsdata or not 'windAngle' or not 'speed' in gpsdata:
             return False
         gpsdata['AWA']=gpsdata['windAngle']
         gpsdata['AWS']=gpsdata['windSpeed']
