@@ -51,6 +51,7 @@ var Sail_InstrumentInfoWidget = {
     name: "Sail_InstrumentInfo",
     //unit: "nm",
     renderHtml: function (props) {
+		let fmtParam="";
 		let gpsdata= {...props};	// https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
 
 		console.log("Sail_InstrumentInfo");
@@ -58,14 +59,17 @@ var Sail_InstrumentInfoWidget = {
         //var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
 		if(typeof(intersections) != 'undefined'&&intersections)
 		{
-        var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
+		if (gpsdata.formatterParameters!=undefined)
+        	fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
+        else
+        	fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
         var fv = formatLL(intersections.Boat.BB.dist,gpsdata.speed,fmtParam);
         var fv2 = formatLL(intersections.Boat.SB.dist,gpsdata.speed,fmtParam);
         var fvges = formatLL(intersections.Boat.SB.dist+intersections.Boat.BB.dist,gpsdata.speed,fmtParam);
 		}
 		else
 		{
-		fv=fv2=fvges=["",""]
+		fv=fv2=fvges=["--","--"]
 		}
         ret= "	\
         <div class=\"Sail_InstrumentInfo\"> </div> \
