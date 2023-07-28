@@ -18,4 +18,4 @@ homepage: ""
 license: "MIT"
 contents:
 - src: ./Sail_Instrument/*
-  dst: /usr/lib/avnav/server/plugins/Sail_Instrument/
+  dst: /usr/lib/avnav/plugins/Sail_Instrument/

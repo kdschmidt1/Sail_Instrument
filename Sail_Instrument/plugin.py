@@ -179,7 +179,7 @@ class Plugin(object):
                 if calc_Laylines(self,gpsdata):  
                     self.api.setStatus('NMEA', 'computing Laylines/TSS/VPOL')
       else:
-          self.api.setStatus('INACTIVE', 'Missing Input of windAngle and/or windSpeed, cannot compute Laylines')
+          self.api.setStatus('ERROR', 'Missing Input of windAngle and/or windSpeed, cannot compute Laylines')
 
 
   
@@ -404,6 +404,10 @@ def calcSailsteer(self, gpsdata):
     rt=gpsdata
     if not 'track' in gpsdata or not 'AWD' in gpsdata:
         return False
+    if gpsdata['windAngle'] is None or gpsdata['windSpeed'] is None or gpsdata['speed'] is None or gpsdata['track'] is None :
+        self.api.setStatus('ERROR', 'Missing Input of windAngle and/or windSpeed, cannot compute Laylines')
+        return False
+
     try:
         KaW=polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
         # KaB = polar(gpsdata['speed'], gpsdata['track']).toKartesisch()
@@ -433,6 +437,10 @@ def calcTrueWind(self, gpsdata):
 
         if not 'track' in gpsdata or not 'windAngle' or not 'speed' in gpsdata:
             return False
+        if gpsdata['windAngle'] is None or gpsdata['windSpeed'] is None or gpsdata['speed'] is None or gpsdata['track'] is None :
+            self.api.setStatus('ERROR', 'Missing Input of windAngle and/or windSpeed, cannot compute Laylines')
+            return False
+
         gpsdata['AWA']=gpsdata['windAngle']
         gpsdata['AWS']=gpsdata['windSpeed']
         #self.api.addData(self.PATHAWA, gpsdata['AWA'],source=source)
