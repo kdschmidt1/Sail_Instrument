@@ -11,6 +11,7 @@ import json
 import sys
 from _ast import Try
 import traceback
+import time
 try:
     from avnrouter import AVNRouter, WpData
     from avnav_worker import AVNWorker, WorkerParameter, WorkerStatus
@@ -163,6 +164,7 @@ class Plugin(object):
     self.api.setStatus('STARTED', 'running')
     gpsdata={}
     while not self.api.shouldStopMainThread():
+      time.sleep(0.5)  
       #gpsdata=self.api.getDataByPrefix('gps')
       gpsdata['track']=self.api.getSingleValue('gps.track')
       gpsdata['windAngle']=self.api.getSingleValue('gps.windAngle')
