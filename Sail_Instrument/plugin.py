@@ -406,8 +406,8 @@ def calcSailsteer(self, gpsdata):
         return False
     try:
         KaW=polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
-        KaB = polar(gpsdata['speed'], gpsdata['track']).toKartesisch()
-
+        # KaB = polar(gpsdata['speed'], gpsdata['track']).toKartesisch()
+        KaB = polar(gpsdata['speed'], (gpsdata['track'] or 0)).toKartesisch()
 
         t_abtast=(time.time()-self.oldtime)
         freq=1/t_abtast
@@ -438,10 +438,10 @@ def calcTrueWind(self, gpsdata):
         #self.api.addData(self.PATHAWA, gpsdata['AWA'],source=source)
         #self.api.addData(self.PATHAWS, gpsdata['AWS'],source=source)
         try:
-            gpsdata['AWD'] = (gpsdata['AWA'] + gpsdata['track']) % 360
+            gpsdata['AWD'] = (gpsdata['AWA'] + (gpsdata['track'] or 0)) % 360
             #self.api.addData(self.PATHAWD, gpsdata['AWD'],source=source)
             KaW=polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
-            KaB = polar(gpsdata['speed'], gpsdata['track']).toKartesisch()
+            KaB = polar(gpsdata['speed'], (gpsdata['track'] or 0)).toKartesisch()
 
             if(gpsdata['speed'] == 0 or gpsdata['AWS'] == 0):
                 gpsdata['TWD'] = gpsdata['AWD'] 
@@ -452,10 +452,10 @@ def calcTrueWind(self, gpsdata):
             gpsdata['TWS'] = math.sqrt((KaW['x'] - KaB['x']) * (KaW['x'] - KaB['x']) + (KaW['y'] - KaB['y']) * (KaW['y'] - KaB['y']))
             #self.api.addData(self.PATHTWS, gpsdata['TWS'],source=source)
 
-            gpsdata['TWA'] = LimitWinkel(self, gpsdata['TWD'] - gpsdata['track'])
+            gpsdata['TWA'] = LimitWinkel(self, gpsdata['TWD'] - (gpsdata['track'] or 0))
             #self.api.addData(self.PATHTWA, gpsdata['TWA'],source=source)
             return True
-        except Exception:
+        except Exception as err:
             self.api.error(" error calculating TrueWind-Data " + str(gpsdata) + "\n")
         return False
     
