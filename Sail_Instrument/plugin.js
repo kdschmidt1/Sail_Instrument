@@ -1,4 +1,4 @@
-console.log("layline plugin loaded");
+console.log("Sailinstrument o github loaded");
 
 		//globalThis.globalParameter={};
 
