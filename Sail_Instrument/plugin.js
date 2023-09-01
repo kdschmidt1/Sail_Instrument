@@ -190,9 +190,6 @@ var Sail_InstrumentWidget={
             	DrawLaylineArea(ctx, Displaysize, maprotationdeg+gpsdata.LLSB, TWD_Abweichung, ((gpsdata.LLSB-gpsdata.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
             	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+gpsdata.AWD, "rgb(0,255,0)", 'A')
             	DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+gpsdata.TWD , "blue", 'T')
-
-            	if(typeof(gpsdata.TWDFilt_Indicator) != 'undefined' && gpsdata.TWDFilt_Indicator==true)	 
-            		DrawWindpfeilIcon(ctx, Displaysize, + maprotationdeg+gpsdata.TSS, "yellow", '~');
             	return;
             },
             		/**
