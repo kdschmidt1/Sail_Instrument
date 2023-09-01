@@ -308,7 +308,6 @@ let Sail_Instrument_Overlay={
 
 var Sail_Instrument_OverlayParameter = {
                              Widgetposition: {type:'SELECT',list:['Boatposition','Mapcenter'],default:'Boatposition'},
-                             //myWidgetposition:{type:'SELECT',list:{name:'Boatposition',value:'true',name:'Mapcenter',value:'false'},default:'Boatposition'},
                              Displaysize: {type: 'NUMBER', default: 100},
                              Opacity: {type: 'NUMBER', default: 1},
                              Laylinerefresh: {type: 'NUMBER', default: 5},
