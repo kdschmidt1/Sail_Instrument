@@ -277,9 +277,13 @@ let Sail_Instrument_Overlay={
                 	  ctx.globalAlpha*=gpsdata.Opacity;
 
                 	  maprotationdeg = this.getRotation()/Math.PI*180;
-                	  boatrotationdeg = gpsdata.course;	// Hier muss eigentlich HDG hinein!!
-
-                	  calc_LaylineAreas(this, gpsdata)
+					  if(typeof(gpsdata.HDT) != 'undefined')
+                	  	boatrotationdeg = gpsdata.HDT;	// Hier muss eigentlich HDG hinein!!
+                	  else if(typeof(gpsdata.HDM) != 'undefined')
+                	  	boatrotationdeg = gpsdata.HDT;	// Hier muss eigentlich HDG hinein!!
+					  else
+                	  	boatrotationdeg = gpsdata.course;	// Hier muss eigentlich HDG hinein!!
+                	  
                 	  DrawOuterRing(ctx, gpsdata.Displaysize, maprotationdeg+boatrotationdeg);
                 	  DrawKompassring(ctx, gpsdata.Displaysize, maprotationdeg);
 
@@ -287,20 +291,16 @@ let Sail_Instrument_Overlay={
                 	  color=((gpsdata.LLBB-gpsdata.TWD)+540)%360-180 > 0 ? "rgb(0,255,0)":"red";
                 	  DrawLaylineArea(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.LLBB, TWD_Abweichung, ((gpsdata.LLBB-gpsdata.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
                 	  DrawLaylineArea(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.LLSB, TWD_Abweichung, ((gpsdata.LLSB-gpsdata.TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red")
-                	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.AWD, "rgb(0,255,0)", 'A')
-                	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.TWD , "blue", 'T')
-                	  DrawEierUhr(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.course , "rgb(255,128,0", 'T')	// zeigt COG an
-                	  DrawCourseBox(ctx, gpsdata.Displaysize,maprotationdeg+boatrotationdeg, "red", Math.round(gpsdata.course))
+                	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.AWDF, "rgb(0,255,0)", 'A')
+                	  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.TWDF , "blue", 'T')
+					if(typeof(gpsdata.wp_course)!='undefined')
+                	  	DrawWPIcon(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.wp_course)
+                	  DrawHourglass(ctx, gpsdata.Displaysize, maprotationdeg+gpsdata.course , "rgb(255,128,0", 'T')	// zeigt COG an
+                	  DrawCourseBox(ctx, gpsdata.Displaysize,maprotationdeg+boatrotationdeg, "red", Math.round(boatrotationdeg))
 
-                	  if(typeof(gpsdata.TWDFilt_Indicator) != 'undefined' && gpsdata.TWDFilt_Indicator==true)	 
-                		  DrawWindpfeilIcon(ctx, gpsdata.Displaysize, + maprotationdeg+gpsdata.TSS, "yellow", '~');
-                	  ctx.restore();
-
-
-                	  ctx=canvas.getContext('2d')
-																													ctx.save();
-                	  testme(this,canvas, gpsdata)															
-                	  ctx.restore();
+                	  //ctx.restore();
+                	  //ctx=canvas.getContext('2d')
+                	  //ctx.restore();
                 		  }
 
 }
@@ -579,7 +579,7 @@ let DrawCourseBox=function(ctx, radius,angle, color, Text) {
 
 }
 
-let DrawEierUhr=function(ctx, radius,angle, color, Text) {
+let DrawHourglass=function(ctx, radius,angle, color, Text) {
 	ctx.save();
 
 	var radius_kompassring = radius	//0.525*Math.min(x,y);
