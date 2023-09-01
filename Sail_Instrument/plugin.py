@@ -3,6 +3,7 @@
 from avnav_api import AVNApi
 import math
 import time
+from datetime import datetime
 import os
 from datetime import date
 import xml.etree.ElementTree as ET
@@ -12,6 +13,7 @@ import sys
 from _ast import Try
 import traceback
 import time
+from builtins import len
 try:
     from avnrouter import AVNRouter, WpData
     from avnav_worker import AVNWorker, WorkerParameter, WorkerStatus
@@ -25,13 +27,22 @@ MIN_AVNAV_VERSION="20220426"
     #//http://www.movable-type.co.uk/scripts/latlong.html
     #//The longitude can be normalised to −180…+180 using (lon+540)%360-180
 
+#            a=b<0?c;
+            #self.minTWD[0] = actTWD if actTWD<self.minTWD[0] else self.minTWD[0]
+
+
+
+
 
 class Plugin(object):
-  PATHTSS="gps.TSS"   #    TrueWindAngle PT1 gefiltert
+  PATHTWDF="gps.TWDF"   #    TrueWindDirection PT1 gefiltert
+  PATHAWDF="gps.AWDF"   #    ApparentWindDirection PT1 gefiltert
   PATHTLL_SB="gps.LLSB" #    Winkel Layline Steuerbord
   PATHTLL_BB="gps.LLBB" #    Winkel Layline Backbord
   PATHTLL_VPOL="gps.VPOL" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
-  PATHTLL_OPTVMC="gps.OPTVMC" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
+  PATHTLL_OPTVMC="gps.OPTVMC" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA
+  PATHmaxTWD="gps.maxTWD" 
+  PATHminTWD="gps.minTWD" 
 #  PATHTLL_speed="gps.speed" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
 
 
@@ -42,7 +53,14 @@ class Plugin(object):
       'default':'0.2',
       'type': 'FLOAT'
       },
+            {
+      'name':'LL_Minutes',
+      'description':'Minutes considered for Layline-Areas [0..60] (0=>No Laylineareas)',
+      'default':'1',
+      'type': 'NUMBER'
+      },
       ]
+
 
   
   @classmethod
@@ -63,8 +81,20 @@ class Plugin(object):
       
       'data': [
         {
-          'path': cls.PATHTSS,
-          'description': 'TrueWindAngle PT1 filtered',
+          'path': cls.PATHminTWD,
+          'description': 'minimum TrueWindDirection last xx Minutes',
+        },
+        {
+          'path': cls.PATHmaxTWD,
+          'description': 'maximum TrueWindDirection last xx Minutes',
+        },
+        {
+          'path': cls.PATHTWDF,
+          'description': 'TrueWindDirection PT1 filtered',
+        },
+        {
+          'path': cls.PATHAWDF,
+          'description': 'ApparentWindDirection PT1 filtered',
         },
         {
           'path': cls.PATHTLL_OPTVMC,
@@ -86,6 +116,7 @@ class Plugin(object):
     }
 
 
+    
 
 
   def __init__(self,api):
@@ -109,7 +140,10 @@ class Plugin(object):
     #we register an handler for API requests
     self.api.registerRequestHandler(self.handleApiRequest)
     self.count=0
-    self.windAngleSailsteer={'x':0,'y':0, 'alpha':0}
+    self.TrueWindDirection_filtered={'x':0,'y':0, 'alpha':0}
+    self.ApparentWindDirection_filtered={'x':0,'y':0, 'alpha':0}
+    self.awdf=0
+    self.twdf=0
     self.api.registerRestart(self.stop)
     self.oldtime=0
     self.polare={}
@@ -119,7 +153,13 @@ class Plugin(object):
     self.saveAllConfig()
     self.startSequence = 0
 
-
+# Normalizes any number to an arbitrary range 
+# by assuming the range wraps around when going below min or above max 
+  def normalize(self, value, start, end ): 
+        width       = end - start      
+        offsetValue = value - start    # value relative to 0      
+        return ( offsetValue - ( math.floor( offsetValue / width ) * width ) ) + start ;
+        #// + start to reset back to start of original range
 
   def getConfigValue(self, name):
     defaults = self.pluginInfo()['config']
@@ -148,17 +188,44 @@ class Plugin(object):
     pass
 
   def PT_1funk(self, f_grenz, t_abtast, oldvalue, newvalue):
+    """
+        PT1 filter
+        @param f_grenz, t_abtast, oldvalue, newvalue
+        @return:
+    """
     #const t_abtast= globalStore.getData(keys.properties.positionQueryTimeout)/1000 //[ms->s]
     T = 1 / (2*math.pi*f_grenz)
     tau = 1 / ((T / t_abtast) + 1)
     return(oldvalue + tau * (newvalue - oldvalue))
 
-
+  minTWD=[]
+  maxTWD=[]
+  lastMinute = -1
   def run(self):
     """
     the run method
     @return:
     """
+    def calc_minmaxTWD(self, actTWD, act_minute, max_minutes): # using lists instead of collections because length is <= 60
+        if(act_minute != self.lastMinute):   # list shiften
+            self.minTWD.insert(0,actTWD) #// New Element on pos 0
+            self.maxTWD.insert(0,actTWD)               
+        elif len(self.minTWD)>0:
+            self.minTWD[0] = actTWD if actTWD<self.minTWD[0] else self.minTWD[0]
+            self.maxTWD[0] = actTWD if actTWD>self.maxTWD[0] else self.maxTWD[0]
+    
+        while(len(self.minTWD)>max_minutes):
+            self.minTWD.pop();   #limit array-length to maxmaxminutes if necessary
+            self.maxTWD.pop();   #limit array-length to maxmaxminutes if necessary
+        # print(minTWD)
+        self.lastMinute=act_minute
+        if len(self.minTWD)>0:  # if max_minutes>0 return min/max TWD  
+            return([min(self.minTWD),max(self.maxTWD)])
+        else:
+            return([actTWD,actTWD]) # if max_minutes==0 return actTWD
+
+
+
     seq=0
     self.api.log("started")
     self.api.setStatus('STARTED', 'running')
@@ -171,13 +238,22 @@ class Plugin(object):
       gpsdata['windSpeed']=self.api.getSingleValue('gps.windSpeed')
       gpsdata['speed']=self.api.getSingleValue('gps.speed')
 
-      calcTrueWind(self, gpsdata)          
+      calcTrueWind(self, gpsdata)       
       if 'AWS' in gpsdata and 'AWD' in gpsdata and 'TWA' in gpsdata and 'TWS' in gpsdata:
             best_vmc_angle(self,gpsdata)
-            if(calcSailsteer(self, gpsdata)):
-                self.api.addData(self.PATHTSS,gpsdata['TSS'])
+            if(calcFilteredWind(self, gpsdata)):
+                minmaxTWD=calc_minmaxTWD(self, gpsdata['TWDF'], datetime.now().minute, float(self.getConfigValue('LL_Minutes')))
+                #print(datetime.now().minute,"min ",minmaxTWD)
+                gpsdata['minTWD']=minmaxTWD[0]
+                gpsdata['maxTWD']=minmaxTWD[1]
+                self.api.addData(self.PATHTWDF,gpsdata['TWDF'])
+                self.api.addData(self.PATHAWDF,gpsdata['AWDF'])
+                self.api.addData(self.PATHminTWD,gpsdata['minTWD'])
+                self.api.addData(self.PATHmaxTWD,gpsdata['maxTWD'])
+                
                 if calc_Laylines(self,gpsdata):  
-                    self.api.setStatus('NMEA', 'computing Laylines/TSS/VPOL')
+                    self.api.setStatus('NMEA', 'computing Laylines/VPOL')
+                
       else:
           self.api.setStatus('ERROR', 'Missing Input of windAngle and/or windSpeed, cannot compute Laylines')
 
@@ -353,7 +429,7 @@ def calc_Laylines(self,gpsdata):# // [grad]
     
     if (self.Polare and 'TWA' in gpsdata):
         # LAYLINES
-        if (math.fabs(gpsdata['TWA']) > 120 and math.fabs(gpsdata['TSS']) < 240): 
+        if (math.fabs(gpsdata['TWA']) > 120 and math.fabs(gpsdata['TWA']) < 240): 
             wendewinkel = linear((gpsdata['TWS'] / 0.514),self.polare['windspeedvector'],self.polare['ww_downwind']) * 2
         else:
             wendewinkel = linear((gpsdata['TWS'] / 0.514),self.polare['windspeedvector'],self.polare['ww_upwind']) * 2
@@ -361,8 +437,8 @@ def calc_Laylines(self,gpsdata):# // [grad]
         #LL_SB = (gpsdata['TWD'] + wendewinkel / 2) % 360
         #LL_BB = (gpsdata['TWD'] - wendewinkel / 2) % 360
 
-        LL_SB = (gpsdata['TSS'] + wendewinkel / 2) % 360
-        LL_BB = (gpsdata['TSS'] - wendewinkel / 2) % 360
+        LL_SB = (gpsdata['TWDF'] + wendewinkel / 2) % 360
+        LL_BB = (gpsdata['TWDF'] - wendewinkel / 2) % 360
         
         
         self.api.addData(self.PATHTLL_SB,LL_SB)
@@ -370,7 +446,8 @@ def calc_Laylines(self,gpsdata):# // [grad]
 
 
         gpsdata['TWA']=gpsdata['TWA']%360
-        anglew = 360 - gpsdata['TWA'] if gpsdata['TWA'] > 180 else gpsdata['TWA']
+        anglew = math.fabs(self.normalize(gpsdata['TWA'], -180, 180 ))  
+        #360 - gpsdata['TWA'] if gpsdata['TWA'] > 180 else gpsdata['TWA']
         #in kn
         if not self.polare['boatspeed']:
             return False
@@ -400,8 +477,9 @@ def calc_Laylines(self,gpsdata):# // [grad]
 
     
     
-def calcSailsteer(self, gpsdata):
+def calcFilteredWind(self, gpsdata):
     rt=gpsdata
+    #self.twdf=self.awdf=0
     if not 'track' in gpsdata or not 'AWD' in gpsdata:
         return False
     if gpsdata['windAngle'] is None or gpsdata['windSpeed'] is None or gpsdata['speed'] is None or gpsdata['track'] is None :
@@ -409,25 +487,45 @@ def calcSailsteer(self, gpsdata):
         return False
 
     try:
+        fgrenz=float(self.getConfigValue('TWD_filtFreq'))
+        t_abtast=(time.time()-self.oldtime)
+        freq=1/t_abtast
+        self.oldtime=time.time()
+        gpsdata['AWD']=self.normalize(gpsdata['AWD'],0,360)
+        gpsdata['TWD']=self.normalize(gpsdata['TWD'],0,360)
+        gpsdata['track']=self.normalize(gpsdata['track'],0,360)
+        #if not 'speedf' in gpsdata:
+        #    gpsdata['speedf']=0
+        #gpsdata['speedf']=self.PT_1funk(fgrenz, t_abtast, gpsdata['speedf'],gpsdata['speed'])
+
         KaW=polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
         # KaB = polar(gpsdata['speed'], gpsdata['track']).toKartesisch()
         KaB = polar(gpsdata['speed'], (gpsdata['track'] or 0)).toKartesisch()
 
-        t_abtast=(time.time()-self.oldtime)
-        freq=1/t_abtast
-        self.oldtime=time.time()
       
-        fgrenz=float(self.getConfigValue('TWD_filtFreq'))
-        self.windAngleSailsteer['x']=self.PT_1funk(fgrenz, t_abtast, self.windAngleSailsteer['x'], KaW['x'] - KaB['x'])
-        self.windAngleSailsteer['y']=self.PT_1funk(fgrenz, t_abtast, self.windAngleSailsteer['y'], KaW['y'] - KaB['y'])
-      # zurück in Polaren Winkel
-        self.windAngleSailsteer['alpha']=kartesisch(self.windAngleSailsteer['x'],self.windAngleSailsteer['y']).toPolar()
-        gpsdata['TSS']=self.windAngleSailsteer['alpha']
+
+        self.twdf=self.PT_1funk(fgrenz, t_abtast, self.twdf+360,gpsdata['TWD']+360)-360 
+        self.awdf=self.PT_1funk(fgrenz, t_abtast, self.awdf+360,gpsdata['AWD']+360)-360 
         
+        
+        self.TrueWindDirection_filtered['x']=self.PT_1funk(fgrenz, t_abtast, self.TrueWindDirection_filtered['x'], KaW['x'] - KaB['x'])
+        self.TrueWindDirection_filtered['y']=self.PT_1funk(fgrenz, t_abtast, self.TrueWindDirection_filtered['y'], KaW['y'] - KaB['y'])
+
+        self.ApparentWindDirection_filtered['x']=self.PT_1funk(fgrenz, t_abtast, self.ApparentWindDirection_filtered['x'], KaW['x'])
+        self.ApparentWindDirection_filtered['y']=self.PT_1funk(fgrenz, t_abtast, self.ApparentWindDirection_filtered['y'], KaW['y'])
+      
+      # zurück in Polaren Winkel
+        self.TrueWindDirection_filtered['alpha']=kartesisch(self.TrueWindDirection_filtered['x'],self.TrueWindDirection_filtered['y']).toPolar()
+        self.ApparentWindDirection_filtered['alpha']=kartesisch(self.ApparentWindDirection_filtered['x'],self.ApparentWindDirection_filtered['y']).toPolar()
+        self.TrueWindDirection_filtered['alpha']=self.normalize(self.TrueWindDirection_filtered['alpha'],0,360)
+        self.ApparentWindDirection_filtered['alpha']=self.normalize(self.ApparentWindDirection_filtered['alpha'],0,360)
+        
+        
+        gpsdata['AWDF']=self.ApparentWindDirection_filtered['alpha']
+        gpsdata['TWDF']=self.TrueWindDirection_filtered['alpha']
         return True
-    except Exception:
-        gpsdata['TSS']=0
-        self.api.error(" error calculating TSS ")
+    except Exception as err:
+        self.api.error(" error in calcFilteredWind ")
         return False
     
 def calcTrueWind(self, gpsdata):
@@ -443,37 +541,21 @@ def calcTrueWind(self, gpsdata):
 
         gpsdata['AWA']=gpsdata['windAngle']
         gpsdata['AWS']=gpsdata['windSpeed']
-        #self.api.addData(self.PATHAWA, gpsdata['AWA'],source=source)
-        #self.api.addData(self.PATHAWS, gpsdata['AWS'],source=source)
         try:
             gpsdata['AWD'] = (gpsdata['AWA'] + (gpsdata['track'] or 0)) % 360
-            #self.api.addData(self.PATHAWD, gpsdata['AWD'],source=source)
             KaW=polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
             KaB = polar(gpsdata['speed'], (gpsdata['track'] or 0)).toKartesisch()
-
             if(gpsdata['speed'] == 0 or gpsdata['AWS'] == 0):
                 gpsdata['TWD'] = gpsdata['AWD'] 
-                #self.api.addData(self.PATHTWD, gpsdata['TWD'],source=source)
             else:
                 gpsdata['TWD'] = kartesisch(KaW['x'] - KaB['x'], KaW['y'] - KaB['y']).toPolar() % 360
-            #self.api.addData(self.PATHTWD, gpsdata['TWD'],source=source)
             gpsdata['TWS'] = math.sqrt((KaW['x'] - KaB['x']) * (KaW['x'] - KaB['x']) + (KaW['y'] - KaB['y']) * (KaW['y'] - KaB['y']))
-            #self.api.addData(self.PATHTWS, gpsdata['TWS'],source=source)
-
-            gpsdata['TWA'] = LimitWinkel(self, gpsdata['TWD'] - (gpsdata['track'] or 0))
-            #self.api.addData(self.PATHTWA, gpsdata['TWA'],source=source)
+            gpsdata['TWA'] = self.normalize((gpsdata['TWD'] - gpsdata['track'])or 0, -180, 180 )  
             return True
         except Exception as err:
             self.api.error(" error calculating TrueWind-Data " + str(gpsdata) + "\n")
         return False
     
-def LimitWinkel(self, alpha):  # [grad]   
-    alpha %= 360
-    if (alpha > 180): 
-        alpha -= 360;
-    return(alpha)  
-
-
 
 class polar(object):
     def __init__(self,r, alpha):  # [alpha in deg] 
