@@ -1,4 +1,4 @@
-console.log("Sailinstrument o github loaded");
+console.log("Sailinstrument loaded");
 
 		//globalThis.globalParameter={};
 
