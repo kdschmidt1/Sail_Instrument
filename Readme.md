@@ -53,6 +53,7 @@ For the Instrument-Overlay you can configure
 | Displaysize| 100 | Size of the Sail-Instrument (%) |
 | Opacity | 1.0| Opacity of the Sail-Instrument on the map|
 |  |  |  |  
+
 If there is no boatposition available the Instrument will always be shown at the center position!
 
                           
