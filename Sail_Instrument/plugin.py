@@ -242,7 +242,7 @@ class Plugin(object):
       if 'AWS' in gpsdata and 'AWD' in gpsdata and 'TWA' in gpsdata and 'TWS' in gpsdata:
             best_vmc_angle(self,gpsdata)
             if(calcFilteredWind(self, gpsdata)):
-                minmaxTWD=calc_minmaxTWD(self, gpsdata['TWDF'], datetime.now().minute, float(self.getConfigValue('LL_Minutes')))
+                minmaxTWD=calc_minmaxTWD(self, gpsdata['TWDF'], datetime.now().minute, float(self.getConfigValue('Area_Minutes')))
                 #print(datetime.now().minute,"min ",minmaxTWD)
                 gpsdata['minTWD']=minmaxTWD[0]
                 gpsdata['maxTWD']=minmaxTWD[1]
