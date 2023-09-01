@@ -54,7 +54,7 @@ class Plugin(object):
       'type': 'FLOAT'
       },
             {
-      'name':'LL_Minutes',
+      'name':'Area_Minutes',
       'description':'Minutes considered for Layline-Areas [0..60] (0=>No Laylineareas)',
       'default':'1',
       'type': 'NUMBER'

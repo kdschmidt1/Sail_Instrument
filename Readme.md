@@ -5,7 +5,7 @@
 ![nur ein Beispiel](https://github.com/kdschmidt1/Sail_Instrument/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
 
 
-**This Plugin only works with an AVNAV-Version including User-Overlays (see Issue request [213](https://github.com/wellenvogel/avnav/issues/213)) and new geodesy-library (see [commit](https://github.com/wellenvogel/avnav/commit/52f3b97a6ee2feb5b9c987b9b168f0e1eb936580)). A daily-release is already available [20220614](https://www.wellenvogel.net/software/avnav/downloads/daily/20220614/)).** 
+**This Plugin only works with an AVNAV-Versions including User-Overlays and new geodesy-library. (Release >20220819).** 
 Idea of this plugin is to show an Instrument, that contains all basic informations needed for sailing.
 With the possibility to show this Display directly on the map at the boatposition the sailor has all informations in view. The Laylines will inform you about the fastest bearing to a waypoint upwind and if displayed on the map you can follow these lines. (The advantage you can get using laylines is shown at the [end of this Readme](#usecase)).  
 The Instrument is inspired by B&Gs sailsteer.  
@@ -33,10 +33,11 @@ The boatspeed Matrix is only used for calculation of VPOL (interpolated speed fo
 
 | Value | Format | Storename | Description |
 | --- | --- | --- | --- |
-| TSS | 0…360 [°] | gps.TSS | PT1 filtered True WindDirection |
 | LLSB | 0…360 [°] | gps.LLSB | layline angle Starboard |
 | LLBB | 0…360 [°] | gps.LLBB | layline angle Portside |
 | VPOL | 0..∞ [m/s] | gps.VPOL | calculated polar speed |
+| AWDF | 0…360 [°] | gps.AWDF |  PT1 filtered ApparentWindDirection |
+| TWDF | 0…360 [°] | gps.AWDF |  PT1 filtered TrueWindDirection |
 |  |  |  |  |
 
 
@@ -51,8 +52,6 @@ For the Instrument-Overlay you can configure
 | Widgetposition| Boatposition | Position of the Instrument on the map|
 | Displaysize| 100 | Size of the Sail-Instrument (%) |
 | Opacity | 1.0| Opacity of the Sail-Instrument on the map|
-| Laylinerefresh | 5 | Time in (min) to completely clear Layline-Area |
-| TWDFilt_Indicator | False | Show filtered TWD Arrow (yellow) |  
 |  |  |  |  
 If there is no boatposition available the Instrument will always be shown at the center position!
 
@@ -74,13 +73,14 @@ For the Laylines-Overlay you can configure
 
 
 
-The plugin itself has one parameter  
+The server-plugin itself has two parameter  
 [](https://github.com/kdschmidt1/Sail_Instrument/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
 
 
 | Name | Default Value | Description |
 | --- | --- | --- |
 | TWD_FiltFreq | 0.2 | Limit Frequency of the PT1 Lowpass-Filter |  
+| Area-Minutes | 0.2 | Minutes considered for Layline-Areas [0..60] where 0 means no Laylineareas |  
 |  |  |  |
 
 
@@ -108,7 +108,7 @@ You can use the plugin in 2 different ways.
 2. Download the package provided in the releases section [Sail_Instrument](https://github.com/kdschmidt1/Sail_Instrument/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
 
  ```
- sudo dpkg -i Sail_Instrument-plugin...._all.deb
+ sudo dpkg -i avnav-sailinstrument-plugin_xxxx.deb
 
  ```
 Add the Laylines to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
@@ -141,8 +141,8 @@ No configuration necessary
 The plugin provides the 
 - Sail_Instrument_Overlay,
 - LayLines_Overlay
-- Sail_InstrumentWidget (a classic widget with the Sail_Instrument)
-- Sail_InstrumentInfo-Widget (A Widget you can configure with fmt:unit to show the distance [nm] or the time for each Layline separate or with cum_.. for both Laylines together)  
+- Sail_InstrumentWidget (a widget with the Sail_Instrument)
+- Sail_InstrumentInfo-Widget (A Widget you can configure with Displaytype to show the distance [nm] or the time for each Layline (separate or with cum_.. for both Laylines together))  
 
 
 **Formatter**
