@@ -80,7 +80,7 @@ The server-plugin itself has two parameter
 | Name | Default Value | Description |
 | --- | --- | --- |
 | TWD_FiltFreq | 0.2 | Limit Frequency of the PT1 Lowpass-Filter |  
-| Area-Minutes | 0.2 | Minutes considered for Layline-Areas [0..60] where 0 means no Laylineareas |  
+| Area-Minutes | 2 | Minutes considered for Layline-Areas [0..60] where 0 means no Laylineareas |  
 |  |  |  |
 
 
