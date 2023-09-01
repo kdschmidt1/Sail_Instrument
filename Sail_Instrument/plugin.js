@@ -4,12 +4,11 @@ console.log("Sailinstrument o github loaded");
 
 
 var Sail_InstrumentInfoParameters = {
-    //formatterParameters is already well known to avnav, so no need for any definition
-    //just tell avnav that the user should be able to set this
-    formatterParameters: true,
-    //we would like to get a value from the internal data store
-    //if we name it "value" avnav already knows how to ask the user about it
-    value: true
+    formatterParameters: false,
+    caption: false,
+    unit: false,
+    value: false,
+    Displaytype: {type:'SELECT',list:['dist','cum_dist','time','cum_time'],default:'dist'},
 };
 var intersections
 
@@ -59,10 +58,10 @@ var Sail_InstrumentInfoWidget = {
         //var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
 		if(typeof(intersections) != 'undefined'&&intersections)
 		{
-		if (gpsdata.formatterParameters!=undefined)
-        	fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
+		if (gpsdata.Displaytype!=undefined)
+        	fmtParam = gpsdata.Displaytype
         else
-        	fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
+        	fmtParam = ['dist'];	//((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
         var fv = formatLL(intersections.Boat.BB.dist,gpsdata.speed,fmtParam);
         var fv2 = formatLL(intersections.Boat.SB.dist,gpsdata.speed,fmtParam);
         var fvges = formatLL(intersections.Boat.SB.dist+intersections.Boat.BB.dist,gpsdata.speed,fmtParam);
