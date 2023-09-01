@@ -56,7 +56,7 @@ class Plugin(object):
             {
       'name':'Area_Minutes',
       'description':'Minutes considered for Layline-Areas [0..60] (0=>No Laylineareas)',
-      'default':'1',
+      'default':'2',
       'type': 'NUMBER'
       },
       ]
