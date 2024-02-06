@@ -1,3 +1,4 @@
+(function(){
 console.log("Sailinstrument loaded");
 
 //globalThis.globalParameter={};
@@ -130,28 +131,29 @@ avnav.api.registerWidget(Sail_InstrumentInfoWidget, Sail_InstrumentInfoParameter
 
 
 var Sail_InstrumentWidget = {
-
     name: "Sail_InstrumentWidget",
-
-    // Editable Parameters
-
-
-    initFunction: function(a, b) {},
-
-
-    /**
-     * optional render some graphics to a canvas object
-     * you should style the canvas dimensions in the plugin.css
-     * be sure to potentially resize and empty the canvas before drawing
-     * @param canvas
-     * @param props - the properties you have provided here + the properties you
-     *                defined with the storeKeys
-     */
-    renderCanvas: function(canvas, props) {
-        let gpsdata = {
-            ...props
-        }; // https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
-
+    caption: "SailInstrument",
+    unit: "",
+    storeKeys: {
+        BRG: 'nav.wp.course',
+        POS: 'nav.gps.position',
+        LLSB: 'nav.gps.LLSB',
+        LLBB: 'nav.gps.LLBB',
+        HDT: 'nav.gps.headingTrue',
+        COG: 'nav.gps.course',
+        TWDF: 'nav.gps.TWDF',
+        TWSF: 'nav.gps.TWSF',
+        AWDF: 'nav.gps.AWDF',
+        AWSF: 'nav.gps.AWSF',
+        SETF: 'nav.gps.SETF',
+        DFTF: 'nav.gps.DFTF',
+        minTWD: 'nav.gps.minTWD',
+        maxTWD: 'nav.gps.maxTWD',
+    },
+    initFunction: function() {},
+    finalizeFunction: function() {},
+    renderCanvas: function(canvas, data) {
+        console.log(data);
         var ctx = canvas.getContext('2d');
         // Set scale factor for all values
         var crect = canvas.getBoundingClientRect();
@@ -160,73 +162,56 @@ var Sail_InstrumentWidget = {
         canvas.width = w;
         canvas.height = h;
         ctx.save();
-        var width = 200; // Control width
-        var height = 200; // Control height
+        var width = 300;
+        var height = 300;
         var f1 = w / width;
         var f2 = h / height;
         var f = Math.min(f1, f2);
         ctx.scale(f, f);
-        ctx.translate(width / 2 * f1 / f, height / 2 * f2 / f); //move the drawing to the middle
+        ctx.translate(width / 2 * f1 / f, height / 2 * f2 / f);
 
         self = this
         ctx.save();
-        //Fixiere Grösse für Widget
-        Displaysize = 65;
 
-        //maprotationdeg = gpsdata.ActualMapRotation	//this.mapholder.olmap.getView().getRotation()/Math.PI*180
-        boatrotationdeg = gpsdata.course;
-        // get rid of maprotationdeg for widget
-        if (gpsdata.courseup)
-            maprotationdeg = 360 - boatrotationdeg;
-        else
-            maprotationdeg = 0;
-        calcTrueWind(gpsdata)
-        let start = new Date();
-        let TWD_Abweichung = [gpsdata.minTWD - gpsdata.TWDF, gpsdata.maxTWD - gpsdata.TWDF]
-        DrawOuterRing(ctx, Displaysize, maprotationdeg + boatrotationdeg);
-        DrawKompassring(ctx, Displaysize, maprotationdeg);
+        if (data.Widgetposition == 'Mapcenter')
+            ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
+        else if (data.Widgetposition == 'Boatposition') {
+            if (typeof(data.POS) != 'undefined') {
+                coordinates = this.lonLatToPixel(data.POS.lon, data.POS.lat)
+                ctx.translate(coordinates[0], coordinates[1]);
+            } else
+                ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
+        }
+        ctx.globalAlpha *= data.Opacity;
 
+        var heading = typeof(data.HDT) != 'undefined' ? data.HDT : data.COG;
+        var maprotation =-heading;
+        var size = 100;
 
-        // wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
-        color = ((gpsdata.LLBB - gpsdata.TWD) + 540) % 360 - 180 > 0 ? "rgb(0,255,0)" : "red";
-        DrawLaylineArea(ctx, Displaysize, maprotationdeg + gpsdata.LLBB, TWD_Abweichung, ((gpsdata.LLBB - gpsdata.TWD) + 540) % 360 - 180 < 0 ? "rgb(0,255,0)" : "red")
-        DrawLaylineArea(ctx, Displaysize, maprotationdeg + gpsdata.LLSB, TWD_Abweichung, ((gpsdata.LLSB - gpsdata.TWD) + 540) % 360 - 180 < 0 ? "rgb(0,255,0)" : "red")
-        DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg + gpsdata.AWD, "rgb(0,255,0)", 'A')
-        DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg + gpsdata.TWD, "blue", 'T')
+        DrawOuterRing(ctx, size, maprotation + heading);
+        DrawKompassring(ctx, size, maprotation);
 
-        if (typeof(gpsdata.TWDFilt_Indicator) != 'undefined' && gpsdata.TWDFilt_Indicator == true)
-            DrawWindpfeilIcon(ctx, Displaysize, +maprotationdeg + gpsdata.TWDF, "yellow", '~');
-        return;
+        if (data.DFTF>=0.5) {
+            drawTideArrow(ctx, size, maprotation + data.SETF , "teal", (1.94384*data.DFTF).toFixed(1));
+        }
+        var mm = [to360(data.minTWD - data.TWDF), to360(data.maxTWD - data.TWDF)];
+        DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, to180(data.LLSB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
+        DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, to180(data.LLBB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
+        if (data.AWSF>=1) {
+            DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, "rgb(0,255,0)", 'A');
+        }
+        if (data.TWSF>=1) {
+            DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, "blue", 'T');
+        }
+        if (typeof(data.BRG) != 'undefined') {
+            DrawWPIcon(ctx, size, maprotation + data.BRG);
+        }
+        DrawEierUhr(ctx, size, maprotation + data.COG, "orange", 'T');
+        DrawCourseBox(ctx, size, maprotation + heading, "black", Math.round(heading));
     },
-    /**
-     * the access to the internal store
-     * this should be an object where the keys are the names you would like to
-     * see as properties when your render functions are called
-     * whenever one of the values in the store is changing, your render functions will be called
-     */
-    storeKeys: {
-        boatposition: 'nav.gps.position',
-        WPposition: 'nav.wp.position',
-        LLSB: 'nav.gps.LLSB',
-        LLBB: 'nav.gps.LLBB',
-        course: 'nav.gps.course',
-        course: 'nav.gps.course',
-        speed: 'nav.gps.speed',
-        windAngle: 'nav.gps.windAngle',
-        windSpeed: 'nav.gps.windSpeed',
-        courseup: 'map.courseUp',
-        TWDF: 'nav.gps.TWDF',
-        AWDF: 'nav.gps.AWDF',
-        minTWD: 'nav.gps.minTWD',
-        maxTWD: 'nav.gps.maxTWD',
-
-    },
-    caption: "Laylines",
-    unit: "",
 };
-var Sail_InstrumentWidgetParameter = {};
 
-avnav.api.registerWidget(Sail_InstrumentWidget, Sail_InstrumentWidgetParameter);
+avnav.api.registerWidget(Sail_InstrumentWidget, {});
 
 
 /*################################################################################################*/
@@ -275,7 +260,6 @@ let Sail_Instrument_Overlay = {
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data, center) {
         //console.log(data);
-
         if (data.Widgetposition == 'Mapcenter')
             ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
         else if (data.Widgetposition == 'Boatposition') {
@@ -330,38 +314,26 @@ let LayLines_Overlay = {
     name: 'LayLines-Overlay',
     type: 'map',
     storeKeys: {
-        boatposition: 'nav.gps.position',
-        WPposition: 'nav.wp.position',
+        POS: 'nav.gps.position',
+        WP: 'nav.wp.position',
         LLSB: 'nav.gps.LLSB',
         LLBB: 'nav.gps.LLBB',
-        course: 'nav.gps.course',
-        speed: 'nav.gps.speed',
-        windAngle: 'nav.gps.windAngle',
-        windSpeed: 'nav.gps.windSpeed',
+        TWDF: 'nav.gps.TWDF',
     },
-    initFunction: function(a, b) {},
+    initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, props, center) {
-        let gpsdata = {
-            ...props
-        }; // https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
-        calcTrueWind(gpsdata);
-
-        if (typeof(props.boatposition) != 'undefined') {
+        if (typeof(props.POS) != 'undefined') {
             ctx = canvas.getContext('2d')
             ctx.save();
             ctx.globalAlpha *= props.Opacity;
 
-            //Laylines auf map zeichnen
-            intersections = calc_intersections(self, props)
-            if ((typeof(props.LaylineWP) != 'undefined' && props.LaylineWP == true) || true)
-                if (typeof(intersections) != 'undefined' && intersections)
-                    DrawMapLaylines(this, ctx, this.getScale(), intersections, props, gpsdata.TWD);
+            intersections = calc_intersections(self, props);
+            if (typeof(intersections) != 'undefined')
+                DrawMapLaylines(this, ctx, this.getScale(), intersections, props, props.TWDF);
             ctx.restore();
         }
-
     },
-
 }
 
 var LayLines_OverlayParameter = {
@@ -391,15 +363,13 @@ var LayLines_OverlayParameter = {
 avnav.api.registerWidget(LayLines_Overlay, LayLines_OverlayParameter);
 /*##################################################################################################*/
 
-var TWD_Abweichung = [0, 0];
-var old_time = performance.now()
 let LatLon = avnav.api.LatLon();
 let calc_intersections = function(self, props) {
     intersections = null;
-    let b_pos = new LatLon(props.boatposition.lat, props.boatposition.lon);
+    let b_pos = new LatLon(props.POS.lat, props.POS.lon);
     //b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
-    if (props.WPposition) {
-        WP_pos = new LatLon(props.WPposition.lat, props.WPposition.lon);
+    if (props.WP) {
+        WP_pos = new LatLon(props.WP.lat, props.WP.lon);
 
         // Intersections berechnen
         var is_SB = LatLon.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
@@ -473,14 +443,11 @@ let calc_intersections = function(self, props) {
 let DrawMapLaylines = function(self, ctx, scale, intersections, props, TWD) {
     DrawLine = function(p1, p2, color) {
         ctx.beginPath();
-        ctx.moveTo(p1[0], p1[1]); // Move pen to center
+        ctx.moveTo(p1[0], p1[1]);
         ctx.lineTo(p2[0], p2[1]);
         ctx.closePath();
-
-
-        ctx.lineWidth = 5; //0.02*Math.min(x,y)
-        ctx.fillStyle = color
-        ctx.strokeStyle = color; // !!!
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = color;
         ctx.setLineDash([10 * scale, 20 * scale])
         ctx.stroke();
     }
@@ -490,22 +457,22 @@ let DrawMapLaylines = function(self, ctx, scale, intersections, props, TWD) {
         // BB
         p1 = self.lonLatToPixel(intersections.Boat.BB.P1._lon, intersections.Boat.BB.P1._lat);
         p2 = self.lonLatToPixel(intersections.Boat.BB.P2._lon, intersections.Boat.BB.P2._lat);
-        DrawLine(p1, p2, ((props.LLBB - TWD) + 540) % 360 - 180 < 0 ? "rgb(0,255,0)" : "red");
+        DrawLine(p1, p2, to180(props.LLBB - TWD) < 0 ? "rgb(0,255,0)" : "red");
         // SB
         p1 = self.lonLatToPixel(intersections.Boat.SB.P1._lon, intersections.Boat.SB.P1._lat);
         p2 = self.lonLatToPixel(intersections.Boat.SB.P2._lon, intersections.Boat.SB.P2._lat);
-        DrawLine(p1, p2, ((props.LLSB - TWD) + 540) % 360 - 180 < 0 ? "rgb(0,255,0)" : "red");
+        DrawLine(p1, p2, to180(props.LLSB - TWD) < 0 ? "rgb(0,255,0)" : "red");
     }
     if (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP == true && intersections != null) {
         // Layline vom Wegpunkt:
         // BB
         p1 = self.lonLatToPixel(intersections.WP.BB.P1._lon, intersections.WP.BB.P1._lat);
         p2 = self.lonLatToPixel(intersections.WP.BB.P2._lon, intersections.WP.BB.P2._lat);
-        DrawLine(p1, p2, ((props.LLBB - TWD) + 540) % 360 - 180 > 0 ? "rgb(0,255,0)" : "red");
+        DrawLine(p1, p2, to180(props.LLBB - TWD) > 0 ? "rgb(0,255,0)" : "red");
         // SB
         p1 = self.lonLatToPixel(intersections.WP.SB.P1._lon, intersections.WP.SB.P1._lat);
         p2 = self.lonLatToPixel(intersections.WP.SB.P2._lon, intersections.WP.SB.P2._lat);
-        DrawLine(p1, p2, ((props.LLSB - TWD) + 540) % 360 - 180 > 0 ? "rgb(0,255,0)" : "red");
+        DrawLine(p1, p2, to180(props.LLSB - TWD) > 0 ? "rgb(0,255,0)" : "red");
 
     }
     ctx.restore()
@@ -548,8 +515,8 @@ let DrawLaylineArea = function(ctx, radius, angle, TWD_Abweichung, color) {
     ctx.lineWidth = 5; //0.02*Math.min(x,y)
     ctx.fillStyle = color;
     ctx.strokeStyle = color;
-    let dashes = radius / 4
-    ctx.setLineDash([Math.floor(0.5 * dashes), Math.floor(0.5 * dashes)]) //0.1*Math.min(x,y), 0.1*Math.min(x,y)]);
+    let f = radius / 200;
+    ctx.setLineDash([Math.round(10*f),Math.round(15*f)]);
     ctx.stroke();
 
     // Areas
@@ -797,30 +764,6 @@ let DrawKompassring = function(ctx, radius, angle) {
 
 
 
-class polar {
-    constructor(r, alpha) {
-        this.r = r;
-        this.alpha = alpha;
-    }
-    toKartesisch() {
-        let K = {};
-        K['x'] = this.r * Math.cos((this.alpha * Math.PI) / 180);
-        K['y'] = this.r * Math.sin((this.alpha * Math.PI) / 180);
-        return (K);
-    }
-}
-
-class kartesisch {
-    constructor(x, y) // [alpha in deg]
-    {
-        this.x = x
-        this.y = y
-    }
-    toPolar() {
-        return (180 * Math.atan2(this.y, this.x) / Math.PI)
-    }
-}
-
 
 function to360(a) {
     while (a < 360) {
@@ -841,42 +784,4 @@ function degrees(a) {
     return a * 180 / Math.PI;
 }
 
-function add_polar(a, b) {
-    // add two polar vectors [phi,r]
-    a = [a[1] * Math.sin(radians(a[0])), a[1] * Math.cos(radians(a[0]))];
-    b = [b[1] * Math.sin(radians(b[0])), b[1] * Math.cos(radians(b[0]))];
-    var s = [a[0] + b[0], a[1] + b[1]];
-    var r = Math.sqrt(s[0] ** 2 + s[1] ** 2);
-    phi = to360(90 - degrees(Math.atan2(s[1], s[0])));
-    return [phi, r];
-}
-
-
-let calcTrueWind = function(gpsdata) {
-    return;
-    if (typeof(gpsdata['course']) != 'undefined' && typeof(gpsdata['windAngle']) != 'undefined') {
-        var hdg = gpsdata['course']; // true heading
-        var stw = gpsdata['speed']; // water speed
-        // apparent wind
-        var awa = gpsdata['AWA'] = gpsdata['windAngle'];
-        var aws = gpsdata['AWS'] = gpsdata['windSpeed'];
-        var awd = gpsdata['AWD'] = to360(awa + hdg);
-        // true wind (relative to water)
-        var leeway = 0; // leeway angle, not currently know here, is needed to get true wind right
-        var tw = add_polar([awa, aws], [leeway, -stw]);
-        var twd = tw[0];
-        var tws = gpsdata['TWS'] = tw[1];
-        var twa = gpsdata['TWA'] = tw[0];
-        var twd = gpsdata['TWD'] = to360(twa + hdg);
-        //console.log("HDG",hdg,"stw",stw,"LEE",leeway);
-        //console.log("AWS",aws,"AWA",awa,"AWD",awd);
-        //console.log("TWS",tws,"TWA",twa,"TWD",twd);
-        return true;
-    }
-}
-
-let normalize = function(value, start, end) {
-    let width = end - start
-    let offsetValue = value - start //# value relative to 0
-    return (offsetValue - (Math.floor(offsetValue / width) * width)) + start;
-}
+})();
