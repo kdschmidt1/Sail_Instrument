@@ -104,7 +104,7 @@ var Sail_InstrumentInfoWidget = {
                                 						 </div> \
                                 						 </div> \
                                 						 "
-                                			 } 
+                                			 }
                                 	 return(ret)
                                  },
                                 		 storeKeys:{
@@ -178,7 +178,7 @@ var Sail_InstrumentWidget={
             			// get rid of maprotationdeg for widget
             			if(gpsdata.courseup)
             				maprotationdeg=360-boatrotationdeg;
-            			else 
+            			else
             				maprotationdeg=0;
             			calcTrueWind(gpsdata)
             			let start = new Date();
@@ -194,7 +194,7 @@ var Sail_InstrumentWidget={
             			DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+gpsdata.AWD, "rgb(0,255,0)", 'A')
             			DrawWindpfeilIcon(ctx, Displaysize, maprotationdeg+gpsdata.TWD , "blue", 'T')
 
-            			if(typeof(gpsdata.TWDFilt_Indicator) != 'undefined' && gpsdata.TWDFilt_Indicator==true)	 
+            			if(typeof(gpsdata.TWDFilt_Indicator) != 'undefined' && gpsdata.TWDFilt_Indicator==true)
             				DrawWindpfeilIcon(ctx, Displaysize, + maprotationdeg+gpsdata.TWDF, "yellow", '~');
             			return;
             		},
@@ -266,7 +266,7 @@ let Sail_Instrument_Overlay={
                             		 finalizeFunction: function(){
                              },
                             		 renderCanvas: function(canvas,props,center)
-                            		 {	
+                            		 {
                             	 let gpsdata= {...props};	// https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
                             	 calcTrueWind(gpsdata);
 
@@ -278,10 +278,10 @@ let Sail_Instrument_Overlay={
                             	 if(gpsdata.Widgetposition=='Mapcenter')
                             		 // Zeichne im Center:
                             		 ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
-                            		 else if(gpsdata.Widgetposition=='Boatposition')	
+                            		 else if(gpsdata.Widgetposition=='Boatposition')
                             		 {
                             			 if(typeof(gpsdata.boatposition) != 'undefined')
-                            			 { 
+                            			 {
                             				 // Zeichne an der Bootsposition
                             				 coordinates=this.lonLatToPixel(gpsdata.boatposition.lon,gpsdata.boatposition.lat)
                 					  ctx.translate(coordinates[0],coordinates[1]);
@@ -302,7 +302,7 @@ let Sail_Instrument_Overlay={
                             				 boatrotationdeg = gpsdata.course;	// Hier muss eigentlich HDG hinein!!
 
                             				 let start = new Date();
-                            				 //muss auf 360 limitiert werden                	  
+                            				 //muss auf 360 limitiert werden
                             				 let TWD_Abweichung=[normalize(gpsdata.minTWD-gpsdata.TWDF, 0, 360),normalize(gpsdata.maxTWD-gpsdata.TWDF,0,360)]
                             				 DrawOuterRing(ctx, gpsdata.Displaysize, maprotationdeg+boatrotationdeg);
                             				 DrawKompassring(ctx, gpsdata.Displaysize, maprotationdeg);
@@ -364,15 +364,15 @@ let LayLines_Overlay={
                     	  let gpsdata= {...props};	// https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
                     	  calcTrueWind(gpsdata);
 
-                    	  if(typeof(props.boatposition) != 'undefined')		
+                    	  if(typeof(props.boatposition) != 'undefined')
                     	  {
                     		  ctx=canvas.getContext('2d')
 																																	ctx.save();
                     		  ctx.globalAlpha*=props.Opacity;
 
-                    		  //Laylines auf map zeichnen 
+                    		  //Laylines auf map zeichnen
                     		  intersections = calc_intersections(self, props)
-		            		if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true) 
+		            		if( (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true)|| true)
 		            			if(typeof(intersections) != 'undefined'&&intersections)
 		            				DrawMapLaylines(this, ctx, this.getScale(), intersections, props,gpsdata.TWD);
                     		  ctx.restore();
@@ -433,14 +433,14 @@ let calc_intersections = function(self, props) {
 			is_SB_WP = calc_endpoint(is_SB, WP_pos);
 		}
 
-		if(is_SB_boat && is_SB_WP && is_BB_boat && is_BB_WP){	
+		if(is_SB_boat && is_SB_WP && is_BB_boat && is_BB_WP){
 			// es gibt schnittpunkte
-			intersections = 
-			{ 
-			 Boat: { SB: { P1: b_pos, P2: is_SB_boat.pos, color: 'rgb(0,255,0)' ,dist: is_SB_boat.dist}, 
-				 BB: { P1: b_pos, P2: is_BB_boat.pos, color: 'red' ,dist: is_BB_boat.dist} }, 
-				 WP:   { SB: { P1: WP_pos, P2: is_SB_WP.pos, color: 'red' ,dist: is_SB_WP.dist}, 
-					 BB: { P1: WP_pos, P2: is_BB_WP.pos, color: 'rgb(0,255,0)' ,dist: is_BB_WP.dist} } 
+			intersections =
+			{
+			 Boat: { SB: { P1: b_pos, P2: is_SB_boat.pos, color: 'rgb(0,255,0)' ,dist: is_SB_boat.dist},
+				 BB: { P1: b_pos, P2: is_BB_boat.pos, color: 'red' ,dist: is_BB_boat.dist} },
+				 WP:   { SB: { P1: WP_pos, P2: is_SB_WP.pos, color: 'red' ,dist: is_SB_WP.dist},
+					 BB: { P1: WP_pos, P2: is_BB_WP.pos, color: 'rgb(0,255,0)' ,dist: is_BB_WP.dist} }
 			}
 		}
 		else
@@ -455,7 +455,7 @@ let calc_intersections = function(self, props) {
 
 
 let DrawMapLaylines=function(self,ctx, scale, intersections, props,TWD) {
-	DrawLine=function(p1,p2,color){	
+	DrawLine=function(p1,p2,color){
 		ctx.beginPath();
 		ctx.moveTo(p1[0],p1[1]);   // Move pen to center
 		ctx.lineTo(p2[0],p2[1]);
@@ -467,7 +467,7 @@ let DrawMapLaylines=function(self,ctx, scale, intersections, props,TWD) {
 		ctx.strokeStyle = color;// !!!
 		ctx.setLineDash([10*scale,20*scale])
 		ctx.stroke();
-	} 
+	}
 	ctx.save();
 	if(typeof(props.LaylineBoat) != 'undefined' && props.LaylineBoat==true && intersections != null)
 	{
@@ -538,7 +538,7 @@ let DrawLaylineArea=function(ctx, radius, angle,TWD_Abweichung, color) {
 	ctx.setLineDash([Math.floor(0.5*dashes), Math.floor(0.5*dashes)])	//0.1*Math.min(x,y), 0.1*Math.min(x,y)]);
                             				 ctx.stroke();
 
-                            				 // Areas	
+                            				 // Areas
                             				 ctx.globalAlpha *= 0.3;
                             				 ctx.beginPath();
                             				 ctx.moveTo(0, 0);   // Move pen to center
@@ -670,7 +670,7 @@ let DrawOuterRing=function(ctx,radius, angle){
 
 	drawMultiRadiantCircle(0, 0, radius, thickness, someColors);
 
-	function drawMultiRadiantCircle(xc, yc, r, thickness, radientColors) 
+	function drawMultiRadiantCircle(xc, yc, r, thickness, radientColors)
 	{
 		var partLength = (2 * Math.PI) / 2;
 		var start = -Math.PI / 2;
@@ -774,12 +774,12 @@ class polar
 		K['x'] = this.r*Math.cos((this.alpha * Math.PI) / 180);
 		K['y'] = this.r*Math.sin((this.alpha * Math.PI) / 180);
 		return(K);
-	}    
+	}
 }
 
 class kartesisch
 {
-	constructor(x, y)  // [alpha in deg] 
+	constructor(x, y)  // [alpha in deg]
 	{
 		this.x=x
 		this.y=y
@@ -791,43 +791,61 @@ class kartesisch
 }
 
 
+function to360(a) {
+	while(a<360) { a+=360; }
+  return a%360;
+}
+
+function to180(a) {
+	a=to360(a);
+  return a<180 ? a : a-360;
+}
+
+function radians(a) {
+	return a*Math.PI/180;
+}
+
+function degrees(a) {
+	return a*180/Math.PI;
+}
+
+function add_polar(a, b) {
+  // add two polar vectors [phi,r]
+	a = [a[1] * Math.sin(radians(a[0])), a[1] * Math.cos(radians(a[0]))];
+	b = [b[1] * Math.sin(radians(b[0])), b[1] * Math.cos(radians(b[0]))];
+  var s = [a[0] + b[0], a[1] + b[1]];
+  var r = Math.sqrt(s[0] ** 2 + s[1] ** 2);
+  phi = to360(90 - degrees(Math.atan2(s[1], s[0])));
+  return [phi, r];
+}
 
 
-
-
-
-let calcTrueWind=function(gpsdata)
-		{
-
-	//# https://www.rainerstumpe.de/HTML/wind02.html
-	//# https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721      
-
-
-	if(typeof(gpsdata['course']) != 'undefined' &&  typeof(gpsdata['windAngle']) != 'undefined')
-	{
-		gpsdata['AWA']=gpsdata['windAngle']
-		gpsdata['AWS']=gpsdata['windSpeed']
-
-		{
-			gpsdata['AWD'] = (gpsdata['AWA'] + gpsdata['course']) % 360
-			KaW = new polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
-            		KaB = new polar(gpsdata['speed'], gpsdata['course']).toKartesisch()
-
-            		if(gpsdata['speed'] == 0 || gpsdata['AWS'] == 0)
-            			gpsdata['TWD'] = gpsdata['AWD'] 
-            		else
-            			gpsdata['TWD'] = new kartesisch(KaW['x'] - KaB['x'], KaW['y'] - KaB['y']).toPolar() % 360
-			gpsdata['TWS'] = Math.sqrt((KaW['x'] - KaB['x']) * (KaW['x'] - KaB['x']) + (KaW['y'] - KaB['y']) * (KaW['y'] - KaB['y']))
-
-            		gpsdata['TWA'] = gpsdata['TWD'] - gpsdata['course']
-			return true;
-		}
+let calcTrueWind=function(gpsdata) {
+  return;
+	if(typeof(gpsdata['course']) != 'undefined' &&  typeof(gpsdata['windAngle']) != 'undefined') {
+		var hdg=gpsdata['course']; // true heading
+		var stw=gpsdata['speed']; // water speed
+	  // apparent wind
+		var awa=gpsdata['AWA']=gpsdata['windAngle'];
+		var aws=gpsdata['AWS']=gpsdata['windSpeed'];
+		var awd=gpsdata['AWD'] = to360(awa+hdg);
+		// true wind (relative to water)
+		var leeway=0; // leeway angle, not currently know here, is needed to get true wind right
+		var tw =add_polar([awa,aws],[leeway,-stw]);
+		var twd=tw[0];
+		var tws=gpsdata['TWS']=tw[1];
+		var twa=gpsdata['TWA']=tw[0];
+		var twd=gpsdata['TWD']=to360(twa+hdg);
+    //console.log("HDG",hdg,"stw",stw,"LEE",leeway);
+    //console.log("AWS",aws,"AWA",awa,"AWD",awd);
+    //console.log("TWS",tws,"TWA",twa,"TWD",twd);
+		return true;
 	}
-		}
+}
 
 let normalize=function(value, start, end )
-		{        
-	let width       = end - start      
-	let offsetValue = value - start    //# value relative to 0      
+		{
+	let width       = end - start
+	let offsetValue = value - start    //# value relative to 0
 	return ( offsetValue - ( Math.floor( offsetValue / width ) * width ) ) + start ;
 		}
