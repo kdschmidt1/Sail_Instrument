@@ -79,30 +79,25 @@ class Plugin(object):
                     "path": cls.PATHmaxTWD,
                     "description": "maximum TrueWindDirection last xx Minutes",
                 },
-                {
-                    "path": cls.PATHTWDF,
-                    "description": "TrueWindDirection PT1 filtered",
-                },
+                {"path": cls.PATHTWDF, "description": "TrueWindDirection PT1 filtered"},
                 {
                     "path": cls.PATHAWDF,
                     "description": "ApparentWindDirection PT1 filtered",
                 },
-                {
-                    "path": cls.PATHTLL_OPTVMC,
-                    "description": "optimum vmc direction",
-                },
-                {
-                    "path": cls.PATHTLL_SB,
-                    "description": "Layline Steuerbord",
-                },
-                {
-                    "path": cls.PATHTLL_BB,
-                    "description": "Layline Backbord",
-                },
-                {
-                    "path": cls.PATHTLL_VPOL,
-                    "description": "Speed aus Polare",
-                },
+                {"path": cls.PATHTLL_OPTVMC, "description": "optimum vmc direction"},
+                {"path": cls.PATHTLL_SB, "description": "Layline Steuerbord"},
+                {"path": cls.PATHTLL_BB, "description": "Layline Backbord"},
+                {"path": cls.PATHTLL_VPOL, "description": "Speed aus Polare"},
+                {"path": "gps.currentSet", "description": "tide set angle"},
+                {"path": "gps.currentDrift", "description": "tide drift rate"},
+                # {
+                #    "path": "gps.trueWindAngle",
+                #    "description": "true wind angle",
+                # },
+                # {
+                #    "path": "gps.trueWindSpeed",
+                #    "description": "true wind speed",
+                # },
             ],
         }
 
@@ -204,6 +199,8 @@ class Plugin(object):
         while not self.api.shouldStopMainThread():
             time.sleep(0.5)
             data = {}
+            data["COG"] = self.api.getSingleValue("gps.track")
+            data["SOG"] = self.api.getSingleValue("gps.speed")
             data["HDT"] = self.api.getSingleValue("gps.headingTrue")
             data["STW"] = self.api.getSingleValue("gps.waterSpeed")
             data["AWA"] = self.api.getSingleValue("gps.windAngle")
@@ -212,6 +209,12 @@ class Plugin(object):
             data["TWS"] = self.api.getSingleValue("gps.trueWindSpeed")
 
             if calcTrueWind(self, data):
+                # if all(data.get(x) is not None for x in ["TWA", "TWS"]):
+                #    self.api.addData("gps.trueWindAngle", data["TWA"])
+                #    self.api.addData("gps.trueWindSpeed", data["TWS"])
+                if all(data.get(x) is not None for x in ["set", "drift"]):
+                    self.api.addData("gps.currentSet", data["set"])
+                    self.api.addData("gps.currentDrift", data["drift"])
                 best_vmc_angle(self, data)
                 data["minTWD"], data["maxTWD"] = minmax(data["TWD"])
                 self.api.addData(self.PATHminTWD, data["minTWD"])
@@ -219,7 +222,6 @@ class Plugin(object):
                 if calcFilteredWind(self, data):
                     self.api.addData(self.PATHTWDF, data["TWDF"])
                     self.api.addData(self.PATHAWDF, data["AWDF"])
-
                     if calc_Laylines(self, data):
                         self.api.setStatus("NMEA", "computing Laylines/VPOL")
 
@@ -505,34 +507,36 @@ def calcFilteredWind(self, gpsdata):
         self.api.error(f"error in calcFilteredWind {x}")
 
 
-def calcTrueWind(self, gpsdata):
-    # self.api.log(f"gpsdata0={gpsdata}")
+def calcTrueWind(self, data):
+    # self.api.log(f"gpsdata0={data}")
     try:
-        fields = ["HDT", "STW", "AWA", "AWS"]
-        missing_fields = list(filter(lambda x: gpsdata.get(x) is None, fields))
+        fields = ["COG", "SOG", "HDT", "STW", "AWA", "AWS"]
+        missing_fields = list(filter(lambda x: data.get(x) is None, fields))
 
         if missing_fields:
             self.api.setStatus("ERROR", f"missing input data: {missing_fields}")
             return
 
-        hdt, stw, awa, aws = list(map(gpsdata.get, fields))
+        cog, sog, hdt, stw, awa, aws = list(map(data.get, fields))
+        leeway = 0  # needed to get it right, but currently not known here
 
-        if any(gpsdata.get(x) is None for x in ["TWA", "TWS"]):
-            leeway = 0  # needed to get true wind right, but currently not known here
+        if any(data.get(x) is None for x in ["TWA", "TWS"]):
             twa, tws = add_polar((awa, aws), (leeway, -stw))
-            gpsdata["TWA"] = twa
-            gpsdata["TWS"] = tws
+            data["TWA"] = twa
+            data["TWS"] = tws
         else:
-            twa = gpsdata["TWA"]
+            twa = data["TWA"]
 
-        gpsdata["AWD"] = to360(awa + hdt)
-        gpsdata["TWD"] = to360(twa + hdt)
+        data["AWD"] = to360(awa + hdt)
+        data["TWD"] = to360(twa + hdt)
 
-        # self.api.log(f"gpsdata1={gpsdata}")
+        data["set"], data["drift"] = add_polar((cog, sog), (hdt + leeway, -stw))
+
+        # self.api.log(f"gpsdata1={data}")
         return True
 
     except Exception as x:
-        self.api.error(f"error calculating true wind data {gpsdata} {x}")
+        self.api.error(f"error calculating true wind data {data} {x}")
 
 
 try:
