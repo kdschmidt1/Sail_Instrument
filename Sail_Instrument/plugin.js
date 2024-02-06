@@ -153,7 +153,7 @@ var Sail_InstrumentWidget = {
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data) {
-        console.log(data);
+        //console.log(data);
         var ctx = canvas.getContext('2d');
         // Set scale factor for all values
         var crect = canvas.getBoundingClientRect();
@@ -185,29 +185,37 @@ var Sail_InstrumentWidget = {
         ctx.globalAlpha *= data.Opacity;
 
         var heading = typeof(data.HDT) != 'undefined' ? data.HDT : data.COG;
-        var maprotation =-heading;
-        var size = 100;
 
-        DrawOuterRing(ctx, size, maprotation + heading);
-        DrawKompassring(ctx, size, maprotation);
 
-        if (data.DFTF>=0.5) {
-            drawTideArrow(ctx, size, maprotation + data.SETF , "teal", (1.94384*data.DFTF).toFixed(1));
-        }
-        var mm = [to360(data.minTWD - data.TWDF), to360(data.maxTWD - data.TWDF)];
-        DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, to180(data.LLSB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
-        DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, to180(data.LLBB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
-        if (data.AWSF>=1) {
-            DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, "rgb(0,255,0)", 'A');
-        }
-        if (data.TWSF>=1) {
-            DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, "blue", 'T');
-        }
-        if (typeof(data.BRG) != 'undefined') {
-            DrawWPIcon(ctx, size, maprotation + data.BRG);
-        }
-        DrawEierUhr(ctx, size, maprotation + data.COG, "orange", 'T');
-        DrawCourseBox(ctx, size, maprotation + heading, "black", Math.round(heading));
+     // draw triangle symbolizing the boat
+      ctx.save();
+      //ctx.rotate(radians(angle));
+      ctx.beginPath();
+      var radius=100;
+      ctx.moveTo(0, -0.75*radius );
+      ctx.lineTo(-0.3*radius, 0.75*radius );
+      ctx.lineTo(+0.3*radius, 0.75*radius );
+      ctx.closePath();
+      ctx.fillStyle = "gray";
+      ctx.lineWidth = 0.01 * radius;
+      ctx.strokeStyle = "black";
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      drawWindWidget(ctx, 100, -heading, data);
+
+      // print AWS/TWS
+      ctx.save();
+      ctx.fillStyle = "black";
+      ctx.textAlign = "left";
+      ctx.font = "bold " + 0.2*radius + "px Arial";
+      ctx.fillText("AWS", -1.4*radius,-1.3*radius);
+      ctx.fillText((1.94384*data.AWSF).toFixed(1), -1.4*radius,-1.1*radius);
+      ctx.textAlign = "right";
+      ctx.fillText("TWS", 1.4*radius,-1.3*radius);
+      ctx.fillText((1.94384*data.TWSF).toFixed(1), 1.4*radius,-1.1*radius);
+      ctx.restore();
     },
 };
 
@@ -271,9 +279,13 @@ let Sail_Instrument_Overlay = {
         }
         ctx.globalAlpha *= data.Opacity;
 
-        var maprotation = degrees(this.getRotation());
+        drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
+    }
+
+}
+
+function drawWindWidget(ctx,size, maprotation, data){
         var heading = typeof(data.HDT) != 'undefined' ? data.HDT : data.COG;
-        var size = data.Displaysize;
 
         DrawOuterRing(ctx, size, maprotation + heading);
         DrawKompassring(ctx, size, maprotation);
@@ -295,8 +307,6 @@ let Sail_Instrument_Overlay = {
         }
         DrawEierUhr(ctx, size, maprotation + data.COG, "orange", 'T');
         DrawCourseBox(ctx, size, maprotation + heading, "black", Math.round(heading));
-    }
-
 }
 
 avnav.api.registerWidget(Sail_Instrument_Overlay, Sail_Instrument_OverlayParameter);
