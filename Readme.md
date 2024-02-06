@@ -1,8 +1,9 @@
-**Sail_Instrument Plugin**
-![nur ein Beispiel](https://github.com/kdschmidt1/Sail_Instrument/blob/c3503c50ce09bfc21681f1f1e58452fd98255a73/Images/avn1.png "Beispielbild")
-===========================
+# Sail_Instrument Plugin
 
-![nur ein Beispiel](https://github.com/kdschmidt1/Sail_Instrument/blob/1f7c9f73a63de39d7d9d32b99be04a16940e7baa/Images/Achtung.png "Beispielbild")
+![widget overlay](Images/avn1.png)
+![standalone widget](Images/widget.png)
+
+![attention](Images/Achtung.png)
 
 
 **This Plugin only works with an AVNAV-Versions including User-Overlays and new geodesy-library. (Release >20220819).** 
@@ -31,58 +32,54 @@ These two vectors are mandatory for calculation of the laylines.
 The boatspeed Matrix is only used for calculation of VPOL (interpolated speed for actual condition based on polar-data)
 
 
-| Value | Format | Storename | Description |
-| --- | --- | --- | --- |
-| LLSB | 0…360 [°] | gps.LLSB | layline angle Starboard |
-| LLBB | 0…360 [°] | gps.LLBB | layline angle Portside |
-| VPOL | 0..∞ [m/s] | gps.VPOL | calculated polar speed |
-| AWDF | 0…360 [°] | gps.AWDF |  PT1 filtered ApparentWindDirection |
-| TWDF | 0…360 [°] | gps.AWDF |  PT1 filtered TrueWindDirection |
-|  |  |  |  |
+| Value | Format     | Storename | Description                        |
+|-------|------------|-----------|------------------------------------|
+| LLSB  | 0…360 [°]  | gps.LLSB  | layline angle Starboard            |
+| LLBB  | 0…360 [°]  | gps.LLBB  | layline angle Portside             |
+| VPOL  | 0..∞ [m/s] | gps.VPOL  | calculated polar speed             |
+| AWDF  | 0…360 [°]  | gps.AWDF  | PT1 filtered ApparentWindDirection |
+| TWDF  | 0…360 [°]  | gps.AWDF  | PT1 filtered TrueWindDirection     |
 
 
 **NEW:**  
 
 For the Instrument-Overlay you can configure
 
-[](https://github.com/kdschmidt1/Sail_Instrument/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/InstrumentOverlayconf.png "Beispielbild")
+[](Images/InstrumentOverlayconf.png "Beispielbild")
 
-| Name | Default Value | Description |
-| --- | --- | --- |
-| Widgetposition| Boatposition | Position of the Instrument on the map|
-| Displaysize| 100 | Size of the Sail-Instrument (%) |
-| Opacity | 1.0| Opacity of the Sail-Instrument on the map|
-|  |  |  |  
+| Name           | Default Value  | Description                               |
+|----------------|----------------|-------------------------------------------|
+| Widgetposition | Boatposition   | Position of the Instrument on the map     |
+| Displaysize    | 100            | Size of the Sail-Instrument (%)           |
+| Opacity        | 1.0            | Opacity of the Sail-Instrument on the map |
 
 If there is no boatposition available the Instrument will always be shown at the center position!
 
                           
                         
 For the Laylines-Overlay you can configure  
-[](https://github.com/kdschmidt1/Sail_Instrument/blob/98b84dc5dde84936c46d53dbb03e475991b24948/Images/LaylinesOverlay_conf.png "Beispielbild")  
+[](LaylinesOverlay_conf.png "Beispielbild")  
 
 
 
-| Name | Default Value | Description |
-| --- | --- | --- |
-| Opacity | 1.0 | Opacity of the Laylines-Overlay on the map|
-| Laylinelength | 100 | Length of Laylines (nm) |
-| Laylineoverlap | False | Extent Laylines over Intersection |
-| LaylineBoat | True | Draw Ahead-Laylines from Boatposition |
-| LaylineWP | True | Draw Waypoint-Laylines |  
-|  |  |  |
+| Name           | Default Value | Description                                |
+|----------------|---------------|--------------------------------------------|
+| Opacity        | 1.0           | Opacity of the Laylines-Overlay on the map |
+| Laylinelength  | 100           | Length of Laylines (nm)                    |
+| Laylineoverlap | False         | Extent Laylines over Intersection          |
+| LaylineBoat    | True          | Draw Ahead-Laylines from Boatposition      |
+| LaylineWP      | True          | Draw Waypoint-Laylines                     |  
 
 
 
 The server-plugin itself has two parameter  
-[](https://github.com/kdschmidt1/Sail_Instrument/blob/78aa9bd42013f85f47369209355f0217332afda7/Images/plugin_conf.png "Beispielbild")  
+[](Images/plugin_conf.png "Beispielbild")  
 
 
-| Name | Default Value | Description |
-| --- | --- | --- |
-| TWD_FiltFreq | 0.2 | Limit Frequency of the PT1 Lowpass-Filter |  
-| Area-Minutes | 2 | Minutes considered for Layline-Areas [0..60] where 0 means no Laylineareas |  
-|  |  |  |
+| Name         | Default Value | Description                                                                |
+|--------------|---------------|----------------------------------------------------------------------------|
+| TWD_FiltFreq | 0.2           | Limit Frequency of the PT1 Lowpass-Filter                                  |  
+| Area-Minutes | 2             | Minutes considered for Layline-Areas [0..60] where 0 means no Laylineareas |  
 
 
 Please report any Errors to [Issues](https://github.com/kdschmidt1/Sail_Instrument/issues)
