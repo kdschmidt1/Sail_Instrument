@@ -16,8 +16,12 @@ except:
 
 MIN_AVNAV_VERSION = "20220426"
 
-PATHTWDF = "gps.TWDF"
 PATHAWDF = "gps.AWDF"
+PATHAWSF = "gps.AWSF"
+PATHTWDF = "gps.TWDF"
+PATHTWSF = "gps.TWSF"
+PATHSETF = "gps.SETF"
+PATHDFTF = "gps.DFTF"
 PATHTLL_SB = "gps.LLSB"
 PATHTLL_BB = "gps.LLBB"
 PATHTLL_VPOL = "gps.VPOL"
@@ -52,7 +56,7 @@ CONFIG = [
     {
         "name": ADD_TIDE,
         "description": "write tide data to AvNav model",
-        "default": "Trueqq",
+        "default": "False",
         "type": "BOOLEAN",
     },
 ]
@@ -83,8 +87,12 @@ class Plugin(object):
                     "path": PATHmaxTWD,
                     "description": "maximum TrueWindDirection last n Minutes",
                 },
-                {"path": PATHTWDF, "description": "TrueWindDirection PT1 filtered"},
-                {"path": PATHAWDF, "description": "ApparentWindDirection PT1 filtered"},
+                {"path": PATHTWDF, "description": "smoothed true wind direction"},
+                {"path": PATHTWSF, "description": "smoothed true wind speed"},
+                {"path": PATHAWDF, "description": "smoothed apparent wind direction"},
+                {"path": PATHAWSF, "description": "smoothed apparent wind speed"},
+                {"path": PATHSETF, "description": "smoothed tide set direction"},
+                {"path": PATHDFTF, "description": "smoothed tide drift rate"},
                 {"path": PATHTLL_OPTVMC, "description": "optimum vmc direction"},
                 {"path": PATHTLL_SB, "description": "Layline Steuerbord"},
                 {"path": PATHTLL_BB, "description": "Layline Backbord"},
@@ -128,6 +136,7 @@ class Plugin(object):
         self.count = 0
         self.AWF = 0, 0
         self.TWF = 0, 0
+        self.TIF = 0, 0
         self.api.registerRestart(self.stop)
         self.oldtime = 0
         self.polare = {}
@@ -221,8 +230,12 @@ class Plugin(object):
                 self.api.addData(PATHminTWD, data["minTWD"])
                 self.api.addData(PATHmaxTWD, data["maxTWD"])
                 if calcFilteredWind(self, data):
-                    self.api.addData(PATHTWDF, data["TWDF"])
                     self.api.addData(PATHAWDF, data["AWDF"])
+                    self.api.addData(PATHAWSF, data["AWSF"])
+                    self.api.addData(PATHTWDF, data["TWDF"])
+                    self.api.addData(PATHTWSF, data["TWSF"])
+                    self.api.addData(PATHSETF, data["SETF"])
+                    self.api.addData(PATHDFTF, data["DFTF"])
                     calc_Laylines(self, data)
 
     # https://stackoverflow.com/questions/4983258/python-how-to-check-list-monotonicity
@@ -493,10 +506,13 @@ def calcFilteredWind(self, data):
 
         awd, aws = data["AWD"], data["AWS"]
         twd, tws = data["TWD"], data["TWS"]
+        set, dft = data.get("SET", 0), data.get("DFT", 0)
         self.AWF = filter(self.AWF, toCart((awd, aws)))
         self.TWF = filter(self.TWF, toCart((twd, tws)))
-        data["AWDF"] = toPol(self.AWF)[0]
-        data["TWDF"] = toPol(self.TWF)[0]
+        self.TIF = filter(self.TIF, toCart((set, dft)))
+        data["AWDF"], data["AWSF"] = toPol(self.AWF)
+        data["TWDF"], data["TWSF"] = toPol(self.TWF)
+        data["SETF"], data["DFTF"] = toPol(self.TIF)
         return True
 
     except Exception as x:
