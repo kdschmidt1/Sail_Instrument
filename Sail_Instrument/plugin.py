@@ -204,21 +204,21 @@ class Plugin(object):
         while not self.api.shouldStopMainThread():
             time.sleep(0.5)
             data = {}
-            data["track"] = self.api.getSingleValue("gps.headingTrue")
-            data["speed"] = self.api.getSingleValue("gps.waterSpeed")
-            data["windAngle"] = self.api.getSingleValue("gps.windAngle")
-            data["windSpeed"] = self.api.getSingleValue("gps.windSpeed")
+            data["HDT"] = self.api.getSingleValue("gps.headingTrue")
+            data["STW"] = self.api.getSingleValue("gps.waterSpeed")
+            data["AWA"] = self.api.getSingleValue("gps.windAngle")
+            data["AWS"] = self.api.getSingleValue("gps.windSpeed")
             data["TWA"] = self.api.getSingleValue("gps.trueWindAngle")
             data["TWS"] = self.api.getSingleValue("gps.trueWindSpeed")
 
             if calcTrueWind(self, data):
                 best_vmc_angle(self, data)
+                data["minTWD"], data["maxTWD"] = minmax(data["TWD"])
+                self.api.addData(self.PATHminTWD, data["minTWD"])
+                self.api.addData(self.PATHmaxTWD, data["maxTWD"])
                 if calcFilteredWind(self, data):
-                    data["minTWD"], data["maxTWD"] = minmax(data["TWD"])
                     self.api.addData(self.PATHTWDF, data["TWDF"])
                     self.api.addData(self.PATHAWDF, data["AWDF"])
-                    self.api.addData(self.PATHminTWD, data["minTWD"])
-                    self.api.addData(self.PATHmaxTWD, data["maxTWD"])
 
                     if calc_Laylines(self, data):
                         self.api.setStatus("NMEA", "computing Laylines/VPOL")
@@ -508,16 +508,14 @@ def calcFilteredWind(self, gpsdata):
 def calcTrueWind(self, gpsdata):
     # self.api.log(f"gpsdata0={gpsdata}")
     try:
-        fields = ["track", "speed", "windAngle", "windSpeed"]
+        fields = ["HDT", "STW", "AWA", "AWS"]
         missing_fields = list(filter(lambda x: gpsdata.get(x) is None, fields))
 
         if missing_fields:
             self.api.setStatus("ERROR", f"missing input data: {missing_fields}")
             return
 
-        hdg, stw, awa, aws = list(map(gpsdata.get, fields))
-        gpsdata["AWA"] = awa
-        gpsdata["AWS"] = aws
+        hdt, stw, awa, aws = list(map(gpsdata.get, fields))
 
         if any(gpsdata.get(x) is None for x in ["TWA", "TWS"]):
             leeway = 0  # needed to get true wind right, but currently not known here
@@ -527,8 +525,8 @@ def calcTrueWind(self, gpsdata):
         else:
             twa = gpsdata["TWA"]
 
-        gpsdata["AWD"] = to360(awa + hdg)
-        gpsdata["TWD"] = to360(twa + hdg)
+        gpsdata["AWD"] = to360(awa + hdt)
+        gpsdata["TWD"] = to360(twa + hdt)
 
         # self.api.log(f"gpsdata1={gpsdata}")
         return True
