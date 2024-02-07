@@ -294,31 +294,38 @@ class Plugin(object):
             self.api.error(f"polar_speed {x}")
 
     def laylines(self, data):
-        twd, tws = data.TWDF, data.TWSF
-        if any(v is None for v in (twd, tws)):
-            return
-        twa = to180(twd - data.HDT)  # filtered TWA
-        upwind = abs(twa) < 90
-
-        tack_angle = float(self.getConfigValue(TACK_ANGLE))
-        gybe_angle = float(self.getConfigValue(GYBE_ANGLE))
-
-        if upwind and tack_angle or not upwind and gybe_angle:
-            angle = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
-            data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
-            return
-
-        if not self.polare:
-            return
         try:
+            twd, tws = data.TWDF, data.TWSF
+            if any(v is None for v in (twd, tws)):
+                return
+            twa = to180(twd - data.HDT)  # filtered TWA
+
+            brg = bearing_to_waypoint()
+            if brg:
+                upwind = abs(to180(brg - twd)) < 90
+            else:
+                upwind = abs(twa) < 90
+
+            tack_angle = float(self.getConfigValue(TACK_ANGLE))
+            gybe_angle = float(self.getConfigValue(GYBE_ANGLE))
+
+            if upwind and tack_angle or not upwind and gybe_angle:
+                angle = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
+                data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
+                return
+
+            if not self.polare:
+                return
+
             angle = self.polar_angle(tws, upwind)
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
             data.VPOL = self.polar_speed(twa, tws)
 
-            brg = bearing_to_waypoint()
-            if brg:
-                # BRG to WP relative to TWD
-                brgw = to180(brg - twd)
+            if not brg:
+                return
+
+            def optimum_vmc(twd, tws, brg):
+                brgw = to180(brg - twd)  # BRG from wind
 
                 def vmc(twa):
                     # unit vector to WP
@@ -326,7 +333,7 @@ class Plugin(object):
                     # boat speed vector from polar
                     b = toCart((twa, self.polar_speed(twa, tws)))
                     # project boat speed vector onto bearing to get VMC
-                    # negative sign, optimizer find minimum
+                    # negative sign, optimizer finds minimum
                     return -(e[0] * b[0] + e[1] * b[1])
 
                 # for a in range(0, 181, 10): self.api.log(f"{a} {vmc(a)*KNOTS}")
@@ -334,10 +341,12 @@ class Plugin(object):
                 res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
                 # self.api.log(f"{res}")
                 if res.success:
-                    data.VMCA = to360(copysign(res.x, brgw) + twd)
-                    data.VMCS = -res.fun
+                    return to360(twd + copysign(res.x, brgw)), -res.fun
+
+            data.VMCD, data.VMCS = optimum_vmc(twd, tws, brg)
+
         except Exception as x:
-            self.api.error(f"polar calculations {x}")
+            self.api.error(f"laylines {x}")
 
     def strictly_increasing(self, L):
         return all(x < y for x, y in zip(L, L[1:]))

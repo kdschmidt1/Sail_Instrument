@@ -147,7 +147,7 @@ var Sail_InstrumentWidget = {
         DFTF: 'nav.gps.sailinstrument.DFTF',
         minTWD: 'nav.gps.sailinstrument.TWDMIN',
         maxTWD: 'nav.gps.sailinstrument.TWDMAX',
-        VMCA: 'nav.gps.sailinstrument.VMCA',
+        VMCD: 'nav.gps.sailinstrument.VMCD',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -259,7 +259,7 @@ let Sail_Instrument_Overlay = {
         DFTF: 'nav.gps.sailinstrument.DFTF',
         minTWD: 'nav.gps.sailinstrument.TWDMIN',
         maxTWD: 'nav.gps.sailinstrument.TWDMAX',
-        VMCA: 'nav.gps.sailinstrument.VMCA',
+        VMCD: 'nav.gps.sailinstrument.VMCD',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -303,8 +303,8 @@ function drawWindWidget(ctx,size, maprotation, data){
           DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, green);
           DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, red);
         }
-        if (data.VMCA) {
-          DrawLaylineArea(ctx, size, maprotation + data.VMCA, [0,0], blue);
+        if (data.VMCD) {
+          DrawLaylineArea(ctx, size, maprotation + data.VMCD, [0,0], blue);
         }
         if (knots(data.AWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, green, 'A');
