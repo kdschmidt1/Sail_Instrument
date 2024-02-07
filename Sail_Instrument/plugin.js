@@ -147,6 +147,7 @@ var Sail_InstrumentWidget = {
         DFTF: 'nav.gps.sailinstrument.DFTF',
         minTWD: 'nav.gps.sailinstrument.TWDMIN',
         maxTWD: 'nav.gps.sailinstrument.TWDMAX',
+        VMCA: 'nav.gps.sailinstrument.VMCA',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -258,6 +259,7 @@ let Sail_Instrument_Overlay = {
         DFTF: 'nav.gps.sailinstrument.DFTF',
         minTWD: 'nav.gps.sailinstrument.TWDMIN',
         maxTWD: 'nav.gps.sailinstrument.TWDMAX',
+        VMCA: 'nav.gps.sailinstrument.VMCA',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -283,6 +285,12 @@ function knots(v){
   return 1.94384*v;
 }
 
+var red = "rgb(255,0,0)";
+var green = "rgb(0,255,0)";
+var blue = "rgb(0,0,255)";
+var black = "black";
+var orange = "orange";
+
 function drawWindWidget(ctx,size, maprotation, data){
         DrawOuterRing(ctx, size, maprotation + data.HDT);
         DrawKompassring(ctx, size, maprotation);
@@ -292,20 +300,23 @@ function drawWindWidget(ctx,size, maprotation, data){
         }
         if (knots(data.TWSF)>=1) {
           var mm = [data.minTWD, data.maxTWD];
-          DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, to180(data.LLSB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
-          DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, to180(data.LLBB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
+          DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, green);
+          DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, red);
+          if (data.VMCA) {
+            DrawLaylineArea(ctx, size, maprotation + data.VMCA, mm, blue);
+          }
         }
         if (knots(data.AWSF)>=1) {
-            DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, "rgb(0,255,0)", 'A');
+            DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, green, 'A');
         }
         if (knots(data.TWSF)>=1) {
-            DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, "blue", data.HDT==data.COG ? 'G' : 'T');
+            DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, blue, data.HDT==data.COG ? 'G' : 'T');
         }
         if (typeof(data.BRG) != 'undefined') {
             DrawWPIcon(ctx, size, maprotation + data.BRG);
         }
-        DrawEierUhr(ctx, size, maprotation + data.COG, "orange", 'T');
-        DrawCourseBox(ctx, size, maprotation + data.HDT, "black", Math.round(data.HDT));
+        DrawEierUhr(ctx, size, maprotation + data.COG, orange, 'T');
+        DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
 }
 
 avnav.api.registerWidget(Sail_Instrument_Overlay, Sail_Instrument_OverlayParameter);
@@ -507,32 +518,29 @@ let DrawWPIcon = function(ctx, radius, angle) {
 }
 
 
-let DrawLaylineArea = function(ctx, radius, angle, TWD_Abweichung, color) {
+let DrawLaylineArea = function(ctx, radius, angle, minmax, color) {
 
-    // TWA und LL-angle auf pos bereich umrechnen
-    // wenn TWD+360 > LL-angle+360 -> grün sonst -> rot
     ctx.save();
-    var radius = 0.9 * radius //0.45*Math.min(x,y)
-    ctx.rotate((angle / 180) * Math.PI)
+    var radius = 0.9 * radius
+    ctx.rotate(radians(angle))
 
     // Laylines
     ctx.beginPath();
-    ctx.moveTo(0, 0); // Move pen to center
+    ctx.moveTo(0, 0);
     ctx.lineTo(0, -radius);
     ctx.closePath();
 
-    ctx.lineWidth = 4; //0.02*Math.min(x,y)
-    //ctx.fillStyle = color;
+    ctx.lineWidth = 4;
     ctx.strokeStyle = color;
     //let f = radius / 200;
     //ctx.setLineDash([Math.round(10*f),Math.round(15*f)]); // do not dash, looks ugly
     ctx.stroke();
 
-    // Areas
+    // sectors
     ctx.globalAlpha *= 0.3;
     ctx.beginPath();
-    ctx.moveTo(0, 0); // Move pen to center
-    ctx.arc(0, 0, radius, radians(TWD_Abweichung[0] - 90), radians(TWD_Abweichung[1] - 90))
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, radius, radians(minmax[0] - 90), radians(minmax[1] - 90))
     ctx.closePath();
 
     ctx.fillStyle = color;
