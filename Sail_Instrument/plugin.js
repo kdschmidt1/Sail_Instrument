@@ -211,10 +211,10 @@ var Sail_InstrumentWidget = {
       ctx.textAlign = "left";
       ctx.font = "bold " + 0.2*radius + "px Arial";
       ctx.fillText("AWS", -1.4*radius,-1.3*radius);
-      ctx.fillText((1.94384*data.AWSF).toFixed(1), -1.4*radius,-1.1*radius);
+      ctx.fillText(knots(data.AWSF).toFixed(1), -1.4*radius,-1.1*radius);
       ctx.textAlign = "right";
       ctx.fillText("TWS", 1.4*radius,-1.3*radius);
-      ctx.fillText((1.94384*data.TWSF).toFixed(1), 1.4*radius,-1.1*radius);
+      ctx.fillText(knots(data.TWSF).toFixed(1), 1.4*radius,-1.1*radius);
       ctx.restore();
     },
 };
@@ -284,22 +284,26 @@ let Sail_Instrument_Overlay = {
 
 }
 
+function knots(v){
+  return 1.94384*v;
+}
+
 function drawWindWidget(ctx,size, maprotation, data){
         var heading = typeof(data.HDT) != 'undefined' ? data.HDT : data.COG;
 
         DrawOuterRing(ctx, size, maprotation + heading);
         DrawKompassring(ctx, size, maprotation);
 
-        if (data.DFTF>=0.5) {
-            drawTideArrow(ctx, size, maprotation + data.SETF , "teal", (1.94384*data.DFTF).toFixed(1));
+        if (knots(data.DFTF)>=0.5) {
+            drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
         var mm = [to360(data.minTWD - data.TWDF), to360(data.maxTWD - data.TWDF)];
         DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, to180(data.LLSB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
         DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, to180(data.LLBB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
-        if (data.AWSF>=1) {
+        if (knots(data.AWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, "rgb(0,255,0)", 'A');
         }
-        if (data.TWSF>=1) {
+        if (knots(data.TWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, "blue", 'T');
         }
         if (typeof(data.BRG) != 'undefined') {
