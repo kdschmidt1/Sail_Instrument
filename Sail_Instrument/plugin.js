@@ -302,9 +302,9 @@ function drawWindWidget(ctx,size, maprotation, data){
           var mm = [data.minTWD, data.maxTWD];
           DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, green);
           DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, red);
-          if (data.VMCA) {
-            DrawLaylineArea(ctx, size, maprotation + data.VMCA, mm, blue);
-          }
+        }
+        if (data.VMCA) {
+          DrawLaylineArea(ctx, size, maprotation + data.VMCA, [0,0], blue);
         }
         if (knots(data.AWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, green, 'A');
