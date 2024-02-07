@@ -297,7 +297,7 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (knots(data.DFTF)>=0.5) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
-        var mm = [to360(data.minTWD - data.TWDF), to360(data.maxTWD - data.TWDF)];
+        var mm = [data.minTWD, data.maxTWD];
         DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, to180(data.LLSB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
         DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, to180(data.LLBB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
         if (knots(data.AWSF)>=1) {

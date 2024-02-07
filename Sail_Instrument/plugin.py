@@ -181,14 +181,14 @@ class Plugin(object):
         pass
 
     def run(self):
-        twds = []
+        values = []
 
-        def minmax(twd):
+        def minmax(v):
             max_count = int(self.getConfigValue(MM_SAMPLES))
-            twds.append(twd)
-            while len(twds) > max_count:
-                twds.pop(0)
-            return to360(min(twds)), to360(max(twds))
+            values.append(to180(v))
+            while len(values) > max_count:
+                values.pop(0)
+            return min(values), max(values)
 
         self.api.log("started")
         self.api.setStatus("STARTED", "running")
@@ -226,10 +226,10 @@ class Plugin(object):
                     self.api.addData("gps.groundWindAngle", data["GWA"])
                     self.api.addData("gps.groundWindDirection", data["GWD"])
                 best_vmc_angle(self, data)
-                data["minTWD"], data["maxTWD"] = minmax(data["TWD"])
-                self.api.addData(PATHminTWD, data["minTWD"])
-                self.api.addData(PATHmaxTWD, data["maxTWD"])
                 if calcFilteredWind(self, data):
+                    data["minTWD"], data["maxTWD"] = minmax(data["TWD"] - data["TWDF"])
+                    self.api.addData(PATHminTWD, data["minTWD"])
+                    self.api.addData(PATHmaxTWD, data["maxTWD"])
                     self.api.addData(PATHAWDF, data["AWDF"])
                     self.api.addData(PATHAWSF, data["AWSF"])
                     self.api.addData(PATHTWDF, data["TWDF"])
