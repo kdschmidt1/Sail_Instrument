@@ -113,12 +113,10 @@ var Sail_InstrumentInfoWidget = {
         return (ret)
     },
     storeKeys: {
-        course: 'nav.gps.course',
-        speed: 'nav.gps.speed',
         boatposition: 'nav.gps.position',
-        LLSB: 'nav.gps.LLSB',
-        LLBB: 'nav.gps.LLBB',
-        TSS: 'nav.gps.TSS',
+        speed: 'nav.gps.sailinstrument.SOG',
+        LLSB: 'nav.gps.sailinstrument.LLSB',
+        LLBB: 'nav.gps.sailinstrument.LLBB',
     },
     formatter: formatLL,
 };
@@ -137,55 +135,51 @@ var Sail_InstrumentWidget = {
     storeKeys: {
         BRG: 'nav.wp.course',
         POS: 'nav.gps.position',
-        LLSB: 'nav.gps.LLSB',
-        LLBB: 'nav.gps.LLBB',
-        HDT: 'nav.gps.headingTrue',
-        COG: 'nav.gps.course',
-        TWDF: 'nav.gps.TWDF',
-        TWSF: 'nav.gps.TWSF',
-        AWDF: 'nav.gps.AWDF',
-        AWSF: 'nav.gps.AWSF',
-        SETF: 'nav.gps.SETF',
-        DFTF: 'nav.gps.DFTF',
-        minTWD: 'nav.gps.minTWD',
-        maxTWD: 'nav.gps.maxTWD',
+        LLSB: 'nav.gps.sailinstrument.LLSB',
+        LLBB: 'nav.gps.sailinstrument.LLBB',
+        HDT: 'nav.gps.sailinstrument.HDT',
+        TWDF: 'nav.gps.sailinstrument.TWDF',
+        TWSF: 'nav.gps.sailinstrument.TWSF',
+        AWDF: 'nav.gps.sailinstrument.AWDF',
+        AWSF: 'nav.gps.sailinstrument.AWSF',
+        SETF: 'nav.gps.sailinstrument.SETF',
+        DFTF: 'nav.gps.sailinstrument.DFTF',
+        minTWD: 'nav.gps.sailinstrument.TWDMIN',
+        maxTWD: 'nav.gps.sailinstrument.TWDMAX',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data) {
-        //console.log(data);
-        var ctx = canvas.getContext('2d');
-        // Set scale factor for all values
-        var crect = canvas.getBoundingClientRect();
-        var w = crect.width;
-        var h = crect.height;
-        canvas.width = w;
-        canvas.height = h;
-        ctx.save();
-        var width = 300;
-        var height = 300;
-        var f1 = w / width;
-        var f2 = h / height;
-        var f = Math.min(f1, f2);
-        ctx.scale(f, f);
-        ctx.translate(width / 2 * f1 / f, height / 2 * f2 / f);
+      //console.log(data);
+      var ctx = canvas.getContext('2d');
+      // Set scale factor for all values
+      var crect = canvas.getBoundingClientRect();
+      var w = crect.width;
+      var h = crect.height;
+      canvas.width = w;
+      canvas.height = h;
+      ctx.save();
+      var width = 300;
+      var height = 300;
+      var f1 = w / width;
+      var f2 = h / height;
+      var f = Math.min(f1, f2);
+      ctx.scale(f, f);
+      ctx.translate(width / 2 * f1 / f, height / 2 * f2 / f);
 
-        self = this
-        ctx.save();
+      self = this
+      ctx.save();
 
-        if (data.Widgetposition == 'Mapcenter')
-            ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
-        else if (data.Widgetposition == 'Boatposition') {
-            if (typeof(data.POS) != 'undefined') {
-                coordinates = this.lonLatToPixel(data.POS.lon, data.POS.lat)
-                ctx.translate(coordinates[0], coordinates[1]);
-            } else
-                ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
-        }
-        ctx.globalAlpha *= data.Opacity;
-
-        var heading = typeof(data.HDT) != 'undefined' ? data.HDT : data.COG;
-
+      if (data.Widgetposition == 'Mapcenter')
+          ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
+      else if (data.Widgetposition == 'Boatposition') {
+          if (typeof(data.POS) != 'undefined') {
+              coordinates = this.lonLatToPixel(data.POS.lon, data.POS.lat)
+              ctx.translate(coordinates[0], coordinates[1]);
+          } else
+              ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
+      }
+      ctx.globalAlpha *= data.Opacity;
 
      // draw triangle symbolizing the boat
       ctx.save();
@@ -203,7 +197,7 @@ var Sail_InstrumentWidget = {
       ctx.stroke();
       ctx.restore();
 
-      drawWindWidget(ctx, 100, -heading, data);
+      drawWindWidget(ctx, 100, -data.HDT, data);
 
       // print AWS/TWS
       ctx.save();
@@ -251,18 +245,17 @@ let Sail_Instrument_Overlay = {
     storeKeys: {
         BRG: 'nav.wp.course',
         POS: 'nav.gps.position',
-        LLSB: 'nav.gps.LLSB',
-        LLBB: 'nav.gps.LLBB',
-        HDT: 'nav.gps.headingTrue',
-        COG: 'nav.gps.course',
-        TWDF: 'nav.gps.TWDF',
-        TWSF: 'nav.gps.TWSF',
-        AWDF: 'nav.gps.AWDF',
-        AWSF: 'nav.gps.AWSF',
-        SETF: 'nav.gps.SETF',
-        DFTF: 'nav.gps.DFTF',
-        minTWD: 'nav.gps.minTWD',
-        maxTWD: 'nav.gps.maxTWD',
+        LLSB: 'nav.gps.sailinstrument.LLSB',
+        LLBB: 'nav.gps.sailinstrument.LLBB',
+        HDT: 'nav.gps.sailinstrument.HDT',
+        TWDF: 'nav.gps.sailinstrument.TWDF',
+        TWSF: 'nav.gps.sailinstrument.TWSF',
+        AWDF: 'nav.gps.sailinstrument.AWDF',
+        AWSF: 'nav.gps.sailinstrument.AWSF',
+        SETF: 'nav.gps.sailinstrument.SETF',
+        DFTF: 'nav.gps.sailinstrument.DFTF',
+        minTWD: 'nav.gps.sailinstrument.TWDMIN',
+        maxTWD: 'nav.gps.sailinstrument.TWDMAX',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -289,9 +282,7 @@ function knots(v){
 }
 
 function drawWindWidget(ctx,size, maprotation, data){
-        var heading = typeof(data.HDT) != 'undefined' ? data.HDT : data.COG;
-
-        DrawOuterRing(ctx, size, maprotation + heading);
+        DrawOuterRing(ctx, size, maprotation + data.HDT);
         DrawKompassring(ctx, size, maprotation);
 
         if (knots(data.DFTF)>=0.5) {
@@ -310,7 +301,7 @@ function drawWindWidget(ctx,size, maprotation, data){
             DrawWPIcon(ctx, size, maprotation + data.BRG);
         }
         DrawEierUhr(ctx, size, maprotation + data.COG, "orange", 'T');
-        DrawCourseBox(ctx, size, maprotation + heading, "black", Math.round(heading));
+        DrawCourseBox(ctx, size, maprotation + data.HDT, "black", Math.round(data.HDT));
 }
 
 avnav.api.registerWidget(Sail_Instrument_Overlay, Sail_Instrument_OverlayParameter);
@@ -328,11 +319,11 @@ let LayLines_Overlay = {
     name: 'LayLines-Overlay',
     type: 'map',
     storeKeys: {
-        POS: 'nav.gps.position',
         WP: 'nav.wp.position',
-        LLSB: 'nav.gps.LLSB',
-        LLBB: 'nav.gps.LLBB',
-        TWDF: 'nav.gps.TWDF',
+        POS: 'nav.gps.position',
+        LLSB: 'nav.gps.sailinstrument.LLSB',
+        LLBB: 'nav.gps.sailinstrument.LLBB',
+        TWDF: 'nav.gps.sailinstrument.TWDF',
     },
     initFunction: function() {},
     finalizeFunction: function() {},

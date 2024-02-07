@@ -6,7 +6,7 @@ from math import sin, cos, radians, degrees, sqrt, atan2, floor, pi, fabs
 import xml.etree.ElementTree as ET
 import urllib.request, urllib.parse, urllib.error
 import time
-from builtins import len
+from coursedata import *
 
 try:
     from avnrouter import AVNRouter, WpData
@@ -14,30 +14,16 @@ try:
 except:
     pass
 
-MIN_AVNAV_VERSION = "20220426"
-
-PATHAWDF = "gps.AWDF"
-PATHAWSF = "gps.AWSF"
-PATHTWDF = "gps.TWDF"
-PATHTWSF = "gps.TWSF"
-PATHSETF = "gps.SETF"
-PATHDFTF = "gps.DFTF"
-PATHTLL_SB = "gps.LLSB"
-PATHTLL_BB = "gps.LLBB"
-PATHTLL_VPOL = "gps.VPOL"
-PATHTLL_OPTVMC = "gps.OPTVMC"
-PATHmaxTWD = "gps.maxTWD"
-PATHminTWD = "gps.minTWD"
-
-SMOOTHING_FAC = "smoothing_factor"
+MIN_AVNAV_VERSION = "20230705"
+SAILINSTRUMENT_PREFIX = "gps.sailinstrument."
+SMOOTHING_FACTOR = "smoothing_factor"
 MM_SAMPLES = "minmax_samples"
-ADD_WIND = "add_wind"
-ADD_TIDE = "add_tide"
+WRITE_DATA = "write_data"
 TRUE_WIND = "true_wind"
 
 CONFIG = [
     {
-        "name": SMOOTHING_FAC,
+        "name": SMOOTHING_FACTOR,
         "description": "exponential smoothing factor for TWD/AWD",
         "default": "0.1",
         "type": "FLOAT",
@@ -49,20 +35,16 @@ CONFIG = [
         "type": "NUMBER",
     },
     {
-        "name": ADD_WIND,
-        "description": "write wind data to AvNav model (requires allowKeyOverwrite=true)",
-        "default": "False",
-        "type": "BOOLEAN",
-    },
-    {
-        "name": ADD_TIDE,
-        "description": "write tide data to AvNav model",
+        "name": WRITE_DATA,
+        "description": "write calculated data to AvNav model in gps.* (requires allowKeyOverwrite=true), all data is always available in "
+        + SAILINSTRUMENT_PREFIX
+        + "*",
         "default": "False",
         "type": "BOOLEAN",
     },
     {
         "name": TRUE_WIND,
-        "description": "manually entered true wind for testing, enter as 'direction,speed'",
+        "description": "manually entered true wind for testing, enter as 'direction,speed', is used if no other apparent or true wind data is present",
         "default": "",
         "type": "STRING",
     },
@@ -72,49 +54,28 @@ CONFIG = [
 class Plugin(object):
     @classmethod
     def pluginInfo(cls):
-        """
-        the description for the module
-        @return: a dict with the content described below
-                parts:
-                   * description (mandatory)
-                   * data: list of keys to be stored (optional)
-                     * path - the key - see AVNApi.addData, all pathes starting with "gps." will be sent to the GUI
-                     * description
-        """
         return {
             "description": "a test plugins",
             "version": "1.0",
             "config": CONFIG,
             "data": [
                 {
-                    "path": PATHminTWD,
-                    "description": "minimum TrueWindDirection last n Minutes",
+                    "path": SAILINSTRUMENT_PREFIX + "*",
+                    "description": "sail instrument data",
                 },
-                {
-                    "path": PATHmaxTWD,
-                    "description": "maximum TrueWindDirection last n Minutes",
-                },
-                {"path": PATHTWDF, "description": "smoothed true wind direction"},
-                {"path": PATHTWSF, "description": "smoothed true wind speed"},
-                {"path": PATHAWDF, "description": "smoothed apparent wind direction"},
-                {"path": PATHAWSF, "description": "smoothed apparent wind speed"},
-                {"path": PATHSETF, "description": "smoothed tide set direction"},
-                {"path": PATHDFTF, "description": "smoothed tide drift rate"},
-                {"path": PATHTLL_OPTVMC, "description": "optimum vmc direction"},
-                {"path": PATHTLL_SB, "description": "Layline Steuerbord"},
-                {"path": PATHTLL_BB, "description": "Layline Backbord"},
-                {"path": PATHTLL_VPOL, "description": "Speed aus Polare"},
                 {"path": "gps.currentSet", "description": "tide set direction"},
                 {"path": "gps.currentDrift", "description": "tide drift rate"},
-                {"path": "gps.groundWindSpeed", "description": "ground wind speed"},
+                {"path": "gps.windAngle", "description": "apparent wind angle"},
+                {"path": "gps.windSpeed", "description": "apparent wind speed"},
+                {"path": "gps.trueWindAngle", "description": "true wind angle"},
+                {"path": "gps.trueWindSpeed", "description": "true wind speed"},
+                {"path": "gps.trueWindDirection", "description": "true wind direction"},
                 {"path": "gps.groundWindAngle", "description": "ground wind angle"},
+                {"path": "gps.groundWindSpeed", "description": "ground wind speed"},
                 {
                     "path": "gps.groundWindDirection",
                     "description": "ground wind direction",
                 },
-                {"path": "gps.trueWindSpeed", "description": "true wind speed"},
-                {"path": "gps.trueWindAngle", "description": "true wind angle"},
-                {"path": "gps.trueWindDirection", "description": "true wind direction"},
             ],
         }
 
@@ -129,37 +90,17 @@ class Plugin(object):
 
         self.api = api  # type: AVNApi
         if self.api.getAvNavVersion() < int(MIN_AVNAV_VERSION):
-            raise Exception(
-                "SegelDisplay-Plugin is not available for this AvNav-Version"
-            )
-            return
+            raise Exception("not compatible with this AvNav version")
 
         self.api.registerEditableParameters(CONFIG, self.changeParam)
         self.api.registerRestart(self.stop)
 
-        vers = self.api.getAvNavVersion()
-        # we register an handler for API requests
         self.api.registerRequestHandler(self.handleApiRequest)
-        self.count = 0
-        self.AWF = 0, 0
-        self.TWF = 0, 0
-        self.TIF = 0, 0
         self.api.registerRestart(self.stop)
-        self.oldtime = 0
         self.polare = {}
         if not self.Polare("polare.xml"):
             raise Exception("polare.xml not found Error")
-            return
         self.saveAllConfig()
-        self.startSequence = 0
-
-    # Normalizes any number to an arbitrary range
-    # by assuming the range wraps around when going below min or above max
-    def normalize(self, value, start, end):
-        width = end - start
-        offsetValue = value - start  # value relative to 0
-        return (offsetValue - (floor(offsetValue / width) * width)) + start
-        # // + start to reset back to start of original range
 
     def getConfigValue(self, name):
         defaults = self.pluginInfo()["config"]
@@ -182,71 +123,137 @@ class Plugin(object):
 
     def changeParam(self, param):
         self.api.saveConfigValues(param)
-        self.startSequence += 1
 
     def stop(self):
         pass
 
     def run(self):
-        values = []
+        def manual_true_wind():
+            tw = self.getConfigValue(TRUE_WIND)
+            if tw:  # manually entered true wind data
+                twd, tws = list(map(float, tw.split(",")))
+                tws /= 1.94384
+                return twd, tws
 
-        def minmax(v):
-            max_count = int(self.getConfigValue(MM_SAMPLES))
-            values.append(to180(v))
-            while len(values) > max_count:
+        filtered = {}
+
+        def smooth(data, phi, rad):
+            if any(v not in data for v in (phi, rad)):
+                return
+            k = phi + rad
+            p, r = data[phi], data[rad]
+            xy = toCart((p, r))
+            if k in filtered:
+                a = float(self.getConfigValue(SMOOTHING_FACTOR))
+                sk = filtered[k]
+                filtered[k] = [sk[i] + a * (xy[i] - sk[i]) for i in (0, 1)]
+            else:
+                filtered[k] = xy
+            p, r = toPol(filtered[k])
+            data[phi + "F"] = p
+            data[rad + "F"] = r
+
+        min_max_values = {}
+
+        def min_max(data, key, func=lambda x: x):
+            samples = int(self.getConfigValue(MM_SAMPLES))
+            if key not in data:
+                return
+            v = data[key]
+            if key not in min_max_values:
+                min_max_values[key] = []
+            values = min_max_values[key]
+            values.append(func(v))
+            while len(values) > samples:
                 values.pop(0)
-            return min(values), max(values)
+            data[key + "MIN"], data[key + "MAX"] = min(values), max(values)
+
+        def readValue(path):
+            "prevents reading values that we self have calculated"
+            a = self.api.getSingleValue(path, includeInfo=True)
+            if a is not None and "Sail_Instrument" not in a.source:
+                return a.value
+
+        def writeValue(data, key, path):
+            "do not overwrite existing values"
+            if key not in data:
+                return
+            a = self.api.getSingleValue(path, includeInfo=True)
+            if a is None or "Sail_Instrument" in a.source:
+                self.api.addData(path, data[key])
 
         self.api.log("started")
         self.api.setStatus("STARTED", "running")
         while not self.api.shouldStopMainThread():
             time.sleep(0.5)
-            data = {}
-            data["COG"] = self.api.getSingleValue("gps.track")
-            data["SOG"] = self.api.getSingleValue("gps.speed")
-            data["HDT"] = self.api.getSingleValue("gps.headingTrue")
-            data["STW"] = self.api.getSingleValue("gps.waterSpeed")
-            data["AWA"] = self.api.getSingleValue("gps.windAngle")
-            data["AWS"] = self.api.getSingleValue("gps.windSpeed")
-            twa = self.api.getSingleValue("gps.trueWindAngle", includeInfo=True)
-            x = twa and "Sail_Instrument" not in twa.source
-            if x:
-                data["TWA"] = self.api.getSingleValue("gps.trueWindAngle")
-                data["TWS"] = self.api.getSingleValue("gps.trueWindSpeed")
-            else:
-                data["TWA"] = None
-                data["TWS"] = None
+            # get course data
+            cog = readValue("gps.track")
+            sog = readValue("gps.speed")
+            hdt = readValue("gps.headingTrue")
+            hdm = readValue("gps.headingMag")
+            stw = readValue("gps.waterSpeed")
+            hdt = hdm if hdt is None else hdt  # fallback to HDM
+            hdt = cog if hdt is None else hdt  # fallback to COG
+            stw = sog if stw is None else stw  # fallback to SOG
+            if any(v is None for v in (hdt, stw)):
+                self.api.setStatus("ERROR", "missing HDT/STW")
+                continue
+            # get wind data
+            awa = readValue("gps.windAngle")
+            aws = readValue("gps.windSpeed")
+            twa = readValue("gps.trueWindAngle")
+            tws = readValue("gps.trueWindSpeed")
+            twd = readValue("gps.trueWindDirection")
+            if all(v is None for v in (awa, aws, twa, tws, twd)):
+                tw = manual_true_wind()
+                if tw:
+                    twd, tws = tw
+            self.api.log(
+                f"input=\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd}"
+            )
+            # compute missing parts (fields that are None get computed)
+            d = CourseData(
+                COG=cog,
+                SOG=sog,
+                HDT=hdt,
+                STW=stw,
+                AWA=awa,
+                AWS=aws,
+                TWA=twa,
+                TWS=tws,
+                TWD=twd,
+            )
+            # smooth and get min/max
+            smooth(d, "AWD", "AWS")
+            smooth(d, "TWD", "TWS")
+            smooth(d, "SET", "DFT")
+            min_max(d, "TWD", lambda v: to180(v - d.TWDF))
 
-            if calcTrueWind(self, data):
-                t = self.getConfigValue(ADD_TIDE).startswith("T")
-                w = self.getConfigValue(ADD_WIND).startswith("T")
-                if t and "SET" in data:
-                    self.api.addData("gps.currentSet", data["SET"])
-                    self.api.addData("gps.currentDrift", data["DFT"])
-                if w and all(data.get(x) is not None for x in ["TWA", "TWS"]):
-                    if not x:
-                        self.api.addData("gps.trueWindSpeed", data["TWS"])
-                        self.api.addData("gps.trueWindAngle", data["TWA"])
-                    self.api.addData("gps.trueWindDirection", data["TWD"])
-                if w and "GWS" in data:
-                    self.api.addData("gps.groundWindSpeed", data["GWS"])
-                    self.api.addData("gps.groundWindAngle", data["GWA"])
-                    self.api.addData("gps.groundWindDirection", data["GWD"])
-                best_vmc_angle(self, data)
-                if calcFilteredWind(self, data):
-                    data["minTWD"], data["maxTWD"] = minmax(data["TWD"] - data["TWDF"])
-                    self.api.addData(PATHminTWD, data["minTWD"])
-                    self.api.addData(PATHmaxTWD, data["maxTWD"])
-                    self.api.addData(PATHAWDF, data["AWDF"])
-                    self.api.addData(PATHAWSF, data["AWSF"])
-                    self.api.addData(PATHTWDF, data["TWDF"])
-                    self.api.addData(PATHTWSF, data["TWSF"])
-                    self.api.addData(PATHSETF, data["SETF"])
-                    self.api.addData(PATHDFTF, data["DFTF"])
-                    calc_Laylines(self, data)
+            best_vmc_angle(self, d)
+            calc_Laylines(self, d)
 
-    # https://stackoverflow.com/questions/4983258/python-how-to-check-list-monotonicity
+            self.api.log(f"d=\n{d}")
+
+            for k in d.keys():  # publish sailinstrument data
+                self.api.addData(SAILINSTRUMENT_PREFIX + k, d[k])
+
+            # write calculated values
+            if self.getConfigValue(WRITE_DATA).startswith("T"):
+                writeValue(d, "SET", "gps.currentSet")
+                writeValue(d, "DFT", "gps.currentDrift")
+                writeValue(d, "AWA", "gps.windAngle")
+                writeValue(d, "AWS", "gps.windSpeed")
+                writeValue(d, "TWA", "gps.trueWindAngle")
+                writeValue(d, "TWS", "gps.trueWindSpeed")
+                writeValue(d, "TWD", "gps.trueWindDirection")
+                writeValue(d, "GWA", "gps.groundWindAngle")
+                writeValue(d, "GWS", "gps.groundWindSpeed")
+                writeValue(d, "GWD", "gps.groundWindDirection")
+
+            self.api.setStatus("NMEA", "computing data")
+
     def strictly_increasing(self, L):
+        # https://stackoverflow.com/questions/4983258/python-how-to-check-list-monotonicity
         return all(x < y for x, y in zip(L, L[1:]))
 
     def Polare(self, f_name):
@@ -322,23 +329,12 @@ class Plugin(object):
             self.polare["ww_downwind"] = list(map(float, y.strip("][").split(",")))
         return True
 
-    # https://appdividend.com/2019/11/12/how-to-convert-python-string-to-list-example/#:~:text=To%20convert%20string%20to%20list,delimiter%E2%80%9D%20as%20the%20delimiter%20string.
-
     def handleApiRequest(self, url, handler, args):
-        """
-        handler for API requests send from the JS
-        @param url: the url after the plugin base
-        @param handler: the HTTP request handler
-                        https://docs.python.org/2/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler
-        @param args: dictionary of query arguments
-        @return:
-        """
         out = urllib.parse.parse_qs(url)
         out2 = urllib.parse.urlparse(url)
         if url == "test":
             return {"status": "OK"}
         if url == "parameter":
-            # self.count=0
             defaults = self.pluginInfo()["config"]
             b = {}
             for cf in defaults:
@@ -442,18 +438,16 @@ def calc_Laylines(self, gpsdata):  # // [grad]
                 * 2
             )
 
-        LL_SB = (gpsdata["TWDF"] + wendewinkel / 2) % 360
-        LL_BB = (gpsdata["TWDF"] - wendewinkel / 2) % 360
-
-        self.api.addData(PATHTLL_SB, LL_SB)
-        self.api.addData(PATHTLL_BB, LL_BB)
+        gpsdata.LLSB = (gpsdata["TWDF"] + wendewinkel / 2) % 360
+        gpsdata.LLBB = (gpsdata["TWDF"] - wendewinkel / 2) % 360
 
         gpsdata["TWA"] = gpsdata["TWA"] % 360
-        anglew = fabs(self.normalize(gpsdata["TWA"], -180, 180))
+        anglew = fabs(to180(gpsdata["TWA"]))
         # 360 - gpsdata['TWA'] if gpsdata['TWA'] > 180 else gpsdata['TWA']
         # in kn
         if not self.polare["boatspeed"]:
-            return False
+            return
+
         SOGPOLvar = bilinear(
             self,
             self.polare["windspeedvector"],
@@ -462,140 +456,7 @@ def calc_Laylines(self, gpsdata):  # // [grad]
             (gpsdata["TWS"] / 0.514),
             anglew,
         )
-        self.api.addData(PATHTLL_VPOL, SOGPOLvar * 0.514444)
-        # self.api.ALLOW_KEY_OVERWRITE=True
-        # allowKeyOverwrite=True
-        # self.api.addData(self.PATHTLL_speed,SOGPOLvar*0.514444)
-        return True
-
-        # http://forums.sailinganarchy.com/index.php?/topic/132129-calculating-vmc-vs-vmg/
-
-
-def to360(a):
-    "limit a to [0,360)"
-    while a < 0:
-        a += 360
-    return a % 360
-
-
-def to180(a):
-    "limit a to [-180,+180)"
-    a = to360(a)
-    return a if a < 180 else a - 360
-
-
-def toCart(p):
-    # to cartesian with phi going clock-wise from north (phi,r)->(x,y)
-    return p[1] * sin(radians(p[0])), p[1] * cos(radians(p[0]))
-
-
-def toPol(c):
-    # to polar with phi going clock-wise from north (x,y)->(phi,r)
-    return to360(90 - degrees(atan2(c[1], c[0]))), sqrt(c[0] ** 2 + c[1] ** 2)
-
-
-def add_polar(a, b):
-    "sum of polar vectors (phi,r)"
-    a, b = toCart(a), toCart(b)
-    s = a[0] + b[0], a[1] + b[1]
-    return toPol(s)
-
-
-def calcFilteredWind(self, data):
-    try:
-        a = float(self.getConfigValue(SMOOTHING_FAC))
-
-        def filter(old, new):
-            return (
-                old[0] + a * (new[0] - old[0]),
-                old[1] + a * (new[1] - old[1]),
-            )
-
-        awd, aws = data["AWD"], data["AWS"]
-        twd, tws = data["TWD"], data["TWS"]
-        set, dft = data.get("SET", 0), data.get("DFT", 0)
-        self.AWF = filter(self.AWF, toCart((awd, aws)))
-        self.TWF = filter(self.TWF, toCart((twd, tws)))
-        self.TIF = filter(self.TIF, toCart((set, dft)))
-        data["AWDF"], data["AWSF"] = toPol(self.AWF)
-        data["TWDF"], data["TWSF"] = toPol(self.TWF)
-        data["SETF"], data["DFTF"] = toPol(self.TIF)
-        return True
-
-    except Exception as x:
-        self.api.error(f"error in calcFilteredWind {x}")
-
-
-def calcTrueWind(self, data):
-    def missing(msg, *data):
-        if any(v is None for v in data):
-            if msg:
-                self.api.setStatus("ERROR", f"missing input data: {msg}")
-            return True
-
-    try:
-        cog = data["COG"]
-        sog = data["SOG"]
-        hdt = data["HDT"]
-        stw = data["STW"]
-        awa = data["AWA"]
-        aws = data["AWS"]
-        twa = data["TWA"]
-        tws = data["TWS"]
-        lee = 0  # needed to get it right, but currently not known here
-
-        fallback = ""
-        if missing(0, hdt):
-            hdt = cog
-            fallback += "HDT=COG "
-        if missing(0, stw):
-            stw = sog
-            fallback += "STW=SOG "
-
-        if missing("HDT true heading", hdt):
-            return
-
-        msg = ""
-
-        tw = self.getConfigValue(TRUE_WIND)
-        if tw:  # manually entered true wind data
-            twd, tws = list(map(float, tw.split(",")))
-            tws /= 1.94384
-            twa = to360(twd - hdt)
-            data["TWA"], data["TWS"] = twa, tws
-            awa, aws = add_polar((twa, tws), (lee, stw))
-            data["AWA"], data["AWS"] = awa, aws
-            msg += "manually entered true wind, "
-            self.api.log(f"{twd} {tws} {twa} {awa} {aws}")
-
-        if missing(0, twa, tws):
-            if missing("AWA/AWS/STW apparent wind or water speed", awa, aws, stw):
-                return
-            twa, tws = add_polar((awa, aws), (lee, -stw))
-            data["TWA"] = twa
-            data["TWS"] = tws
-            msg += "calculating true wind, "
-
-        data["AWD"] = to360(awa + hdt)
-        data["TWD"] = to360(twa + hdt)
-
-        if not missing(0, sog, sog, awa, aws):
-            gwd, gws = add_polar((awa + hdt, aws), (cog, -sog))
-            data["GWD"] = gwd
-            data["GWS"] = gws
-            data["GWA"] = gwd - hdt
-            msg += "calculating ground wind, "
-
-        if not missing(0, sog, sog, hdt, stw) and not fallback:
-            data["SET"], data["DFT"] = add_polar((cog, sog), (hdt + lee, -stw))
-            msg += "calculating tide "
-
-        # self.api.log(f"data={data}")
-        self.api.setStatus("NMEA", msg + (f"fallback: {fallback}" if fallback else ""))
-        return True
-
-    except Exception as x:
-        self.api.error(f"error calculating true wind data {data} {x}")
+        gpsdata.VPOL = SOGPOLvar * 0.514444
 
 
 try:
@@ -676,8 +537,7 @@ try:
             opthdg = (gps["TWD"] - opttwa) % 360
             diff1 = abs((gps["TWD"] - wendewinkel) % 360 - (gps["TWD"] - opttwa) % 360)
             # aus WA=WD-HDG folgt HDG = WD-WA
-            # self.api.addData(PATHTLL_OPTVMC, (gps['TWD']-wendewinkel)%360,source='SegelDisplay')
-            self.api.addData(PATHTLL_OPTVMC, (opthdg) % 360, source="SegelDisplay")
+            gps.OPTVMC = to360(opthdg)
         except:
             pass
 
@@ -686,6 +546,4 @@ try:
 except:
 
     def best_vmc_angle(self, gps):
-        return False
-
-    pass
+        return
