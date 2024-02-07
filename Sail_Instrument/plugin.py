@@ -19,7 +19,8 @@ SAILINSTRUMENT_PREFIX = "gps.sailinstrument."
 SMOOTHING_FACTOR = "smoothing_factor"
 MM_SAMPLES = "minmax_samples"
 WRITE_DATA = "write_data"
-TRUE_WIND = "true_wind"
+WIND = "wind"
+FALLBACK = "allow_fallback"
 
 CONFIG = [
     {
@@ -35,6 +36,12 @@ CONFIG = [
         "type": "NUMBER",
     },
     {
+        "name": FALLBACK,
+        "description": "allow fallback to use HDM/COG/SOG for HDT/STW",
+        "default": "True",
+        "type": "BOOLEAN",
+    },
+    {
         "name": WRITE_DATA,
         "description": "write calculated data to AvNav model in gps.* (requires allowKeyOverwrite=true), all data is always available in "
         + SAILINSTRUMENT_PREFIX
@@ -43,8 +50,8 @@ CONFIG = [
         "type": "BOOLEAN",
     },
     {
-        "name": TRUE_WIND,
-        "description": "manually entered true wind for testing, enter as 'direction,speed', is used if no other apparent or true wind data is present",
+        "name": WIND,
+        "description": "manually entered ground wind for testing, enter as 'direction,speed', is used if there is no other apparent or true wind data is present",
         "default": "",
         "type": "STRING",
     },
@@ -55,8 +62,8 @@ class Plugin(object):
     @classmethod
     def pluginInfo(cls):
         return {
-            "description": "a test plugins",
-            "version": "1.0",
+            "description": "sail instrument calculating and displaying, true/apparent wind, tide, laylines",
+            "version": "1.2",
             "config": CONFIG,
             "data": [
                 {
@@ -80,14 +87,6 @@ class Plugin(object):
         }
 
     def __init__(self, api):
-        """
-        initialize a plugins
-        do any checks here and throw an exception on error
-        do not yet start any threads!
-        @param api: the api to communicate with avnav
-        @type  api: AVNApi
-        """
-
         self.api = api  # type: AVNApi
         if self.api.getAvNavVersion() < int(MIN_AVNAV_VERSION):
             raise Exception("not compatible with this AvNav version")
@@ -128,12 +127,12 @@ class Plugin(object):
         pass
 
     def run(self):
-        def manual_true_wind():
-            tw = self.getConfigValue(TRUE_WIND)
-            if tw:  # manually entered true wind data
-                twd, tws = list(map(float, tw.split(",")))
-                tws /= 1.94384
-                return twd, tws
+        def manual_wind():
+            w = self.getConfigValue(WIND)
+            if w:  # manually entered wind data
+                wd, ws = list(map(float, w.split(",")))
+                ws /= 1.94384
+                return wd, ws
 
         filtered = {}
 
@@ -171,6 +170,7 @@ class Plugin(object):
         def readValue(path):
             "prevents reading values that we self have calculated"
             a = self.api.getSingleValue(path, includeInfo=True)
+            # self.api.log(f"read {path} {a.value if a else ''} {a.source if a else ''}")
             if a is not None and "Sail_Instrument" not in a.source:
                 return a.value
 
@@ -192,9 +192,10 @@ class Plugin(object):
             hdt = readValue("gps.headingTrue")
             hdm = readValue("gps.headingMag")
             stw = readValue("gps.waterSpeed")
-            hdt = hdm if hdt is None else hdt  # fallback to HDM
-            hdt = cog if hdt is None else hdt  # fallback to COG
-            stw = sog if stw is None else stw  # fallback to SOG
+            if self.getConfigValue(FALLBACK).startswith("T"):
+                hdt = hdm if hdt is None else hdt  # fallback to HDM
+                hdt = cog if hdt is None else hdt  # fallback to COG
+                stw = sog if stw is None else stw  # fallback to SOG
             if any(v is None for v in (hdt, stw)):
                 self.api.setStatus("ERROR", "missing HDT/STW")
                 continue
@@ -204,13 +205,10 @@ class Plugin(object):
             twa = readValue("gps.trueWindAngle")
             tws = readValue("gps.trueWindSpeed")
             twd = readValue("gps.trueWindDirection")
+            gwd, gws = None, None
             if all(v is None for v in (awa, aws, twa, tws, twd)):
-                tw = manual_true_wind()
-                if tw:
-                    twd, tws = tw
-            self.api.log(
-                f"input=\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd}"
-            )
+                gwd, gws = manual_wind() or (None, None)
+            # self.api.log(                f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws}"            )
             # compute missing parts (fields that are None get computed)
             d = CourseData(
                 COG=cog,
@@ -222,6 +220,8 @@ class Plugin(object):
                 TWA=twa,
                 TWS=tws,
                 TWD=twd,
+                GWD=gwd,
+                GWS=gws,
             )
             # smooth and get min/max
             smooth(d, "AWD", "AWS")
@@ -232,7 +232,7 @@ class Plugin(object):
             best_vmc_angle(self, d)
             calc_Laylines(self, d)
 
-            self.api.log(f"d=\n{d}")
+            # self.api.log(f"\n{d}")
 
             for k in d.keys():  # publish sailinstrument data
                 self.api.addData(SAILINSTRUMENT_PREFIX + k, d[k])
@@ -441,7 +441,6 @@ def calc_Laylines(self, gpsdata):  # // [grad]
         gpsdata.LLSB = (gpsdata["TWDF"] + wendewinkel / 2) % 360
         gpsdata.LLBB = (gpsdata["TWDF"] - wendewinkel / 2) % 360
 
-        gpsdata["TWA"] = gpsdata["TWA"] % 360
         anglew = fabs(to180(gpsdata["TWA"]))
         # 360 - gpsdata['TWA'] if gpsdata['TWA'] > 180 else gpsdata['TWA']
         # in kn

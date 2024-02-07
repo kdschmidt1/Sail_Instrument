@@ -114,7 +114,7 @@ var Sail_InstrumentInfoWidget = {
     },
     storeKeys: {
         boatposition: 'nav.gps.position',
-        speed: 'nav.gps.sailinstrument.SOG',
+        speed: 'nav.gps.sailinstrument.STW',
         LLSB: 'nav.gps.sailinstrument.LLSB',
         LLBB: 'nav.gps.sailinstrument.LLBB',
     },
@@ -138,6 +138,7 @@ var Sail_InstrumentWidget = {
         LLSB: 'nav.gps.sailinstrument.LLSB',
         LLBB: 'nav.gps.sailinstrument.LLBB',
         HDT: 'nav.gps.sailinstrument.HDT',
+        COG: 'nav.gps.sailinstrument.COG',
         TWDF: 'nav.gps.sailinstrument.TWDF',
         TWSF: 'nav.gps.sailinstrument.TWSF',
         AWDF: 'nav.gps.sailinstrument.AWDF',
@@ -248,6 +249,7 @@ let Sail_Instrument_Overlay = {
         LLSB: 'nav.gps.sailinstrument.LLSB',
         LLBB: 'nav.gps.sailinstrument.LLBB',
         HDT: 'nav.gps.sailinstrument.HDT',
+        COG: 'nav.gps.sailinstrument.COG',
         TWDF: 'nav.gps.sailinstrument.TWDF',
         TWSF: 'nav.gps.sailinstrument.TWSF',
         AWDF: 'nav.gps.sailinstrument.AWDF',
@@ -285,17 +287,19 @@ function drawWindWidget(ctx,size, maprotation, data){
         DrawOuterRing(ctx, size, maprotation + data.HDT);
         DrawKompassring(ctx, size, maprotation);
 
-        if (knots(data.DFTF)>=0.5) {
+        if (knots(data.DFTF)>=0.3) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
-        var mm = [data.minTWD, data.maxTWD];
-        DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, to180(data.LLSB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
-        DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, to180(data.LLBB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
+        if (knots(data.TWSF)>=1) {
+          var mm = [data.minTWD, data.maxTWD];
+          DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, to180(data.LLSB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
+          DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, to180(data.LLBB - data.TWDF) < 0 ? "rgb(0,255,0)" : "red");
+        }
         if (knots(data.AWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, "rgb(0,255,0)", 'A');
         }
         if (knots(data.TWSF)>=1) {
-            DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, "blue", 'T');
+            DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, "blue", data.HDT==data.COG ? 'G' : 'T');
         }
         if (typeof(data.BRG) != 'undefined') {
             DrawWPIcon(ctx, size, maprotation + data.BRG);
@@ -517,11 +521,11 @@ let DrawLaylineArea = function(ctx, radius, angle, TWD_Abweichung, color) {
     ctx.lineTo(0, -radius);
     ctx.closePath();
 
-    ctx.lineWidth = 5; //0.02*Math.min(x,y)
-    ctx.fillStyle = color;
+    ctx.lineWidth = 4; //0.02*Math.min(x,y)
+    //ctx.fillStyle = color;
     ctx.strokeStyle = color;
-    let f = radius / 200;
-    ctx.setLineDash([Math.round(10*f),Math.round(15*f)]);
+    //let f = radius / 200;
+    //ctx.setLineDash([Math.round(10*f),Math.round(15*f)]); // do not dash, looks ugly
     ctx.stroke();
 
     // Areas
@@ -634,7 +638,7 @@ let DrawWindpfeilIcon = function(ctx, radius, angle, color, Text) {
     ctx.fillStyle = "rgb(255,255,255)";
     ctx.textAlign = "center";
     ctx.font = "bold " + radius / 4 + "px Arial";
-    ctx.fillText(Text, 0, -radius_outer_ring);
+    ctx.fillText(Text, 0, -1.02*radius_outer_ring);
     ctx.restore();
 
 }
