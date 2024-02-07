@@ -33,6 +33,7 @@ SMOOTHING_FAC = "smoothing_factor"
 MM_SAMPLES = "minmax_samples"
 ADD_WIND = "add_wind"
 ADD_TIDE = "add_tide"
+TRUE_WIND = "true_wind"
 
 CONFIG = [
     {
@@ -58,6 +59,12 @@ CONFIG = [
         "description": "write tide data to AvNav model",
         "default": "False",
         "type": "BOOLEAN",
+    },
+    {
+        "name": TRUE_WIND,
+        "description": "manually entered true wind for testing, enter as 'direction,speed'",
+        "default": "",
+        "type": "STRING",
     },
 ]
 
@@ -520,7 +527,6 @@ def calcFilteredWind(self, data):
 
 
 def calcTrueWind(self, data):
-    # self.api.log(f"gpsdata0={data}")
     def missing(msg, *data):
         if any(v is None for v in data):
             if msg:
@@ -546,7 +552,21 @@ def calcTrueWind(self, data):
             stw = sog
             fallback += "STW=SOG "
 
+        if missing("HDT true heading", hdt):
+            return
+
         msg = ""
+
+        tw = self.getConfigValue(TRUE_WIND)
+        if tw:  # manually entered true wind data
+            twd, tws = list(map(float, tw.split(",")))
+            tws /= 1.94384
+            twa = to360(twd - hdt)
+            data["TWA"], data["TWS"] = twa, tws
+            awa, aws = add_polar((twa, tws), (lee, stw))
+            data["AWA"], data["AWS"] = awa, aws
+            msg += "manually entered true wind, "
+            self.api.log(f"{twd} {tws} {twa} {awa} {aws}")
 
         if missing(0, twa, tws):
             if missing("AWA/AWS/STW apparent wind or water speed", awa, aws, stw):
@@ -554,10 +574,8 @@ def calcTrueWind(self, data):
             twa, tws = add_polar((awa, aws), (lee, -stw))
             data["TWA"] = twa
             data["TWS"] = tws
-            msg += "calculating true wind "
+            msg += "calculating true wind, "
 
-        if missing("HDT true heading", hdt):
-            return
         data["AWD"] = to360(awa + hdt)
         data["TWD"] = to360(twa + hdt)
 
@@ -566,17 +584,14 @@ def calcTrueWind(self, data):
             data["GWD"] = gwd
             data["GWS"] = gws
             data["GWA"] = gwd - hdt
-            msg += "calculating ground wind "
+            msg += "calculating ground wind, "
 
         if not missing(0, sog, sog, hdt, stw) and not fallback:
             data["SET"], data["DFT"] = add_polar((cog, sog), (hdt + lee, -stw))
             msg += "calculating tide "
 
-        # self.api.log(f"gpsdata1={data}")
-        self.api.setStatus(
-            "RUNNING" if fallback else "NMEA",
-            msg + (f"fallback: {fallback}" if fallback else ""),
-        )
+        # self.api.log(f"data={data}")
+        self.api.setStatus("NMEA", msg + (f"fallback: {fallback}" if fallback else ""))
         return True
 
     except Exception as x:
