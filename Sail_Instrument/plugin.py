@@ -1,6 +1,3 @@
-# the following import is optional
-# it only allows "intelligent" IDEs (like PyCharm) to support you in using it
-from avnav_api import AVNApi
 import os
 from math import sin, cos, radians, degrees, sqrt, atan2, floor, pi, fabs
 import xml.etree.ElementTree as ET
@@ -9,6 +6,7 @@ import time
 import numpy, scipy
 import re
 from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
+import shutil
 
 try:
     from avnrouter import AVNRouter, WpData
@@ -17,7 +15,7 @@ except:
     pass
 
 KNOTS = 1.94384  # knots per m/s
-MIN_AVNAV_VERSION = "20230705"
+MIN_AVNAV_VERSION = 20230705
 SAILINSTRUMENT_PREFIX = "gps.sailinstrument."
 SMOOTHING_FACTOR = "smoothing_factor"
 MM_SAMPLES = "minmax_samples"
@@ -26,6 +24,7 @@ WIND = "wind"
 FALLBACK = "allow_fallback"
 TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
+POLAR_XML = "polar.xml"
 
 CONFIG = [
     {
@@ -104,17 +103,28 @@ class Plugin(object):
         }
 
     def __init__(self, api):
-        self.api = api  # type: AVNApi
-        if self.api.getAvNavVersion() < int(MIN_AVNAV_VERSION):
-            raise Exception("not compatible with this AvNav version")
+        self.api = api
+        assert (
+            MIN_AVNAV_VERSION <= self.api.getAvNavVersion()
+        ), "incompatible AvNav version"
 
         self.api.registerEditableParameters(CONFIG, self.changeParam)
-        self.api.registerRestart(self.stop)
-
         self.api.registerRequestHandler(self.handleApiRequest)
-        self.api.registerRestart(self.stop)
-        self.polare = {}
-        self.read_polar("polare.xml")
+        # self.api.registerRestart(self.stop)
+
+        polar_filename = os.path.join(
+            self.api.getDataDir(), "user", "viewer", POLAR_XML
+        )
+        if not os.path.isfile(polar_filename):
+            source = os.path.join(os.path.dirname(__file__), POLAR_XML)
+            shutil.copyfile(source, polar_filename)
+
+        try:
+            self.polar = read_polar(polar_filename)
+        except Exception as x:
+            self.polar = None
+            self.api.error(f"reading failed {polar_filename} {x}")
+
         self.saveAllConfig()
 
     def getConfigValue(self, name):
@@ -139,9 +149,6 @@ class Plugin(object):
     def changeParam(self, param):
         self.api.saveConfigValues(param)
 
-    def stop(self):
-        pass
-
     def handleApiRequest(self, url, handler, args):
         return {"status", "unknown request"}
 
@@ -163,6 +170,7 @@ class Plugin(object):
             xy = toCart((p, r))
             if k in filtered:
                 a = float(self.getConfigValue(SMOOTHING_FACTOR))
+                assert 0 < a <= 1
                 sk = filtered[k]
                 filtered[k] = [sk[i] + a * (xy[i] - sk[i]) for i in (0, 1)]
             else:
@@ -182,6 +190,7 @@ class Plugin(object):
             values = min_max_values[key]
             values.append(func(v))
             samples = int(self.getConfigValue(MM_SAMPLES))
+            assert 0 < samples
             while len(values) > samples:
                 values.pop(0)
             data[key + "MIN"], data[key + "MAX"] = min(values), max(values)
@@ -247,6 +256,9 @@ class Plugin(object):
             smooth(d, "TWD", "TWS")
             smooth(d, "SET", "DFT")
             min_max(d, "TWD", lambda v: to180(v - d.TWDF))
+            for k in ("AWS", "TWS", "DFT"):
+                if k not in d:
+                    d[k + "F"] = 0
 
             self.laylines(d)
 
@@ -270,29 +282,6 @@ class Plugin(object):
 
             self.api.setStatus("NMEA", "computing data")
 
-    def polar_angle(self, tws, upwind):
-        try:
-            if not self.polare:
-                return
-            speeds = self.polare["windspeedvector"]
-            angles = self.polare["ww_upwind" if upwind else "ww_downwind"]
-            return numpy.interp(tws * KNOTS, speeds, angles)
-        except Exception as x:
-            self.api.error(f"polar_angle {x}")
-
-    def polar_speed(self, twa, tws):
-        try:
-            if not self.polare:
-                return
-            if "boatspeed" not in self.polare:
-                return
-            wspeeds = self.polare["windspeedvector"]
-            wangles = self.polare["windanglevector"]
-            bspeeds = self.polare["boatspeed"]
-            return bilinear(wspeeds, wangles, bspeeds, tws * KNOTS, abs(twa)) / KNOTS
-        except Exception as x:
-            self.api.error(f"polar_speed {x}")
-
     def laylines(self, data):
         try:
             twd, tws = data.TWDF, data.TWSF
@@ -307,124 +296,31 @@ class Plugin(object):
                 upwind = abs(twa) < 90
 
             tack_angle = float(self.getConfigValue(TACK_ANGLE))
+            assert 0 <= tack_angle < 180
             gybe_angle = float(self.getConfigValue(GYBE_ANGLE))
+            assert 0 <= gybe_angle < 180
 
             if upwind and tack_angle or not upwind and gybe_angle:
                 angle = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
                 data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
                 return
 
-            if not self.polare:
+            if not self.polar:
                 return
 
-            angle = self.polar_angle(tws, upwind)
+            angle = polar_angle(self.polar, tws * KNOTS, upwind)
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
-            data.VPOL = self.polar_speed(twa, tws)
+            data.VPOL = polar_speed(self.polar, twa, tws * KNOTS) / KNOTS
 
             data.VMCD, data.VMCS = -1, 0
 
             if not brg:
                 return
 
-            data.VMCD, data.VMCS = self.optimum_vmc(twd, tws, brg)
+            data.VMCD, data.VMCS = optimum_vmc(self.polar, twd, tws, brg)
 
         except Exception as x:
             self.api.error(f"laylines {x}")
-
-    def optimum_vmc(self, twd, tws, brg):
-        brgw = to180(brg - twd)  # BRG from wind
-
-        def vmc(twa):
-            # unit vector to WP
-            e = toCart((abs(brgw), 1))
-            # boat speed vector from polar
-            b = toCart((twa, self.polar_speed(twa, tws)))
-            # project boat speed vector onto bearing to get VMC
-            # negative sign, optimizer finds minimum
-            return -(e[0] * b[0] + e[1] * b[1])
-
-        # for a in range(0, 181, 10): self.api.log(f"{a} {vmc(a)*KNOTS}")
-
-        res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
-        # self.api.log(f"{res}")
-        if res.success:
-            return to360(twd + copysign(res.x, brgw)), -res.fun
-
-    def read_polar(self, f_name):
-        polare_filename = os.path.join(
-            self.api.getDataDir(), "user", "viewer", "polare.xml"
-        )
-        try:
-            tree = ET.parse(polare_filename)
-        except:
-            try:
-                source = os.path.join(os.path.dirname(__file__), f_name)
-                dest = os.path.join(
-                    self.api.getDataDir(), "user", "viewer", "polare.xml"
-                )
-                with open(source, "rb") as src, open(dest, "wb") as dst:
-                    dst.write(src.read())
-                tree = ET.parse(polare_filename)
-            except:
-                return False
-        finally:
-            if not "tree" in locals():
-                return False
-            root = tree.getroot()
-            x = ET.tostring(root, encoding="utf8").decode("utf8")
-            e_str = "windspeedvector"
-            x = root.find("windspeedvector").text
-            # whitespaces entfernen
-            x = "".join(x.split())
-            self.polare["windspeedvector"] = list(map(float, x.strip("][").split(",")))
-            if not strictly_increasing(self.polare["windspeedvector"]):
-                raise Exception(
-                    "windspeedvector in polare.xml IS NOT STRICTLY INCREASING!"
-                )
-                return False
-
-            e_str = "windanglevector"
-            x = root.find("windanglevector").text
-            # whitespaces entfernen
-            x = "".join(x.split())
-            self.polare["windanglevector"] = list(map(float, x.strip("][").split(",")))
-            if not strictly_increasing(self.polare["windanglevector"]):
-                raise Exception(
-                    "windanglevector in polare.xml IS NOT STRICTLY INCREASING!"
-                )
-                return False
-
-            e_str = "boatspeed"
-            x = root.find("boatspeed").text
-            # whitespaces entfernen
-            z = "".join(x.split())
-
-            z = z.split("],[")
-            boatspeed = []
-            for elem in z:
-                zz = elem.strip("][").split(",")
-                boatspeed.append(list(map(float, zz)))
-            self.polare["boatspeed"] = boatspeed
-
-            e_str = "wendewinkel"
-            x = root.find("wendewinkel")
-
-            e_str = "upwind"
-            y = x.find("upwind").text
-            # whitespaces entfernen
-            y = "".join(y.split())
-            self.polare["ww_upwind"] = list(map(float, y.strip("][").split(",")))
-
-            e_str = "downwind"
-            y = x.find("downwind").text
-            # whitespaces entfernen
-            y = "".join(y.split())
-            self.polare["ww_downwind"] = list(map(float, y.strip("][").split(",")))
-        return True
-
-
-def strictly_increasing(L):
-    return all(x < y for x, y in zip(L, L[1:]))
 
 
 def bearing_to_waypoint():
@@ -440,6 +336,83 @@ def bearing_to_waypoint():
         return wpData.dstBearing
     except:
         return
+
+
+def read_polar(f_name):
+    polar = {}
+    tree = ET.parse(f_name)
+    root = tree.getroot()
+    x = ET.tostring(root, encoding="utf8").decode("utf8")
+    k = "windspeedvector"
+    x = root.find(k).text
+    # whitespaces entfernen
+    x = "".join(x.split())
+    polar[k] = list(map(float, x.strip("][").split(",")))
+    assert strictly_increasing(polar[k])
+
+    k = "windanglevector"
+    x = root.find(k).text
+    # whitespaces entfernen
+    x = "".join(x.split())
+    polar[k] = list(map(float, x.strip("][").split(",")))
+    assert strictly_increasing(polar[k])
+
+    k = "boatspeed"
+    x = root.find(k).text
+    # whitespaces entfernen
+    z = "".join(x.split())
+
+    z = z.split("],[")
+    boatspeed = []
+    for elem in z:
+        zz = elem.strip("][").split(",")
+        boatspeed.append(list(map(float, zz)))
+    polar[k] = boatspeed
+
+    x = root.find("wendewinkel")
+
+    y = x.find("upwind").text
+    y = "".join(y.split())
+    polar["ww_upwind"] = list(map(float, y.strip("][").split(",")))
+
+    y = x.find("downwind").text
+    y = "".join(y.split())
+    polar["ww_downwind"] = list(map(float, y.strip("][").split(",")))
+    return polar
+
+
+def strictly_increasing(L):
+    return all(x < y for x, y in zip(L, L[1:]))
+
+
+def polar_angle(polar, tws, upwind):
+    speeds = polar["windspeedvector"]
+    angles = polar["ww_upwind" if upwind else "ww_downwind"]
+    return numpy.interp(tws, speeds, angles)
+
+
+def polar_speed(polar, twa, tws):
+    wspeeds = polar["windspeedvector"]
+    wangles = polar["windanglevector"]
+    bspeeds = polar["boatspeed"]
+    return bilinear(wspeeds, wangles, bspeeds, tws, abs(twa))
+
+
+def optimum_vmc(polar, twd, tws, brg):
+    brg_twd = to180(brg - twd)  # BRG from wind
+
+    def vmc(twa):
+        # unit vector to WP
+        e = toCart((abs(brg_twd), 1))
+        # boat speed vector from polar
+        b = toCart((twa, polar_speed(polar, twa, tws)))
+        # project boat speed vector onto bearing to get VMC
+        # negative sign, optimizer finds minimum
+        return -(e[0] * b[0] + e[1] * b[1])
+
+    res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
+    if res.success:
+        return to360(twd + copysign(res.x, brg_twd)), -res.fun
 
 
 def bilinear(xv, yv, zv, x, y):
