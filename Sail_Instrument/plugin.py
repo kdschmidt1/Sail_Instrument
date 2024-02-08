@@ -324,7 +324,8 @@ class Plugin(object):
             data.VPOL = polar_speed(self.polar, twa, tws * KNOTS) / KNOTS
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
-                data.VMCD, data.VMCS = optimum_vmc(self.polar, twd, tws, brg)
+                data.VMCD, data.VMCS = optimum_vmc(self.polar, twd, tws * KNOTS, brg)
+                data.VMCS /= KNOTS
 
         except Exception as x:
             self.api.error(f"laylines {x}")
