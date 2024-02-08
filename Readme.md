@@ -71,7 +71,7 @@ You have to provide polar data for your boat in `avnav/user/viewer/polar.json` f
 
 If you do not have any polar data, you can enter tack and gybe angle in the plugin configuration and use these fixed values instead.
   
-A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG) or [Seapilot.com](https://www.seapilot.com/wp-content/uploads/2018/05/All_polar_files.zip).
+A source for polar data can be [ORC sailboat data](https://jieter.github.io/orc-data/site/) or [Seapilot.com](https://www.seapilot.com/features/download-polar-files/).
 
 ## Laylines
 

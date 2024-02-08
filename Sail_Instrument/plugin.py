@@ -342,7 +342,7 @@ def bearing_to_waypoint():
 
 def polar_angle(polar, tws, upwind):
     speeds = polar["TWS"]
-    angles = polar["tack_angle" if upwind else "gybe_angle"]
+    angles = polar["beat_angle" if upwind else "run_angle"]
     return numpy.interp(tws, speeds, angles)
 
 
