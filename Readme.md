@@ -62,6 +62,7 @@ There are the following config options.
 - `gybe_angle` - gybe angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
 - `write_data` - write calculated data to their well-defined AvNav paths, requires `allowKeyOverwrite=true`
 - `wind` - manually entered ground wind as `direction,speed`, used to calculate true and apparent wind if no other wind data is present (for simulation)
+- `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
 
 ## Installation
 
@@ -89,4 +90,4 @@ The calculation of laylines is based on the upwind and downwind vectors in the p
 
 From the boatspeed matrix in the polar data, which is a mapping of TWS and TWA to boatspeed (STW), one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. This plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
 
-These calculations require `numpy`, `scipy.optimize` and `scipy.interpolate` to be installed.
+These calculations require `numpy`, `scipy.optimize` and `scipy.interpolate` to be installed. `scipy.optimize` is not available on OpenPlotter.

@@ -25,6 +25,7 @@ WIND = "wind"
 FALLBACK = "allow_fallback"
 TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
+CALC_VMC = "calc_vmc"
 POLAR_FILE = "polar.json"
 
 CONFIG = [
@@ -44,6 +45,12 @@ CONFIG = [
         "name": FALLBACK,
         "description": "allow fallback to use HDM/COG/SOG for HDT/STW",
         "default": "True",
+        "type": "BOOLEAN",
+    },
+    {
+        "name": CALC_VMC,
+        "description": "perform calculation of optimal TWA for maximum VMC",
+        "default": "False",
         "type": "BOOLEAN",
     },
     {
@@ -302,6 +309,8 @@ class Plugin(object):
             gybe_angle = float(self.getConfigValue(GYBE_ANGLE))
             assert 0 <= gybe_angle < 180
 
+            data.VMCD, data.VMCS = -1, 0
+
             if upwind and tack_angle or not upwind and gybe_angle:
                 angle = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
                 data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
@@ -314,12 +323,8 @@ class Plugin(object):
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
             data.VPOL = polar_speed(self.polar, twa, tws * KNOTS) / KNOTS
 
-            data.VMCD, data.VMCS = -1, 0
-
-            if not brg:
-                return
-
-            data.VMCD, data.VMCS = optimum_vmc(self.polar, twd, tws, brg)
+            if brg and self.getConfigValue(CALC_VMC).startswith("T"):
+                data.VMCD, data.VMCS = optimum_vmc(self.polar, twd, tws, brg)
 
         except Exception as x:
             self.api.error(f"laylines {x}")
