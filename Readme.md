@@ -70,7 +70,7 @@ Place the `Sail_Instrument` folder inside `avnav/data/plugins`.
 You have to provide polar data for your boat in `avnav/user/viewer` for calculating the laylines. If there is no `polar.xml` file in the user folder, the plugin will copy its own file to this location, and you can use it as a template for your own polar data.
 If you do not have polar data, you can enter tack and gybe angle in the plugin configuration and use these fixed values instead.
   
-A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG)(thanks to [Segeln-Forum](https://www.segeln-forum.de/thread/61813-messbriefe-und-polardaten-online-nachschauen/)) or [Seapilot.com](https://www.seapilot.com/wp-content/uploads/2018/05/All_polar_files.zip)(thanks to [free-x](https://github.com/free-x)).
+A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG) or [Seapilot.com](https://www.seapilot.com/wp-content/uploads/2018/05/All_polar_files.zip).
 
 In the polar data you find beat angle and run angle. These two vectors are needed for the calculation of the laylines.  
 The boat speed matrix is only used for calculation of VPOL and optimal VMC course.
