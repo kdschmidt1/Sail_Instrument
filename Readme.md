@@ -67,6 +67,8 @@ There are the following config options.
 
 Place the `Sail_Instrument` folder inside `avnav/data/plugins`.
 
+## Polar Data
+
 You have to provide polar data for your boat in `avnav/user/viewer/polar.json` for calculating the laylines. If there is no such file, the plugin will copy one to this location, and you can use it as a template for your own polar data.
 
 If you do not have any polar data, you can enter tack and gybe angle in the plugin configuration and use these fixed values instead.
