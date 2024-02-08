@@ -321,35 +321,34 @@ class Plugin(object):
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
             data.VPOL = self.polar_speed(twa, tws)
 
+            data.VMCD, data.VMCS = -1, 0
+
             if not brg:
                 return
 
-            def optimum_vmc(twd, tws, brg):
-                brgw = to180(brg - twd)  # BRG from wind
-
-                def vmc(twa):
-                    # unit vector to WP
-                    e = toCart((abs(brgw), 1))
-                    # boat speed vector from polar
-                    b = toCart((twa, self.polar_speed(twa, tws)))
-                    # project boat speed vector onto bearing to get VMC
-                    # negative sign, optimizer finds minimum
-                    return -(e[0] * b[0] + e[1] * b[1])
-
-                # for a in range(0, 181, 10): self.api.log(f"{a} {vmc(a)*KNOTS}")
-
-                res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
-                # self.api.log(f"{res}")
-                if res.success:
-                    return to360(twd + copysign(res.x, brgw)), -res.fun
-
-            data.VMCD, data.VMCS = optimum_vmc(twd, tws, brg)
+            data.VMCD, data.VMCS = self.optimum_vmc(twd, tws, brg)
 
         except Exception as x:
             self.api.error(f"laylines {x}")
 
-    def strictly_increasing(self, L):
-        return all(x < y for x, y in zip(L, L[1:]))
+    def optimum_vmc(self, twd, tws, brg):
+        brgw = to180(brg - twd)  # BRG from wind
+
+        def vmc(twa):
+            # unit vector to WP
+            e = toCart((abs(brgw), 1))
+            # boat speed vector from polar
+            b = toCart((twa, self.polar_speed(twa, tws)))
+            # project boat speed vector onto bearing to get VMC
+            # negative sign, optimizer finds minimum
+            return -(e[0] * b[0] + e[1] * b[1])
+
+        # for a in range(0, 181, 10): self.api.log(f"{a} {vmc(a)*KNOTS}")
+
+        res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
+        # self.api.log(f"{res}")
+        if res.success:
+            return to360(twd + copysign(res.x, brgw)), -res.fun
 
     def read_polar(self, f_name):
         polare_filename = os.path.join(
@@ -378,7 +377,7 @@ class Plugin(object):
             # whitespaces entfernen
             x = "".join(x.split())
             self.polare["windspeedvector"] = list(map(float, x.strip("][").split(",")))
-            if not self.strictly_increasing(self.polare["windspeedvector"]):
+            if not strictly_increasing(self.polare["windspeedvector"]):
                 raise Exception(
                     "windspeedvector in polare.xml IS NOT STRICTLY INCREASING!"
                 )
@@ -389,7 +388,7 @@ class Plugin(object):
             # whitespaces entfernen
             x = "".join(x.split())
             self.polare["windanglevector"] = list(map(float, x.strip("][").split(",")))
-            if not self.strictly_increasing(self.polare["windanglevector"]):
+            if not strictly_increasing(self.polare["windanglevector"]):
                 raise Exception(
                     "windanglevector in polare.xml IS NOT STRICTLY INCREASING!"
                 )
@@ -422,6 +421,10 @@ class Plugin(object):
             y = "".join(y.split())
             self.polare["ww_downwind"] = list(map(float, y.strip("][").split(",")))
         return True
+
+
+def strictly_increasing(L):
+    return all(x < y for x, y in zip(L, L[1:]))
 
 
 def bearing_to_waypoint():

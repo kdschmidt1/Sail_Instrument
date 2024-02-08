@@ -303,7 +303,7 @@ function drawWindWidget(ctx,size, maprotation, data){
           DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, green);
           DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, red);
         }
-        if (data.VMCD) {
+        if (data.VMCD>=0) {
           DrawLaylineArea(ctx, size, maprotation + data.VMCD, [0,0], blue);
         }
         if (knots(data.AWSF)>=1) {
