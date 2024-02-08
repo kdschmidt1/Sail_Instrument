@@ -1,6 +1,7 @@
 import os
 from math import sin, cos, radians, degrees, sqrt, atan2, floor, pi, fabs
 import xml.etree.ElementTree as ET
+import json
 import urllib.request, urllib.parse, urllib.error
 import time
 import numpy, scipy
@@ -24,7 +25,7 @@ WIND = "wind"
 FALLBACK = "allow_fallback"
 TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
-POLAR_XML = "polar.xml"
+POLAR_FILE = "polar.json"
 
 CONFIG = [
     {
@@ -113,14 +114,15 @@ class Plugin(object):
         # self.api.registerRestart(self.stop)
 
         polar_filename = os.path.join(
-            self.api.getDataDir(), "user", "viewer", POLAR_XML
+            self.api.getDataDir(), "user", "viewer", POLAR_FILE
         )
         if not os.path.isfile(polar_filename):
-            source = os.path.join(os.path.dirname(__file__), POLAR_XML)
+            source = os.path.join(os.path.dirname(__file__), POLAR_FILE)
             shutil.copyfile(source, polar_filename)
 
         try:
-            self.polar = read_polar(polar_filename)
+            with open(polar_filename) as f:
+                self.polar = json.load(f)
         except Exception as x:
             self.polar = None
             self.api.error(f"reading failed {polar_filename} {x}")
@@ -338,63 +340,16 @@ def bearing_to_waypoint():
         return
 
 
-def read_polar(f_name):
-    polar = {}
-    tree = ET.parse(f_name)
-    root = tree.getroot()
-    x = ET.tostring(root, encoding="utf8").decode("utf8")
-    k = "windspeedvector"
-    x = root.find(k).text
-    # whitespaces entfernen
-    x = "".join(x.split())
-    polar[k] = list(map(float, x.strip("][").split(",")))
-    assert strictly_increasing(polar[k])
-
-    k = "windanglevector"
-    x = root.find(k).text
-    # whitespaces entfernen
-    x = "".join(x.split())
-    polar[k] = list(map(float, x.strip("][").split(",")))
-    assert strictly_increasing(polar[k])
-
-    k = "boatspeed"
-    x = root.find(k).text
-    # whitespaces entfernen
-    z = "".join(x.split())
-
-    z = z.split("],[")
-    boatspeed = []
-    for elem in z:
-        zz = elem.strip("][").split(",")
-        boatspeed.append(list(map(float, zz)))
-    polar[k] = boatspeed
-
-    x = root.find("wendewinkel")
-
-    y = x.find("upwind").text
-    y = "".join(y.split())
-    polar["ww_upwind"] = list(map(float, y.strip("][").split(",")))
-
-    y = x.find("downwind").text
-    y = "".join(y.split())
-    polar["ww_downwind"] = list(map(float, y.strip("][").split(",")))
-    return polar
-
-
-def strictly_increasing(L):
-    return all(x < y for x, y in zip(L, L[1:]))
-
-
 def polar_angle(polar, tws, upwind):
-    speeds = polar["windspeedvector"]
-    angles = polar["ww_upwind" if upwind else "ww_downwind"]
+    speeds = polar["TWS"]
+    angles = polar["tack_angle" if upwind else "gybe_angle"]
     return numpy.interp(tws, speeds, angles)
 
 
 def polar_speed(polar, twa, tws):
-    wspeeds = polar["windspeedvector"]
-    wangles = polar["windanglevector"]
-    bspeeds = polar["boatspeed"]
+    wspeeds = polar["TWS"]
+    wangles = polar["TWA"]
+    bspeeds = polar["STW"]
     return bilinear(wspeeds, wangles, bspeeds, tws, abs(twa))
 
 

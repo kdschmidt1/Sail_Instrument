@@ -12,7 +12,7 @@ There is a good description of what you can do with it at [blauwasser.de](https:
 
 The plugin calculates true wind, ground wind and set and drift. It needs COG/SOG, HDT/STW and AWA/AWS as input data. If HDT/STW is missing it uses COG/SOG as fallback (you get ground wind instead of true wind, and the direction is wrong if HDT!=COG). If you do not have a wind sensor, you can enter ground wind in the settings for testing purposes.
 
-How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L454).
+How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L409).
 
 The values calculated by the plugin are published in AvNav as `gps.sailinstrument.*`. 
 Optionally you can enable that some of these quantities are written to their well-defined AvNav paths to make them available to widgets or other plugins.
@@ -67,7 +67,7 @@ There are the following config options.
 
 Place the `Sail_Instrument` folder inside `avnav/data/plugins`.
 
-You have to provide polar data for your boat in `avnav/user/viewer/polar.xml` for calculating the laylines. If there is no such file, the plugin will copy one to this location, and you can use it as a template for your own polar data.
+You have to provide polar data for your boat in `avnav/user/viewer/polar.json` for calculating the laylines. If there is no such file, the plugin will copy one to this location, and you can use it as a template for your own polar data.
 
 If you do not have any polar data, you can enter tack and gybe angle in the plugin configuration and use these fixed values instead.
   
