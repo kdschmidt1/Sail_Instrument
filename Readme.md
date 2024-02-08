@@ -67,13 +67,11 @@ There are the following config options.
 
 Place the `Sail_Instrument` folder inside `avnav/data/plugins`.
 
-You have to provide polar data for your boat in `avnav/user/viewer` for calculating the laylines. If there is no `polar.xml` file in the user folder, the plugin will copy its own file to this location, and you can use it as a template for your own polar data.
-If you do not have polar data, you can enter tack and gybe angle in the plugin configuration and use these fixed values instead.
+You have to provide polar data for your boat in `avnav/user/viewer/polar.xml` for calculating the laylines. If there is no such file, the plugin will copy one to this location, and you can use it as a template for your own polar data.
+
+If you do not have any polar data, you can enter tack and gybe angle in the plugin configuration and use these fixed values instead.
   
 A source for polar data can be [Zeilersforum.nl](http://jieter.github.io/orc-data/site/index.html?#ITAEVERG) or [Seapilot.com](https://www.seapilot.com/wp-content/uploads/2018/05/All_polar_files.zip).
-
-In the polar data you find beat angle and run angle. These two vectors are needed for the calculation of the laylines.  
-The boat speed matrix is only used for calculation of VPOL and optimal VMC course.
 
 ## Laylines
 
@@ -84,6 +82,6 @@ To understand the technical background of the laylines one has first to have an 
 
 Unfortunately there is a lot of confusion on these two terms and also most of the commercial products are mixing the two items and indicate VMG but actually showing VMC (and so does AvNav). 
 
-The calculation of laylines is based on the upwind and downwind vectors in your polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result laylines show the optimal TWA to travel upwind, but not the optimal TWA to get to the waypoint.  
+The calculation of laylines is based on the upwind and downwind vectors in the polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result the laylines show the optimal TWA to travel upwind, but not the optimal TWA to get towards the waypoint.  
 
-From the polar data, which is a mapping of TWS and TWA to boatspeed (STW), one can calculate the optimal TWA such that VMC is maximised, the TWA that gets you fasted towards the waypoint. This plugin calculates this optimum VMC course from the polar data and displays it as a blue line along with the laylines.
+From the boatspeed matrix in the polar data, which is a mapping of TWS and TWA to boatspeed (STW), one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. This plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines.
