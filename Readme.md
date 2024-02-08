@@ -63,6 +63,7 @@ There are the following config options.
 - `write_data` - write calculated data to their well-defined AvNav paths, requires `allowKeyOverwrite=true`
 - `ground_wind` - manually entered ground wind as `direction,speed`, used to calculate true and apparent wind if no other wind data is present (for simulation)
 - `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
+- `laylines_from_matrix` - calculate laylines from speed matrix, not from beat/run angle in polar data
 
 ## Installation
 

@@ -25,6 +25,7 @@ FALLBACK = "allow_fallback"
 TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
 CALC_VMC = "calc_vmc"
+LAYLINES_FROM_MATRIX = "laylines_from_matrix"
 
 CONFIG = [
     {
@@ -48,6 +49,12 @@ CONFIG = [
     {
         "name": CALC_VMC,
         "description": "perform calculation of optimal TWA for maximum VMC",
+        "default": "False",
+        "type": "BOOLEAN",
+    },
+    {
+        "name": LAYLINES_FROM_MATRIX,
+        "description": "calculate laylines from speed matrix, not from beat/run angle in polar data",
         "default": "False",
         "type": "BOOLEAN",
     },
@@ -317,7 +324,11 @@ class Plugin(object):
             if not self.polar:
                 return
 
-            angle = polar_angle(self.polar, tws * KNOTS, upwind)
+            if self.getConfigValue(LAYLINES_FROM_MATRIX).startswith("T"):
+                angle = polar_angle2(self.polar, tws * KNOTS, upwind)
+            else:
+                angle = polar_angle(self.polar, tws * KNOTS, upwind)
+
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
             data.VPOL = polar_speed(self.polar, twa, tws * KNOTS) * MPS
 
@@ -362,17 +373,18 @@ def optimum_vmc(polar, twd, tws, brg):
     brg_twd = to180(brg - twd)  # BRG from wind
 
     def vmc(twa):
-        # unit vector to WP
-        e = toCart((abs(brg_twd), 1))
-        # boat speed vector from polar
-        b = toCart((twa, polar_speed(polar, twa, tws)))
-        # project boat speed vector onto bearing to get VMC
-        # negative sign, optimizer finds minimum
-        return -(e[0] * b[0] + e[1] * b[1])
+        # negative sign for minimizer
+        return -polar_speed(polar, twa, tws) * cos(radians(twa - abs(brg_twd)))
 
     res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
     if res.success:
         return to360(twd + copysign(res.x, brg_twd)), -res.fun
+
+
+def polar_angle2(polar, tws, upwind):
+    "calculate beat/run angle from speed matrix"
+    d, s = optimum_vmc(polar, 0, tws, 0 if upwind else 180)
+    return d
 
 
 class CourseData:
