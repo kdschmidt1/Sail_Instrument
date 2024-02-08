@@ -1,665 +1,686 @@
-#the following import is optional
-#it only allows "intelligent" IDEs (like PyCharm) to support you in using it
+# the following import is optional
+# it only allows "intelligent" IDEs (like PyCharm) to support you in using it
 from avnav_api import AVNApi
-import math
-import time
-from datetime import datetime
 import os
-from datetime import date
+from math import sin, cos, radians, degrees, sqrt, atan2, floor, pi, fabs
 import xml.etree.ElementTree as ET
 import urllib.request, urllib.parse, urllib.error
-import json
-import sys
-from _ast import Try
-import traceback
 import time
-from builtins import len
+import numpy, scipy
+import re
+from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
+
 try:
     from avnrouter import AVNRouter, WpData
     from avnav_worker import AVNWorker, WorkerParameter, WorkerStatus
 except:
     pass
-MIN_AVNAV_VERSION="20220426"
 
-    #// https://www.rainerstumpe.de/HTML/wind02.html
-    #// https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721
+KNOTS = 1.94384  # knots per m/s
+MIN_AVNAV_VERSION = "20230705"
+SAILINSTRUMENT_PREFIX = "gps.sailinstrument."
+SMOOTHING_FACTOR = "smoothing_factor"
+MM_SAMPLES = "minmax_samples"
+WRITE_DATA = "write_data"
+WIND = "wind"
+FALLBACK = "allow_fallback"
+TACK_ANGLE = "tack_angle"
+GYBE_ANGLE = "gybe_angle"
 
-    #//http://www.movable-type.co.uk/scripts/latlong.html
-    #//The longitude can be normalised to −180…+180 using (lon+540)%360-180
-
-#            a=b<0?c;
-            #self.minTWD[0] = actTWD if actTWD<self.minTWD[0] else self.minTWD[0]
-
-
-
+CONFIG = [
+    {
+        "name": SMOOTHING_FACTOR,
+        "description": "exponential smoothing factor for TWD/AWD",
+        "default": "0.1",
+        "type": "FLOAT",
+    },
+    {
+        "name": MM_SAMPLES,
+        "description": "number of samples for calculating min/max of TWD",
+        "default": "200",
+        "type": "NUMBER",
+    },
+    {
+        "name": FALLBACK,
+        "description": "allow fallback to use HDM/COG/SOG for HDT/STW",
+        "default": "True",
+        "type": "BOOLEAN",
+    },
+    {
+        "name": TACK_ANGLE,
+        "description": "tack angle, if >0 use this fixed angle instead of calculating from polar data",
+        "default": "0",
+        "type": "FLOAT",
+    },
+    {
+        "name": GYBE_ANGLE,
+        "description": "gybe angle, if >0 use this fixed angle instead of calculating from polar data",
+        "default": "0",
+        "type": "FLOAT",
+    },
+    {
+        "name": WRITE_DATA,
+        "description": "write calculated data to AvNav model in gps.* (requires allowKeyOverwrite=true), all data is always available in "
+        + SAILINSTRUMENT_PREFIX
+        + "*",
+        "default": "False",
+        "type": "BOOLEAN",
+    },
+    {
+        "name": WIND,
+        "description": "manually entered ground wind for testing, enter as 'direction,speed', is used if no other wind data is present",
+        "default": "",
+        "type": "STRING",
+    },
+]
 
 
 class Plugin(object):
-  PATHTWDF="gps.TWDF"   #    TrueWindDirection PT1 gefiltert
-  PATHAWDF="gps.AWDF"   #    ApparentWindDirection PT1 gefiltert
-  PATHTLL_SB="gps.LLSB" #    Winkel Layline Steuerbord
-  PATHTLL_BB="gps.LLBB" #    Winkel Layline Backbord
-  PATHTLL_VPOL="gps.VPOL" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
-  PATHTLL_OPTVMC="gps.OPTVMC" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA
-  PATHmaxTWD="gps.maxTWD" 
-  PATHminTWD="gps.minTWD" 
-#  PATHTLL_speed="gps.speed" #  Geschwindigkeit aus Polardiagramm basierend auf TWS und TWA 
+    @classmethod
+    def pluginInfo(cls):
+        return {
+            "description": "sail instrument calculating and displaying, true/apparent wind, tide, laylines",
+            "version": "1.2",
+            "config": CONFIG,
+            "data": [
+                {
+                    "path": SAILINSTRUMENT_PREFIX + "*",
+                    "description": "sail instrument data",
+                },
+                {"path": "gps.currentSet", "description": "tide set direction"},
+                {"path": "gps.currentDrift", "description": "tide drift rate"},
+                {"path": "gps.windAngle", "description": "apparent wind angle"},
+                {"path": "gps.windSpeed", "description": "apparent wind speed"},
+                {"path": "gps.trueWindAngle", "description": "true wind angle"},
+                {"path": "gps.trueWindSpeed", "description": "true wind speed"},
+                {"path": "gps.trueWindDirection", "description": "true wind direction"},
+                {"path": "gps.groundWindAngle", "description": "ground wind angle"},
+                {"path": "gps.groundWindSpeed", "description": "ground wind speed"},
+                {
+                    "path": "gps.groundWindDirection",
+                    "description": "ground wind direction",
+                },
+            ],
+        }
 
+    def __init__(self, api):
+        self.api = api  # type: AVNApi
+        if self.api.getAvNavVersion() < int(MIN_AVNAV_VERSION):
+            raise Exception("not compatible with this AvNav version")
 
-  CONFIG = [
-      {
-      'name':'TWD_filtFreq',
-      'description':'Limit Frequency for PT1-Filter of TWD',
-      'default':'0.2',
-      'type': 'FLOAT'
-      },
-            {
-      'name':'Area_Minutes',
-      'description':'Minutes considered for Layline-Areas [0..60] (0=>No Laylineareas)',
-      'default':'2',
-      'type': 'NUMBER'
-      },
-      ]
+        self.api.registerEditableParameters(CONFIG, self.changeParam)
+        self.api.registerRestart(self.stop)
 
+        self.api.registerRequestHandler(self.handleApiRequest)
+        self.api.registerRestart(self.stop)
+        self.polare = {}
+        self.read_polar("polare.xml")
+        self.saveAllConfig()
 
-  
-  @classmethod
-  def pluginInfo(cls):
-    """
-    the description for the module
-    @return: a dict with the content described below
-            parts:
-               * description (mandatory)
-               * data: list of keys to be stored (optional)
-                 * path - the key - see AVNApi.addData, all pathes starting with "gps." will be sent to the GUI
-                 * description
-    """
-    return {
-      'description': 'a test plugins',
-      'version': '1.0',
-      'config': cls.CONFIG,
-      
-      'data': [
-        {
-          'path': cls.PATHminTWD,
-          'description': 'minimum TrueWindDirection last xx Minutes',
-        },
-        {
-          'path': cls.PATHmaxTWD,
-          'description': 'maximum TrueWindDirection last xx Minutes',
-        },
-        {
-          'path': cls.PATHTWDF,
-          'description': 'TrueWindDirection PT1 filtered',
-        },
-        {
-          'path': cls.PATHAWDF,
-          'description': 'ApparentWindDirection PT1 filtered',
-        },
-        {
-          'path': cls.PATHTLL_OPTVMC,
-          'description': 'optimum vmc direction',
-        },
-        {
-          'path': cls.PATHTLL_SB,
-          'description': 'Layline Steuerbord',
-        },
-        {
-          'path': cls.PATHTLL_BB,
-          'description': 'Layline Backbord',
-        },
-        {
-          'path': cls.PATHTLL_VPOL,
-          'description': 'Speed aus Polare',
-        },
-      ]
-    }
+    def getConfigValue(self, name):
+        defaults = self.pluginInfo()["config"]
+        for cf in defaults:
+            if cf["name"] == name:
+                return self.api.getConfigValue(name, cf.get("default"))
+        return self.api.getConfigValue(name)
 
+    def saveAllConfig(self):
+        d = {}
+        defaults = self.pluginInfo()["config"]
+        for cf in defaults:
+            v = self.getConfigValue(cf.get("name"))
+            d.update({cf.get("name"): v})
+        self.api.saveConfigValues(d)
+        return
 
-    
+    def changeConfig(self, newValues):
+        self.api.saveConfigValues(newValues)
 
+    def changeParam(self, param):
+        self.api.saveConfigValues(param)
 
-  def __init__(self,api):
-    """
-        initialize a plugins
-        do any checks here and throw an exception on error
-        do not yet start any threads!
-        @param api: the api to communicate with avnav
-        @type  api: AVNApi
-    """
-    
-    self.api = api # type: AVNApi
-    if(self.api.getAvNavVersion() < int(MIN_AVNAV_VERSION)):
-        raise Exception("SegelDisplay-Plugin is not available for this AvNav-Version")
-        return 
+    def stop(self):
+        pass
 
-    self.api.registerEditableParameters(self.CONFIG, self.changeParam)
-    self.api.registerRestart(self.stop)
+    def handleApiRequest(self, url, handler, args):
+        return {"status", "unknown request"}
 
-    vers=self.api.getAvNavVersion()
-    #we register an handler for API requests
-    self.api.registerRequestHandler(self.handleApiRequest)
-    self.count=0
-    self.TrueWindDirection_filtered={'x':0,'y':0, 'alpha':0}
-    self.ApparentWindDirection_filtered={'x':0,'y':0, 'alpha':0}
-    self.awdf=0
-    self.twdf=0
-    self.api.registerRestart(self.stop)
-    self.oldtime=0
-    self.polare={}
-    if not self.Polare('polare.xml'):
-       raise Exception("polare.xml not found Error")
-       return
-    self.saveAllConfig()
-    self.startSequence = 0
+    def run(self):
+        def manual_wind():
+            w = self.getConfigValue(WIND)
+            if w:  # manually entered wind data
+                wd, ws = list(map(float, w.split(",")))
+                ws /= 1.94384
+                return wd, ws
 
-# Normalizes any number to an arbitrary range 
-# by assuming the range wraps around when going below min or above max 
-  def normalize(self, value, start, end ): 
-        width       = end - start      
-        offsetValue = value - start    # value relative to 0      
-        return ( offsetValue - ( math.floor( offsetValue / width ) * width ) ) + start ;
-        #// + start to reset back to start of original range
+        filtered = {}
 
-  def getConfigValue(self, name):
-    defaults = self.pluginInfo()['config']
-    for cf in defaults:
-      if cf['name'] == name:
-        return self.api.getConfigValue(name, cf.get('default'))
-    return self.api.getConfigValue(name)
-  
-  def saveAllConfig(self):
-    d = {}
-    defaults = self.pluginInfo()['config']
-    for cf in defaults:
-      v = self.getConfigValue(cf.get('name'))
-      d.update({cf.get('name'):v})
-    self.api.saveConfigValues(d)
-    return 
-  
-  def changeConfig(self, newValues):
-    self.api.saveConfigValues(newValues)
-  
-  def changeParam(self,param):
-    self.api.saveConfigValues(param)
-    self.startSequence+=1  
-  
-  def stop(self):
-    pass
+        def smooth(data, phi, rad):
+            if any(v not in data for v in (phi, rad)):
+                return
+            k = phi + rad
+            p, r = data[phi], data[rad]
+            xy = toCart((p, r))
+            if k in filtered:
+                a = float(self.getConfigValue(SMOOTHING_FACTOR))
+                sk = filtered[k]
+                filtered[k] = [sk[i] + a * (xy[i] - sk[i]) for i in (0, 1)]
+            else:
+                filtered[k] = xy
+            p, r = toPol(filtered[k])
+            data[phi + "F"] = p
+            data[rad + "F"] = r
 
-  def PT_1funk(self, f_grenz, t_abtast, oldvalue, newvalue):
-    """
-        PT1 filter
-        @param f_grenz, t_abtast, oldvalue, newvalue
-        @return:
-    """
-    #const t_abtast= globalStore.getData(keys.properties.positionQueryTimeout)/1000 //[ms->s]
-    T = 1 / (2*math.pi*f_grenz)
-    tau = 1 / ((T / t_abtast) + 1)
-    return(oldvalue + tau * (newvalue - oldvalue))
+        min_max_values = {}
 
-  minTWD=[]
-  maxTWD=[]
-  lastMinute = -1
-  def run(self):
-    """
-    the run method
-    @return:
-    """
-    def calc_minmaxTWD(self, actTWD, act_minute, max_minutes): # using lists instead of collections because length is <= 60
-        if(act_minute != self.lastMinute):   # list shiften
-            self.minTWD.insert(0,actTWD) #// New Element on pos 0
-            self.maxTWD.insert(0,actTWD)               
-        elif len(self.minTWD)>0:
-            self.minTWD[0] = actTWD if actTWD<self.minTWD[0] else self.minTWD[0]
-            self.maxTWD[0] = actTWD if actTWD>self.maxTWD[0] else self.maxTWD[0]
-    
-        while(len(self.minTWD)>max_minutes):
-            self.minTWD.pop();   #limit array-length to maxmaxminutes if necessary
-            self.maxTWD.pop();   #limit array-length to maxmaxminutes if necessary
-        # print(minTWD)
-        self.lastMinute=act_minute
-        if len(self.minTWD)>0:  # if max_minutes>0 return min/max TWD  
-            return([min(self.minTWD),max(self.maxTWD)])
-        else:
-            return([actTWD,actTWD]) # if max_minutes==0 return actTWD
+        def min_max(data, key, func=lambda x: x):
+            if key not in data:
+                return
+            v = data[key]
+            if key not in min_max_values:
+                min_max_values[key] = []
+            values = min_max_values[key]
+            values.append(func(v))
+            samples = int(self.getConfigValue(MM_SAMPLES))
+            while len(values) > samples:
+                values.pop(0)
+            data[key + "MIN"], data[key + "MAX"] = min(values), max(values)
 
+        def readValue(path):
+            "prevents reading values that we self have calculated"
+            a = self.api.getSingleValue(path, includeInfo=True)
+            # self.api.log(f"read {path} {a.value if a else ''} {a.source if a else ''}")
+            if a is not None and "Sail_Instrument" not in a.source:
+                return a.value
 
+        def writeValue(data, key, path):
+            "do not overwrite existing values"
+            if key not in data:
+                return
+            a = self.api.getSingleValue(path, includeInfo=True)
+            if a is None or "Sail_Instrument" in a.source:
+                self.api.addData(path, data[key])
 
-    seq=0
-    self.api.log("started")
-    self.api.setStatus('STARTED', 'running')
-    gpsdata={}
-    while not self.api.shouldStopMainThread():
-      time.sleep(0.5)  
-      #gpsdata=self.api.getDataByPrefix('gps')
-      gpsdata['track']=self.api.getSingleValue('gps.track')
-      gpsdata['windAngle']=self.api.getSingleValue('gps.windAngle')
-      gpsdata['windSpeed']=self.api.getSingleValue('gps.windSpeed')
-      gpsdata['speed']=self.api.getSingleValue('gps.speed')
+        self.api.log("started")
+        self.api.setStatus("STARTED", "running")
+        while not self.api.shouldStopMainThread():
+            time.sleep(0.5)
+            # get course data
+            cog = readValue("gps.track")
+            sog = readValue("gps.speed")
+            hdt = readValue("gps.headingTrue")
+            hdm = readValue("gps.headingMag")
+            stw = readValue("gps.waterSpeed")
+            if self.getConfigValue(FALLBACK).startswith("T"):
+                hdt = hdm if hdt is None else hdt  # fallback to HDM
+                hdt = cog if hdt is None else hdt  # fallback to COG
+                stw = sog if stw is None else stw  # fallback to SOG
+            if any(v is None for v in (hdt, stw)):
+                self.api.setStatus("ERROR", "missing HDT/STW")
+                continue
+            # get wind data
+            awa = readValue("gps.windAngle")
+            aws = readValue("gps.windSpeed")
+            twa = readValue("gps.trueWindAngle")
+            tws = readValue("gps.trueWindSpeed")
+            twd = readValue("gps.trueWindDirection")
+            gwd, gws = None, None
+            if all(v is None for v in (awa, aws, twa, tws, twd)):
+                gwd, gws = manual_wind() or (None, None)
+            # self.api.log(                f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws}"            )
+            # compute missing parts (fields that are None get computed)
+            d = CourseData(
+                COG=cog,
+                SOG=sog,
+                HDT=hdt,
+                STW=stw,
+                AWA=awa,
+                AWS=aws,
+                TWA=twa,
+                TWS=tws,
+                TWD=twd,
+                GWD=gwd,
+                GWS=gws,
+            )
+            # smooth and get min/max
+            smooth(d, "AWD", "AWS")
+            smooth(d, "TWD", "TWS")
+            smooth(d, "SET", "DFT")
+            min_max(d, "TWD", lambda v: to180(v - d.TWDF))
 
-      calcTrueWind(self, gpsdata)       
-      if 'AWS' in gpsdata and 'AWD' in gpsdata and 'TWA' in gpsdata and 'TWS' in gpsdata:
-            best_vmc_angle(self,gpsdata)
-            if(calcFilteredWind(self, gpsdata)):
-                minmaxTWD=calc_minmaxTWD(self, gpsdata['TWDF'], datetime.now().minute, float(self.getConfigValue('Area_Minutes')))
-                #print(datetime.now().minute,"min ",minmaxTWD)
-                gpsdata['minTWD']=minmaxTWD[0]
-                gpsdata['maxTWD']=minmaxTWD[1]
-                self.api.addData(self.PATHTWDF,gpsdata['TWDF'])
-                self.api.addData(self.PATHAWDF,gpsdata['AWDF'])
-                self.api.addData(self.PATHminTWD,gpsdata['minTWD'])
-                self.api.addData(self.PATHmaxTWD,gpsdata['maxTWD'])
-                
-                if calc_Laylines(self,gpsdata):  
-                    self.api.setStatus('NMEA', 'computing Laylines/VPOL')
-                
-      else:
-          self.api.setStatus('ERROR', 'Missing Input of windAngle and/or windSpeed, cannot compute Laylines')
+            self.laylines(d)
 
+            # self.api.log(f"\n{d}")
 
-  
-  
- #https://stackoverflow.com/questions/4983258/python-how-to-check-list-monotonicity
-  def strictly_increasing(self, L):
-        return all(x<y for x, y in zip(L, L[1:]))
-  
+            for k in d.keys():  # publish gps.sailinstrument.* data
+                self.api.addData(SAILINSTRUMENT_PREFIX + k, d[k])
 
-  def Polare(self, f_name):
-    #polare_filename = os.path.join(os.path.dirname(__file__), f_name)
-    polare_filename = os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
-    try:
-        tree = ET.parse(polare_filename)
-    except:
+            # write calculated values
+            if self.getConfigValue(WRITE_DATA).startswith("T"):
+                writeValue(d, "SET", "gps.currentSet")
+                writeValue(d, "DFT", "gps.currentDrift")
+                writeValue(d, "AWA", "gps.windAngle")
+                writeValue(d, "AWS", "gps.windSpeed")
+                writeValue(d, "TWA", "gps.trueWindAngle")
+                writeValue(d, "TWS", "gps.trueWindSpeed")
+                writeValue(d, "TWD", "gps.trueWindDirection")
+                writeValue(d, "GWA", "gps.groundWindAngle")
+                writeValue(d, "GWS", "gps.groundWindSpeed")
+                writeValue(d, "GWD", "gps.groundWindDirection")
+
+            self.api.setStatus("NMEA", "computing data")
+
+    def polar_angle(self, tws, upwind):
+        try:
+            if not self.polare:
+                return
+            speeds = self.polare["windspeedvector"]
+            angles = self.polare["ww_upwind" if upwind else "ww_downwind"]
+            return numpy.interp(tws * KNOTS, speeds, angles)
+        except Exception as x:
+            self.api.error(f"polar_angle {x}")
+
+    def polar_speed(self, twa, tws):
+        try:
+            if not self.polare:
+                return
+            if "boatspeed" not in self.polare:
+                return
+            wspeeds = self.polare["windspeedvector"]
+            wangles = self.polare["windanglevector"]
+            bspeeds = self.polare["boatspeed"]
+            return bilinear(wspeeds, wangles, bspeeds, tws * KNOTS, abs(twa)) / KNOTS
+        except Exception as x:
+            self.api.error(f"polar_speed {x}")
+
+    def laylines(self, data):
+        try:
+            twd, tws = data.TWDF, data.TWSF
+            if any(v is None for v in (twd, tws)):
+                return
+            twa = to180(twd - data.HDT)  # filtered TWA
+
+            brg = bearing_to_waypoint()
+            if brg:
+                upwind = abs(to180(brg - twd)) < 90
+            else:
+                upwind = abs(twa) < 90
+
+            tack_angle = float(self.getConfigValue(TACK_ANGLE))
+            gybe_angle = float(self.getConfigValue(GYBE_ANGLE))
+
+            if upwind and tack_angle or not upwind and gybe_angle:
+                angle = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
+                data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
+                return
+
+            if not self.polare:
+                return
+
+            angle = self.polar_angle(tws, upwind)
+            data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
+            data.VPOL = self.polar_speed(twa, tws)
+
+            data.VMCD, data.VMCS = -1, 0
+
+            if not brg:
+                return
+
+            data.VMCD, data.VMCS = self.optimum_vmc(twd, tws, brg)
+
+        except Exception as x:
+            self.api.error(f"laylines {x}")
+
+    def optimum_vmc(self, twd, tws, brg):
+        brgw = to180(brg - twd)  # BRG from wind
+
+        def vmc(twa):
+            # unit vector to WP
+            e = toCart((abs(brgw), 1))
+            # boat speed vector from polar
+            b = toCart((twa, self.polar_speed(twa, tws)))
+            # project boat speed vector onto bearing to get VMC
+            # negative sign, optimizer finds minimum
+            return -(e[0] * b[0] + e[1] * b[1])
+
+        # for a in range(0, 181, 10): self.api.log(f"{a} {vmc(a)*KNOTS}")
+
+        res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
+        # self.api.log(f"{res}")
+        if res.success:
+            return to360(twd + copysign(res.x, brgw)), -res.fun
+
+    def read_polar(self, f_name):
+        polare_filename = os.path.join(
+            self.api.getDataDir(), "user", "viewer", "polare.xml"
+        )
+        try:
+            tree = ET.parse(polare_filename)
+        except:
             try:
-                source=os.path.join(os.path.dirname(__file__), f_name)
-                dest=os.path.join(self.api.getDataDir(),'user','viewer','polare.xml')
-                with open(source, 'rb') as src, open(dest, 'wb') as dst: dst.write(src.read())
+                source = os.path.join(os.path.dirname(__file__), f_name)
+                dest = os.path.join(
+                    self.api.getDataDir(), "user", "viewer", "polare.xml"
+                )
+                with open(source, "rb") as src, open(dest, "wb") as dst:
+                    dst.write(src.read())
                 tree = ET.parse(polare_filename)
             except:
                 return False
-    finally:
-            if not 'tree' in locals():
+        finally:
+            if not "tree" in locals():
                 return False
             root = tree.getroot()
-            x=ET.tostring(root, encoding='utf8').decode('utf8')
-            e_str='windspeedvector'
-            x=root.find('windspeedvector').text
-        # whitespaces entfernen
-            x="".join(x.split())
-            self.polare['windspeedvector']=list(map(float,x.strip('][').split(',')))
-            if not self.strictly_increasing(self.polare['windspeedvector']):
-                raise Exception("windspeedvector in polare.xml IS NOT STRICTLY INCREASING!")
-                return(False)
+            x = ET.tostring(root, encoding="utf8").decode("utf8")
+            e_str = "windspeedvector"
+            x = root.find("windspeedvector").text
+            # whitespaces entfernen
+            x = "".join(x.split())
+            self.polare["windspeedvector"] = list(map(float, x.strip("][").split(",")))
+            if not strictly_increasing(self.polare["windspeedvector"]):
+                raise Exception(
+                    "windspeedvector in polare.xml IS NOT STRICTLY INCREASING!"
+                )
+                return False
 
-            e_str='windanglevector'
-            x=root.find('windanglevector').text
-        # whitespaces entfernen
-            x="".join(x.split())
-            self.polare['windanglevector']=list(map(float,x.strip('][').split(',')))
-            if not self.strictly_increasing(self.polare['windanglevector']):
-                raise Exception("windanglevector in polare.xml IS NOT STRICTLY INCREASING!")
-                return(False)
-            
-            e_str='boatspeed'
-            x=root.find('boatspeed').text
-        # whitespaces entfernen
-            z="".join(x.split())
-        
-            z=z.split('],[')
-            boatspeed=[]
+            e_str = "windanglevector"
+            x = root.find("windanglevector").text
+            # whitespaces entfernen
+            x = "".join(x.split())
+            self.polare["windanglevector"] = list(map(float, x.strip("][").split(",")))
+            if not strictly_increasing(self.polare["windanglevector"]):
+                raise Exception(
+                    "windanglevector in polare.xml IS NOT STRICTLY INCREASING!"
+                )
+                return False
+
+            e_str = "boatspeed"
+            x = root.find("boatspeed").text
+            # whitespaces entfernen
+            z = "".join(x.split())
+
+            z = z.split("],[")
+            boatspeed = []
             for elem in z:
-                zz=elem.strip('][').split(',')
-                boatspeed.append(list(map(float,zz)))
-            self.polare['boatspeed']=boatspeed
-    
-    
-            e_str='wendewinkel'
-            x=root.find('wendewinkel')
-        
-            e_str='upwind'
-            y=x.find('upwind').text
-        # whitespaces entfernen
-            y="".join(y.split())
-            self.polare['ww_upwind']=list(map(float,y.strip('][').split(',')))
-    
-            e_str='downwind'
-            y=x.find('downwind').text
-        # whitespaces entfernen
-            y="".join(y.split())
-            self.polare['ww_downwind']=list(map(float,y.strip('][').split(',')))
-    return(True)
+                zz = elem.strip("][").split(",")
+                boatspeed.append(list(map(float, zz)))
+            self.polare["boatspeed"] = boatspeed
 
-    
-#https://appdividend.com/2019/11/12/how-to-convert-python-string-to-list-example/#:~:text=To%20convert%20string%20to%20list,delimiter%E2%80%9D%20as%20the%20delimiter%20string.        
+            e_str = "wendewinkel"
+            x = root.find("wendewinkel")
 
-  def handleApiRequest(self,url,handler,args):
-    """
-    handler for API requests send from the JS
-    @param url: the url after the plugin base
-    @param handler: the HTTP request handler
-                    https://docs.python.org/2/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler
-    @param args: dictionary of query arguments
-    @return:
-    """
-    out=urllib.parse.parse_qs(url)
-    out2=urllib.parse.urlparse(url)
-    if url == 'test':
-      return {'status':'OK'}
-    if url == 'parameter':
-      #self.count=0
-      defaults = self.pluginInfo()['config']
-      b={}
-      for cf in defaults:
-          v = self.getConfigValue(cf.get('name'))
-          b.setdefault(cf.get('name'), v)
-      b.setdefault('server_version', self.api.getAvNavVersion())
-      return(b)
-    return {'status','unknown request'}
+            e_str = "upwind"
+            y = x.find("upwind").text
+            # whitespaces entfernen
+            y = "".join(y.split())
+            self.polare["ww_upwind"] = list(map(float, y.strip("][").split(",")))
+
+            e_str = "downwind"
+            y = x.find("downwind").text
+            # whitespaces entfernen
+            y = "".join(y.split())
+            self.polare["ww_downwind"] = list(map(float, y.strip("][").split(",")))
+        return True
 
 
-def bilinear(self,xv, yv, zv, x, y) :
-    #ws = xv
- try:
-    angle =yv
-    speed =zv
-    #var x2i = ws.findIndex(this.checkfunc, x)
+def strictly_increasing(L):
+    return all(x < y for x, y in zip(L, L[1:]))
+
+
+def bearing_to_waypoint():
+    try:
+        router = AVNWorker.findHandlerByName(AVNRouter.getConfigName())
+        if router is None:
+            return
+        wpData = router.getWpData()
+        if wpData is None:
+            return
+        if not wpData.validData:
+            return
+        return wpData.dstBearing
+    except:
+        return
+
+
+def bilinear(xv, yv, zv, x, y):
+    angle = yv
+    speed = zv
+    # var x2i = ws.findIndex(this.checkfunc, x)
     x2i = list(filter(lambda lx: xv[lx] >= x, range(len(xv))))
-    if(len(x2i) > 0):
+    if len(x2i) > 0:
         x2i = 1 if x2i[0] < 1 else x2i[0]
         x2 = xv[x2i]
         x1i = x2i - 1
         x1 = xv[x1i]
     else:
-        x1=x2=xv[len(xv)-1]
-        x1i=x2i=len(xv)-1
+        x1 = x2 = xv[len(xv) - 1]
+        x1i = x2i = len(xv) - 1
 
-    #var y2i = angle.findIndex(this.checkfunc, y)
+    # var y2i = angle.findIndex(this.checkfunc, y)
     y2i = list(filter(lambda lx: angle[lx] >= y, range(len(angle))))
-    if(len(y2i) > 0):
+    if len(y2i) > 0:
         y2i = 1 if y2i[0] < 1 else y2i[0]
-        #y2i = y2i < 1 ? 1 : y2i
+        # y2i = y2i < 1 ? 1 : y2i
         y2 = angle[y2i]
         y1i = y2i - 1
         y1 = angle[y2i - 1]
     else:
-        y1=y2=angle[len(angle)-1]
-        y1i=y2i=len(angle)-1
+        y1 = y2 = angle[len(angle) - 1]
+        y1i = y2i = len(angle) - 1
 
-    ret =   \
-             ((y2 - y) / (y2 - y1)) *   \
-        (((x2 - x) / (x2 - x1)) * speed[y1i][x1i]  +    \
-            ((x - x1) / (x2 - x1)) * speed[y1i][x2i])  +    \
-        ((y - y1) / (y2 - y1)) *    \
-        (((x2 - x) / (x2 - x1)) * speed[y2i][x1i]  +    \
-            ((x - x1) / (x2 - x1)) * speed[y2i][x2i]) 
+    ret = ((y2 - y) / (y2 - y1)) * (
+        ((x2 - x) / (x2 - x1)) * speed[y1i][x1i]
+        + ((x - x1) / (x2 - x1)) * speed[y1i][x2i]
+    ) + ((y - y1) / (y2 - y1)) * (
+        ((x2 - x) / (x2 - x1)) * speed[y2i][x1i]
+        + ((x - x1) / (x2 - x1)) * speed[y2i][x2i]
+    )
     return ret
- except:
-        self.api.error(" error calculating bilinear interpolation for TWS with "+str(x)+"kn  at "+str(y)+"°\n")
-        return(0)
 
-  
-def linear(x, x_vector, y_vector):
 
-    #var x2i = x_vector.findIndex(this.checkfunc, x)
-    #https://www.geeksforgeeks.org/python-ways-to-find-indices-of-value-in-list/
-    # using filter()
-    # to find indices for 3
-    try:
-        x2i = list(filter(lambda lx: x_vector[lx] >= x, range(len(x_vector))))
-    # y_vector = BoatData.Polare.wendewinkel.upwind;
-    #x2i = x2i < 1 ? 1 : x2i
-        if(len(x2i) > 0):
-           x2i = 1 if x2i[0] < 1 else x2i[0]
-           x2 = x_vector[x2i]
-           y2 = y_vector[x2i]
-           x1i = x2i - 1
-           x1 = x_vector[x1i]
-           y1 = y_vector[x1i]
-           y = ((x2 - x) / (x2 - x1)) * y1 + ((x - x1) / (x2 - x1)) * y2
+class CourseData:
+    """
+    This class is a container for course data that tries to compute the missing pieces
+    from the information that is supplied in the constructor.
+
+    ## Units
+
+    - direction - given in degrees within [0,360), relative to north, measured clockwise
+    - angles - as directions, but given in degrees within [-180,+180), relative to HDG
+      If you want angles in the range [0,360), set anlges360=True in the constructor.
+    - speeds - given in any speed unit (but all the same), usually knots
+
+    ## Definitions
+
+    HDG = heading, unspecified which of the following
+    HDT = true heading, direction bow is pointing to, relative to true north (also HDGt)
+    HDM = magnetic heading, as reported by a calibrated compass (also HDGm)
+    HDC = compass heading, raw reading of the compass (also HDGc)
+    VAR = magnetic variation, given in chart or computed from model
+    DEV = magnetic deviation, boat specific, depends on HDG
+    COG = course over ground, usually from GPS
+    SOG = speed over ground, usually from GPS
+    SET = set, direction of tide/current, cannot be measured directly
+    DFT = drift, rate of tide/current, cannot be measured directly
+    STW = speed through water, usually from paddle wheel, water speed vector projected onto HDT (long axis of boat)
+    LEE = leeway angle, angle between HDT and direction of water speed vector, usually estimated from wind and/or heel and STW
+    AWA = apparent wind angle, measured by wind direction sensor
+    AWD = apparent wind direction, relative to true north
+    AWS = apparent wind speed, measured by anemometer
+    TWA = true wind angle, relative to water, relative to HDT
+    TWD = true wind direction, relative to water, relative true north
+    TWS = true wind speed, relative to water
+    GWA = ground wind angle, relative to ground, relative to HDT
+    GWD = ground wind direction, relative to ground, relative true north
+    GWS = ground wind speed, relative to ground
+
+    Beware! Wind direction is the direction where the wind is coming FROM, SET,HDG,COG is the direction where the tide/boat is going TO.
+
+    also see https://t1p.de/5th2j and https://t1p.de/628t7
+
+    ## Magnetic Directions
+
+    All directions, except HDM, are relative to true north. This is because a magnetic compass gives you a magnetic
+    direction (heading or bearing). You convert it to true using deviation and variation and that's it.
+
+    You could use something like COG magnetic, but it does not make any sense and is error-prone.
+    Don't do this! If you do need this for output, then do the conversion to magnetic at the very end,
+    after all calculations are done.
+
+    ## Equations
+
+    All of the mentioned quantities are linked together by the following equations. Some of them are
+    vector equations, vectors are polar vectors of the form [angle,radius]. The (+) operator denotes the addition of
+    polar vectors. see https://math.stackexchange.com/questions/1365622/adding-two-polar-vectors
+    An implementation of this addition is given below in add_polar().
+
+    ### Heading
+
+    - HDT = HDM + VAR = HDC + DEV + VAR
+    - HDM = HDT - VAR = HDC + DEV
+
+    ### Course, Speed and Tide
+
+    - [COG,SOG] = [HDT+LEE,STW] (+) [SET,DFT]
+    - [SET,DFT] = [COG,SOG] (+) [HDT+LEE,-STW]
+
+    ### Wind
+
+    angles and directions are always converted like xWD = xWA + HDT and xWA = xWD - HDT
+
+    - [AWD,AWS] = [GWD,GWS] (+) [COG,SOG]
+    - [AWD,AWS] = [TWD,TWS] (+) [HDT+LEE,STW]
+    - [AWA,AWS] = [TWA,TWS] (+) [LEE,STW]
+
+    - [TWD,TWS] = [GWD,GWS] (+) [SET,DFT]
+    - [TWD,TWS] = [AWD,AWS] (+) [HDT+LEE,-STW]
+    - [TWA,TWS] = [AWA,AWS] (+) [LEE,-STW]
+
+    - [GWD,GWS] = [AWD,AWS] (+) [COG,-SOG]
+
+    In the vector equations angle and radius must be transformed together, always!
+
+    ## How to use it
+
+    Create CourseData() with the known quantities supplied in the constructor. Then access the calculated
+    quantities as d.TWA or d.["TWA"]. Ask with "TWD" in d if they exist. Just print(d) to see what's inside.
+    See test() for examples.
+    """
+
+    def __init__(self, **kwargs):
+        self._data = kwargs
+        self.angles360 = kwargs.get("angles360", False)
+        self.compute_missing()
+
+    def compute_missing(self):
+        if self.misses("HDM") and self.has("HDC", "DEV"):
+            self.HDM = to360(self.HDC + self.DEV)
+
+        if self.misses("HDT") and self.has("HDM", "VAR"):
+            self.HDT = to360(self.HDM + self.VAR)
+
+        if self.misses("HDM") and self.has("HDT", "VAR"):
+            self.HDM = to360(self.HDT - self.VAR)
+
+        if self.misses("LEE"):
+            self.LEE = 0
+
+        if self.misses("SET", "DFT") and self.has("COG", "SOG", "HDT", "STW", "LEE"):
+            self.SET, self.DFT = add_polar(
+                (self.COG, self.SOG), (self.HDT + self.LEE, -self.STW)
+            )
+        if self.misses("COG", "SOG") and self.has("SET", "DFT", "HDT", "STW", "LEE"):
+            self.COG, self.SOG = add_polar(
+                (self.SET, self.DFT), (self.HDT + self.LEE, self.STW)
+            )
+
+        if self.misses("TWA", "TWS") and self.has("AWA", "AWS", "STW", "LEE"):
+            self.TWA, self.TWS = add_polar((self.AWA, self.AWS), (self.LEE, -self.STW))
+            self.TWA = self.angle(self.TWA)
+
+        if self.misses("TWD", "TWS") and self.has("GWD", "GWS", "SET", "DFT"):
+            self.TWD, self.TWS = add_polar((self.GWD, self.GWS), (self.SET, self.DFT))
+
+        if self.misses("TWD") and self.has("TWA", "HDT"):
+            self.TWD = to360(self.TWA + self.HDT)
+
+        if self.misses("TWA") and self.has("TWD", "HDT"):
+            self.TWA = self.angle(self.TWD - self.HDT)
+
+        if self.misses("GWD", "GWS") and self.has("TWD", "TWS", "SET", "DFT"):
+            self.GWD, self.GWS = add_polar((self.TWD, self.TWS), (self.SET, -self.DFT))
+
+        if self.misses("GWA") and self.has("GWD", "HDT"):
+            self.GWA = self.angle(self.GWD - self.HDT)
+
+        if self.misses("AWA", "AWS") and self.has("TWA", "TWS", "LEE", "STW"):
+            self.AWA, self.AWS = add_polar((self.TWA, self.TWS), (self.LEE, self.STW))
+            self.AWA = self.angle(self.AWA)
+
+        if self.misses("AWD") and self.has("AWA", "HDT"):
+            self.AWD = to360(self.AWA + self.HDT)
+
+    def __getattribute__(self, item):
+        if re.match("[A-Z]+", item):
+            return self._data.get(item)
+        return super(CourseData, self).__getattribute__(item)
+
+    def __setattr__(self, key, value):
+        if re.match("[A-Z]+", key):
+            self._data[key] = value
         else:
-            y=y_vector[len(y_vector)-1]
-    except:
-        self.api.error(" error calculating linear interpolation "+ "\n")
-        return 0
-    return y
+            self.__dict__[key] = value
 
-def calc_Laylines(self,gpsdata):# // [grad]
-    
-    
-    if (self.Polare and 'TWA' in gpsdata):
-        # LAYLINES
-        if (math.fabs(gpsdata['TWA']) > 120 and math.fabs(gpsdata['TWA']) < 240): 
-            wendewinkel = linear((gpsdata['TWS'] / 0.514),self.polare['windspeedvector'],self.polare['ww_downwind']) * 2
-        else:
-            wendewinkel = linear((gpsdata['TWS'] / 0.514),self.polare['windspeedvector'],self.polare['ww_upwind']) * 2
+    def __getitem__(self, item):
+        return self._data.get(item)
 
-        #LL_SB = (gpsdata['TWD'] + wendewinkel / 2) % 360
-        #LL_BB = (gpsdata['TWD'] - wendewinkel / 2) % 360
+    def __setitem__(self, key, value):
+        self._data[key] = value
 
-        LL_SB = (gpsdata['TWDF'] + wendewinkel / 2) % 360
-        LL_BB = (gpsdata['TWDF'] - wendewinkel / 2) % 360
-        
-        
-        self.api.addData(self.PATHTLL_SB,LL_SB)
-        self.api.addData(self.PATHTLL_BB,LL_BB)
+    def __contains__(self, item):
+        v = self[item]
+        return v is not None and isfinite(v)
 
+    def __str__(self):
+        return "\n".join(f"{k}={self[k]}" for k in self.keys())
 
-        gpsdata['TWA']=gpsdata['TWA']%360
-        anglew = math.fabs(self.normalize(gpsdata['TWA'], -180, 180 ))  
-        #360 - gpsdata['TWA'] if gpsdata['TWA'] > 180 else gpsdata['TWA']
-        #in kn
-        if not self.polare['boatspeed']:
-            return False
-        SOGPOLvar = bilinear(self,  \
-            self.polare['windspeedvector'],    \
-            self.polare['windanglevector'],    \
-            self.polare['boatspeed'],  \
-            (gpsdata['TWS'] / 0.514), \
-            anglew  \
-        )
-        self.api.addData(self.PATHTLL_VPOL,SOGPOLvar*0.514444)
-        #self.api.ALLOW_KEY_OVERWRITE=True
-        #allowKeyOverwrite=True
-        #self.api.addData(self.PATHTLL_speed,SOGPOLvar*0.514444)
-        return True
-        
-        # http://forums.sailinganarchy.com/index.php?/topic/132129-calculating-vmc-vs-vmg/
-#VMG = BS * COS(RADIANS(TWA))
-#VMC = BS * COS(RADIANS(BRG-HDG))
-      
-        #rueckgabewert = urllib.request.urlopen('http://localhost:8081/viewer/avnav_navi.php?request=route&command=getleg')
-        #route=rueckgabewert.read()
-        #inhalt_text = route.decode("UTF-8")
-        #d = json.loads(inhalt_text)
-        #VMCvar = ((gpsdata['speed'] * 1.94384) * math.cos((xx-gpsdata['track']) * math.pi) / 180)
-    #print(d)
+    def keys(self):
+        return sorted(filter(self.__contains__, self._data.keys()))
 
-    
-    
-def calcFilteredWind(self, gpsdata):
-    rt=gpsdata
-    #self.twdf=self.awdf=0
-    if not 'track' in gpsdata or not 'AWD' in gpsdata:
-        return False
-    if gpsdata['windAngle'] is None or gpsdata['windSpeed'] is None or gpsdata['speed'] is None or gpsdata['track'] is None :
-        self.api.setStatus('ERROR', 'Missing Input of windAngle and/or windSpeed, cannot compute Laylines')
-        return False
+    def has(self, *args):
+        return all(x in self for x in args)
 
-    try:
-        fgrenz=float(self.getConfigValue('TWD_filtFreq'))
-        t_abtast=(time.time()-self.oldtime)
-        freq=1/t_abtast
-        self.oldtime=time.time()
-        gpsdata['AWD']=self.normalize(gpsdata['AWD'],0,360)
-        gpsdata['TWD']=self.normalize(gpsdata['TWD'],0,360)
-        gpsdata['track']=self.normalize(gpsdata['track'],0,360)
-        #if not 'speedf' in gpsdata:
-        #    gpsdata['speedf']=0
-        #gpsdata['speedf']=self.PT_1funk(fgrenz, t_abtast, gpsdata['speedf'],gpsdata['speed'])
+    def misses(self, *args):
+        return any(x not in self for x in args)
 
-        KaW=polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
-        # KaB = polar(gpsdata['speed'], gpsdata['track']).toKartesisch()
-        KaB = polar(gpsdata['speed'], (gpsdata['track'] or 0)).toKartesisch()
-
-      
-
-        self.twdf=self.PT_1funk(fgrenz, t_abtast, self.twdf+360,gpsdata['TWD']+360)-360 
-        self.awdf=self.PT_1funk(fgrenz, t_abtast, self.awdf+360,gpsdata['AWD']+360)-360 
-        
-        
-        self.TrueWindDirection_filtered['x']=self.PT_1funk(fgrenz, t_abtast, self.TrueWindDirection_filtered['x'], KaW['x'] - KaB['x'])
-        self.TrueWindDirection_filtered['y']=self.PT_1funk(fgrenz, t_abtast, self.TrueWindDirection_filtered['y'], KaW['y'] - KaB['y'])
-
-        self.ApparentWindDirection_filtered['x']=self.PT_1funk(fgrenz, t_abtast, self.ApparentWindDirection_filtered['x'], KaW['x'])
-        self.ApparentWindDirection_filtered['y']=self.PT_1funk(fgrenz, t_abtast, self.ApparentWindDirection_filtered['y'], KaW['y'])
-      
-      # zurück in Polaren Winkel
-        self.TrueWindDirection_filtered['alpha']=kartesisch(self.TrueWindDirection_filtered['x'],self.TrueWindDirection_filtered['y']).toPolar()
-        self.ApparentWindDirection_filtered['alpha']=kartesisch(self.ApparentWindDirection_filtered['x'],self.ApparentWindDirection_filtered['y']).toPolar()
-        self.TrueWindDirection_filtered['alpha']=self.normalize(self.TrueWindDirection_filtered['alpha'],0,360)
-        self.ApparentWindDirection_filtered['alpha']=self.normalize(self.ApparentWindDirection_filtered['alpha'],0,360)
-        
-        
-        gpsdata['AWDF']=self.ApparentWindDirection_filtered['alpha']
-        gpsdata['TWDF']=self.TrueWindDirection_filtered['alpha']
-        return True
-    except Exception as err:
-        self.api.error(" error in calcFilteredWind ")
-        return False
-    
-def calcTrueWind(self, gpsdata):
-    # https://www.rainerstumpe.de/HTML/wind02.html
-    # https://www.segeln-forum.de/board1-rund-ums-segeln/board4-seemannschaft/46849-frage-zu-windberechnung/#post1263721      
-        source='SegelDisplay'
-
-        if not 'track' in gpsdata or not 'windAngle' or not 'speed' in gpsdata:
-            return False
-        if gpsdata['windAngle'] is None or gpsdata['windSpeed'] is None or gpsdata['speed'] is None or gpsdata['track'] is None :
-            self.api.setStatus('ERROR', 'Missing Input of windAngle and/or windSpeed, cannot compute Laylines')
-            return False
-
-        gpsdata['AWA']=gpsdata['windAngle']
-        gpsdata['AWS']=gpsdata['windSpeed']
-        try:
-            gpsdata['AWD'] = (gpsdata['AWA'] + (gpsdata['track'] or 0)) % 360
-            KaW=polar(gpsdata['AWS'], gpsdata['AWD']).toKartesisch()
-            KaB = polar(gpsdata['speed'], (gpsdata['track'] or 0)).toKartesisch()
-            if(gpsdata['speed'] == 0 or gpsdata['AWS'] == 0):
-                gpsdata['TWD'] = gpsdata['AWD'] 
-            else:
-                gpsdata['TWD'] = kartesisch(KaW['x'] - KaB['x'], KaW['y'] - KaB['y']).toPolar() % 360
-            gpsdata['TWS'] = math.sqrt((KaW['x'] - KaB['x']) * (KaW['x'] - KaB['x']) + (KaW['y'] - KaB['y']) * (KaW['y'] - KaB['y']))
-            gpsdata['TWA'] = self.normalize((gpsdata['TWD'] - gpsdata['track'])or 0, -180, 180 )  
-            return True
-        except Exception as err:
-            self.api.error(" error calculating TrueWind-Data " + str(gpsdata) + "\n")
-        return False
-    
-
-class polar(object):
-    def __init__(self,r, alpha):  # [alpha in deg] 
-        self.r=r
-        self.alpha=alpha
-    def toKartesisch(self):
-        K = {}
-        K['x'] = self.r*math.cos((self.alpha * math.pi) / 180)
-        K['y'] = self.r*math.sin((self.alpha * math.pi) / 180)
-        return(K)    
-        
-class kartesisch(object):
-    def __init__(self,x, y):  # [alpha in deg] 
-        self.x=x
-        self.y=y
-    def toPolar(self):
-        return(180 * math.atan2(self.y, self.x) / math.pi)
-        K = {}
-        K['x'] = self.r*math.cos((self.alpha * math.pi) / 180)
-        K['y'] = self.r*math.sin((self.alpha * math.pi) / 180)
-        return(K)    
+    def angle(self, a):
+        return to360(a) if self.angles360 else to180(a)
 
 
+def to360(a):
+    "limit a to [0,360)"
+    while a < 0:
+        a += 360
+    return a % 360
 
 
+def to180(a):
+    "limit a to [-180,+180)"
+    return to360(a + 180) - 180
 
 
-
-try:
-  import numpy as np
-  from scipy.interpolate import InterpolatedUnivariateSpline
-
-  def quadratic_spline_roots(self,spl):
-    roots = []
-    knots = spl.get_knots()
-    for a, b in zip(knots[:-1], knots[1:]):
-        u, v, w = spl(a), spl((a+b)/2), spl(b)
-        t = np.roots([u+w-2*v, w-u, 2*v])
-        t = t[np.isreal(t) & (np.abs(t) <= 1)]
-        roots.extend(t*(b-a)/2 + (b+a)/2)
-    return np.array(roots)
-
-       
-
-    
-  def best_vmc_angle(self, gps):
-    try:
-      router=AVNWorker.findHandlerByName(AVNRouter.getConfigName())
-      if router is None:
-        return False
-      wpData=router.getWpData()
-      if wpData is None:
-        return False
-      if not wpData.validData and self.ownWpOffSent:
-        return True
-    except:
-        return False
-
-    try:
-        self.cWendewinkel_upwind=[]
-        self.cWendewinkel_downwind=[]
-    
-        lastindex=len(self.polare['windanglevector'])
-    
-        x = np.array(self.polare['boatspeed'])
-        BRG=wpData.dstBearing
-        windanglerad=np.deg2rad(BRG-gps['TWD']+np.array(self.polare['windanglevector']))
-        coswindanglerad=np.cos(windanglerad)
-    
-        self.cWendewinkel_upwind=[]
-        vmc=[]
-        for i in range(len(self.polare['windspeedvector'])):
-            updownindexvalue=next(z for z in self.polare['windanglevector'] if z >=90)
-            updownindex=self.polare['windanglevector'].index(updownindexvalue, 0, lastindex)
-            spalte=i
-            # vmc=v*cos(BRG-HDG)
-            # HDG = TWD +/- TWA
-            # test: BRG = , TWD=0 --> HDG=-TWA --> vmc=v*cos(BRG+TWA)
-            vmc.append(np.array(x[0:lastindex,spalte])*coswindanglerad[0:lastindex])
-            f=InterpolatedUnivariateSpline(self.polare['windanglevector'], vmc[spalte][:], k=3)
-            cr_pts = quadratic_spline_roots(self, f.derivative())
-            cr_vals = f(cr_pts)
-            min_index = np.argmin(cr_vals)
-            max_index = np.argmax(cr_vals)
-        #print("Maximum value {} at {}\nMinimum value {} at {}".format(cr_vals[max_index], cr_pts[max_index], cr_vals[min_index], cr_pts[min_index]))
-            self.cWendewinkel_upwind.append(cr_pts[max_index])
-        #Der TWA mit der höschsten VMC
-        spl=InterpolatedUnivariateSpline(self.polare['windspeedvector'], self.cWendewinkel_upwind, k=3)
-        wendewinkel = linear((gps['TWS'] / 0.514),self.polare['windspeedvector'],self.cWendewinkel_upwind)
-        opttwa=spl(gps['TWS'] / 0.514)
-        opthdg=(gps['TWD']-opttwa)%360
-        diff1=abs((gps['TWD']-wendewinkel)%360-(gps['TWD']-opttwa)%360)
-        # aus WA=WD-HDG folgt HDG = WD-WA
-        #self.api.addData(self.PATHTLL_OPTVMC, (gps['TWD']-wendewinkel)%360,source='SegelDisplay')
-        self.api.addData(self.PATHTLL_OPTVMC, (opthdg)%360,source='SegelDisplay')
-    except:
-        pass
-
-    return(True)
+def toCart(p):
+    # to cartesian with phi going clock-wise from north
+    return p[1] * sin(radians(p[0])), p[1] * cos(radians(p[0]))
 
 
+def toPol(c):
+    # to polar with phi going clock-wise from north
+    return to360(90 - degrees(atan2(c[1], c[0]))), sqrt(c[0] ** 2 + c[1] ** 2)
 
-except:
-  def best_vmc_angle(self,gps):
-      return False;
-  pass    
-    
+
+def add_polar(a, b):
+    "sum of polar vectors (phi,r)"
+    a, b = toCart(a), toCart(b)
+    s = a[0] + b[0], a[1] + b[1]
+    return toPol(s)
