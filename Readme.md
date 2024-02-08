@@ -70,6 +70,7 @@ Place the `Sail_Instrument` folder inside `avnav/data/plugins`.
 
 ## Polar Data
 
+![polar](Images/polar.png)
 
 You have to provide polar data for your boat in `avnav/user/viewer/polar.json` for calculating the laylines. If there is no such file, the plugin will copy [one](Sail_Instrument/polar.json) to this location, and you can use it as a template for your own polar data.
 
