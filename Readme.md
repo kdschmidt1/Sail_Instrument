@@ -33,7 +33,9 @@ The following values are computed or copied from their sources.
 | GWD      | ground wind direction                    | gps.groundWindDirection |
 | GWS      | ground wind speed                        | gps.groundWindSpeed     |
 | HDT      | true heading                             |                         |
-| LEE      | leeway angle (currently 0)               |                         |
+| HEL      | heel angle                               |                         |
+| LEE      | leeway angle                             |                         |
+| LEF      | leeway factor                            |                         |
 | LLBB     | port layline direction                   |                         |
 | LLSB     | starboard layline direction              |                         |
 | SET      | tide set direction                       | gps.currentSet          |
@@ -64,6 +66,7 @@ There are the following config options.
 - `ground_wind` - manually entered ground wind as `direction,speed`, used to calculate true and apparent wind if no other wind data is present (for simulation)
 - `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
 - `laylines_from_matrix` - calculate laylines from speed matrix, not from beat/run angle in polar data
+- `lee_factor` - leeway factor, if >0 leeway angle is estimated, see below
 
 ## Installation
 
@@ -79,6 +82,14 @@ If you do not have any polar data, you can enter tack and gybe angle in the plug
   
 A source for polar data can be [ORC sailboat data](https://jieter.github.io/orc-data/site/) or [Seapilot.com](https://www.seapilot.com/features/download-polar-files/).
 
+## Leeway estimation
+
+Leeway is [estimated from heel and STW](https://opencpn-manuals.github.io/main/tactics/index.html#_2_2_calculate_leeway) as
+
+LEE = LEF * HEL / STW^2
+
+With LEF being a boat specific factor from within (0,20). Heel could be measured but here it is interpolated from the heel polar in `heel.json`. As the boat speed polar it contains an interpolation table to map TWA/TWS to heel angle HEL. 
+
 ## Laylines
 
 To understand the technical background of the laylines one has first to have an understanding of the terms VMG and VMC.
@@ -88,7 +99,9 @@ To understand the technical background of the laylines one has first to have an 
 
 Unfortunately there is a lot of confusion on these two terms and also most of the commercial products are mixing the two items and indicate VMG but actually showing VMC (and so does AvNav). 
 
-The calculation of laylines is based on the `beat_angle` and `run_angle` vectors in the polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result the laylines show the optimal TWA to travel upwind in general, but not the optimal TWA to get towards the waypoint.  
+The laylines are computed from the `beat_angle` and `run_angle` vectors in the polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result the laylines show the optimal TWA to travel upwind in general, but not the optimal TWA to get towards the waypoint.  Optionally it is possible to calculate the laylines from the STW matrix.
+
+![VMC](Images/vmc.png)
 
 From the `STW` matrix in the polar data, which is a mapping of TWS and TWA to STW, one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. The plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
 

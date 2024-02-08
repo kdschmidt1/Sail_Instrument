@@ -16,6 +16,7 @@ MIN_AVNAV_VERSION = 20230705
 KNOTS = 1.94384  # knots per m/s
 MPS = 1 / KNOTS
 POLAR_FILE = "polar.json"
+HEEL_FILE = "heel.json"
 PATH_PREFIX = "gps.sailinstrument."
 SMOOTHING_FACTOR = "smoothing_factor"
 MM_SAMPLES = "minmax_samples"
@@ -25,6 +26,7 @@ FALLBACK = "allow_fallback"
 TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
 CALC_VMC = "calc_vmc"
+LEEWAY_FACTOR = "lee_factor"
 LAYLINES_FROM_MATRIX = "laylines_from_matrix"
 
 CONFIG = [
@@ -84,6 +86,12 @@ CONFIG = [
         "default": "",
         "type": "STRING",
     },
+    {
+        "name": LEEWAY_FACTOR,
+        "description": "leeway factor LEF, if >0 leeway angle is estimated as LEF * HEL / STW^2",
+        "default": "10",
+        "type": "FLOAT",
+    },
 ]
 
 
@@ -115,6 +123,20 @@ class Plugin(object):
             ],
         }
 
+    def load_json(self, filename):
+        fn = os.path.join(self.api.getDataDir(), "user", "viewer", filename)
+
+        if not os.path.isfile(fn):
+            source = os.path.join(os.path.dirname(__file__), filename)
+            shutil.copyfile(source, fn)
+
+        try:
+            with open(fn) as f:
+                return json.load(f)
+
+        except Exception as x:
+            self.api.error(f"reading failed {fn} {x}")
+
     def __init__(self, api):
         self.api = api
         assert (
@@ -123,21 +145,9 @@ class Plugin(object):
 
         self.api.registerEditableParameters(CONFIG, self.changeParam)
         self.api.registerRequestHandler(self.handleApiRequest)
-        # self.api.registerRestart(self.stop)
 
-        polar_filename = os.path.join(
-            self.api.getDataDir(), "user", "viewer", POLAR_FILE
-        )
-        if not os.path.isfile(polar_filename):
-            source = os.path.join(os.path.dirname(__file__), POLAR_FILE)
-            shutil.copyfile(source, polar_filename)
-
-        try:
-            with open(polar_filename) as f:
-                self.polar = json.load(f)
-        except Exception as x:
-            self.polar = None
-            self.api.error(f"reading failed {polar_filename} {x}")
+        self.polar = self.load_json(POLAR_FILE)
+        self.heels = self.load_json(HEEL_FILE)
 
         self.saveAllConfig()
 
@@ -226,8 +236,10 @@ class Plugin(object):
 
         self.api.log("started")
         self.api.setStatus("STARTED", "running")
+        d = CourseData()
         while not self.api.shouldStopMainThread():
             time.sleep(0.5)
+
             # get course data
             cog = readValue("gps.track")
             sog = readValue("gps.speed")
@@ -238,9 +250,11 @@ class Plugin(object):
                 hdt = hdm if hdt is None else hdt  # fallback to HDM
                 hdt = cog if hdt is None else hdt  # fallback to COG
                 stw = sog if stw is None else stw  # fallback to SOG
+
             if any(v is None for v in (hdt, stw)):
                 self.api.setStatus("ERROR", "missing HDT/STW")
                 continue
+
             # get wind data
             awa = readValue("gps.windAngle")
             aws = readValue("gps.windSpeed")
@@ -250,7 +264,20 @@ class Plugin(object):
             gwd, gws = None, None
             if all(v is None for v in (awa, aws, twa, tws, twd)):
                 gwd, gws = manual_wind() or (None, None)
-            # self.api.log(                f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws}"            )
+
+            hel = None
+
+            lef = float(self.getConfigValue(LEEWAY_FACTOR)) / KNOTS**2
+            assert 0 <= lef
+
+            if hel is None and self.heels and lef and d.has("TWDF", "TWSF"):
+                twaf = to180(d.TWDF - hdt)
+                hel = copysign(polar_heel(self.heels, twaf, d.TWSF * KNOTS), -twaf)
+
+            # self.api.log(
+            #    f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws} HEL={hel} LEF={lef}"
+            # )
+
             # compute missing parts (fields that are None get computed)
             d = CourseData(
                 COG=cog,
@@ -264,6 +291,8 @@ class Plugin(object):
                 TWD=twd,
                 GWD=gwd,
                 GWS=gws,
+                HEL=hel,
+                LEF=lef,
             )
             # smooth and get min/max
             smooth(d, "AWD", "AWS")
@@ -324,7 +353,10 @@ class Plugin(object):
             if not self.polar:
                 return
 
-            if self.getConfigValue(LAYLINES_FROM_MATRIX).startswith("T"):
+            if (
+                self.getConfigValue(LAYLINES_FROM_MATRIX).startswith("T")
+                or ("beat_angle" if upwind else "run_angle") not in self.polar
+            ):
                 angle = polar_angle2(self.polar, tws * KNOTS, upwind)
             else:
                 angle = polar_angle(self.polar, tws * KNOTS, upwind)
@@ -362,10 +394,16 @@ def polar_angle(polar, tws, upwind):
 
 
 def polar_speed(polar, twa, tws):
-    wspeeds = polar["TWS"]
-    wangles = polar["TWA"]
-    bspeeds = polar["STW"]
-    spl = scipy.interpolate.RectBivariateSpline(wangles, wspeeds, bspeeds)
+    spl = scipy.interpolate.RectBivariateSpline(
+        polar["TWA"], polar["TWS"], polar["STW"]
+    )
+    return max(0, float(spl(abs(twa), tws)))
+
+
+def polar_heel(polar, twa, tws):
+    spl = scipy.interpolate.RectBivariateSpline(
+        polar["TWA"], polar["TWS"], polar["heel"]
+    )
     return max(0, float(spl(abs(twa), tws)))
 
 
@@ -412,7 +450,9 @@ class CourseData:
     SET = set, direction of tide/current, cannot be measured directly
     DFT = drift, rate of tide/current, cannot be measured directly
     STW = speed through water, usually from paddle wheel, water speed vector projected onto HDT (long axis of boat)
+    HEL = heel angle, measured by sensor or from heel polar TWA/TWS -> HEL
     LEE = leeway angle, angle between HDT and direction of water speed vector, usually estimated from wind and/or heel and STW
+    CRS = course through water
     AWA = apparent wind angle, measured by wind direction sensor
     AWD = apparent wind direction, relative to true north
     AWS = apparent wind speed, measured by anemometer
@@ -448,21 +488,28 @@ class CourseData:
     - HDT = HDM + VAR = HDC + DEV + VAR
     - HDM = HDT - VAR = HDC + DEV
 
+    ### Leeway and Course
+
+    - LEE = LEF * HEL / STW^2
+    - CRS = HDT + LEE
+
+    With leeway factor LEF = 0..20, boat specific
+
     ### Course, Speed and Tide
 
-    - [COG,SOG] = [HDT+LEE,STW] (+) [SET,DFT]
-    - [SET,DFT] = [COG,SOG] (+) [HDT+LEE,-STW]
+    - [COG,SOG] = [CRS,STW] (+) [SET,DFT]
+    - [SET,DFT] = [COG,SOG] (+) [CRS,-STW]
 
     ### Wind
 
     angles and directions are always converted like xWD = xWA + HDT and xWA = xWD - HDT
 
     - [AWD,AWS] = [GWD,GWS] (+) [COG,SOG]
-    - [AWD,AWS] = [TWD,TWS] (+) [HDT+LEE,STW]
+    - [AWD,AWS] = [TWD,TWS] (+) [CRS,STW]
     - [AWA,AWS] = [TWA,TWS] (+) [LEE,STW]
 
     - [TWD,TWS] = [GWD,GWS] (+) [SET,DFT]
-    - [TWD,TWS] = [AWD,AWS] (+) [HDT+LEE,-STW]
+    - [TWD,TWS] = [AWD,AWS] (+) [CRS,-STW]
     - [TWA,TWS] = [AWA,AWS] (+) [LEE,-STW]
 
     - [GWD,GWS] = [AWD,AWS] (+) [COG,-SOG]
@@ -491,17 +538,23 @@ class CourseData:
         if self.misses("HDM") and self.has("HDT", "VAR"):
             self.HDM = to360(self.HDT - self.VAR)
 
+        if self.misses("LEF") and self.has("HEL", "STW"):
+            self.LEF = 10
+
+        if self.misses("LEE") and self.has("HEL", "STW", "LEF"):
+            self.LEE = max(-30, min(30, self.LEF * self.HEL / self.STW**2))
+
         if self.misses("LEE"):
             self.LEE = 0
 
-        if self.misses("SET", "DFT") and self.has("COG", "SOG", "HDT", "STW", "LEE"):
-            self.SET, self.DFT = add_polar(
-                (self.COG, self.SOG), (self.HDT + self.LEE, -self.STW)
-            )
-        if self.misses("COG", "SOG") and self.has("SET", "DFT", "HDT", "STW", "LEE"):
-            self.COG, self.SOG = add_polar(
-                (self.SET, self.DFT), (self.HDT + self.LEE, self.STW)
-            )
+        if self.misses("CRS") and self.has("HDT", "LEE"):
+            self.CRS = self.HDT + self.LEE
+
+        if self.misses("SET", "DFT") and self.has("COG", "SOG", "CRS", "STW"):
+            self.SET, self.DFT = add_polar((self.COG, self.SOG), (self.CRS, -self.STW))
+
+        if self.misses("COG", "SOG") and self.has("SET", "DFT", "CRS", "STW"):
+            self.COG, self.SOG = add_polar((self.SET, self.DFT), (self.CRS, self.STW))
 
         if self.misses("TWA", "TWS") and self.has("AWA", "AWS", "STW", "LEE"):
             self.TWA, self.TWS = add_polar((self.AWA, self.AWS), (self.LEE, -self.STW))
