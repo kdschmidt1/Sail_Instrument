@@ -12,7 +12,7 @@ There is a good description of what you can do with it at [blauwasser.de](https:
 
 The plugin calculates true wind, ground wind and set and drift. It needs COG/SOG, HDT/STW and AWA/AWS as input data. If HDT/STW is missing it uses COG/SOG as fallback (you get ground wind instead of true wind, and the direction is wrong if HDT!=COG). If you do not have a wind sensor, you can enter ground wind in the settings for testing purposes.
 
-How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L378).
+How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L428).
 
 The values calculated by the plugin are published in AvNav as `gps.sailinstrument.*`. 
 Optionally you can enable that some of these quantities are written to their well-defined AvNav paths to make them available to widgets or other plugins.
