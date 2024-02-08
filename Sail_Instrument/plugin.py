@@ -355,7 +355,7 @@ def polar_speed(polar, twa, tws):
     wangles = polar["TWA"]
     bspeeds = polar["STW"]
     spl = scipy.interpolate.RectBivariateSpline(wangles, wspeeds, bspeeds)
-    return float(spl(abs(twa), tws))
+    return max(0, float(spl(abs(twa), tws)))
 
 
 def optimum_vmc(polar, twd, tws, brg):
