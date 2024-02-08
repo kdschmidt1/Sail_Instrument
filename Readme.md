@@ -61,7 +61,7 @@ There are the following config options.
 - `tack_angle` - tack angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
 - `gybe_angle` - gybe angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
 - `write_data` - write calculated data to their well-defined AvNav paths, requires `allowKeyOverwrite=true`
-- `wind` - manually entered ground wind as `direction,speed`, used to calculate true and apparent wind if no other wind data is present (for simulation)
+- `ground_wind` - manually entered ground wind as `direction,speed`, used to calculate true and apparent wind if no other wind data is present (for simulation)
 - `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
 
 ## Installation

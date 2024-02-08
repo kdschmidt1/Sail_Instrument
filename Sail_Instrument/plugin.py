@@ -1,8 +1,5 @@
 import os
-from math import sin, cos, radians, degrees, sqrt, atan2, floor, pi, fabs
-import xml.etree.ElementTree as ET
 import json
-import urllib.request, urllib.parse, urllib.error
 import time
 import numpy, scipy
 import re
@@ -11,22 +8,23 @@ import shutil
 
 try:
     from avnrouter import AVNRouter, WpData
-    from avnav_worker import AVNWorker, WorkerParameter, WorkerStatus
+    from avnav_worker import AVNWorker
 except:
     pass
 
-KNOTS = 1.94384  # knots per m/s
 MIN_AVNAV_VERSION = 20230705
-SAILINSTRUMENT_PREFIX = "gps.sailinstrument."
+KNOTS = 1.94384  # knots per m/s
+MPS = 1 / KNOTS
+POLAR_FILE = "polar.json"
+PATH_PREFIX = "gps.sailinstrument."
 SMOOTHING_FACTOR = "smoothing_factor"
 MM_SAMPLES = "minmax_samples"
 WRITE_DATA = "write_data"
-WIND = "wind"
+GROUND_WIND = "ground_wind"
 FALLBACK = "allow_fallback"
 TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
 CALC_VMC = "calc_vmc"
-POLAR_FILE = "polar.json"
 
 CONFIG = [
     {
@@ -68,13 +66,13 @@ CONFIG = [
     {
         "name": WRITE_DATA,
         "description": "write calculated data to AvNav model in gps.* (requires allowKeyOverwrite=true), all data is always available in "
-        + SAILINSTRUMENT_PREFIX
+        + PATH_PREFIX
         + "*",
         "default": "False",
         "type": "BOOLEAN",
     },
     {
-        "name": WIND,
+        "name": GROUND_WIND,
         "description": "manually entered ground wind for testing, enter as 'direction,speed', is used if no other wind data is present",
         "default": "",
         "type": "STRING",
@@ -91,7 +89,7 @@ class Plugin(object):
             "config": CONFIG,
             "data": [
                 {
-                    "path": SAILINSTRUMENT_PREFIX + "*",
+                    "path": PATH_PREFIX + "*",
                     "description": "sail instrument data",
                 },
                 {"path": "gps.currentSet", "description": "tide set direction"},
@@ -163,7 +161,7 @@ class Plugin(object):
 
     def run(self):
         def manual_wind():
-            w = self.getConfigValue(WIND)
+            w = self.getConfigValue(GROUND_WIND)
             if w:  # manually entered wind data
                 wd, ws = list(map(float, w.split(",")))
                 ws /= 1.94384
@@ -274,7 +272,7 @@ class Plugin(object):
             # self.api.log(f"\n{d}")
 
             for k in d.keys():  # publish gps.sailinstrument.* data
-                self.api.addData(SAILINSTRUMENT_PREFIX + k, d[k])
+                self.api.addData(PATH_PREFIX + k, d[k])
 
             # write calculated values
             if self.getConfigValue(WRITE_DATA).startswith("T"):
@@ -321,11 +319,11 @@ class Plugin(object):
 
             angle = polar_angle(self.polar, tws * KNOTS, upwind)
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
-            data.VPOL = polar_speed(self.polar, twa, tws * KNOTS) / KNOTS
+            data.VPOL = polar_speed(self.polar, twa, tws * KNOTS) * MPS
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
                 data.VMCD, data.VMCS = optimum_vmc(self.polar, twd, tws * KNOTS, brg)
-                data.VMCS /= KNOTS
+                data.VMCS *= MPS
 
         except Exception as x:
             self.api.error(f"laylines {x}")
