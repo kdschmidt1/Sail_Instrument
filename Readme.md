@@ -87,8 +87,8 @@ To understand the technical background of the laylines one has first to have an 
 
 Unfortunately there is a lot of confusion on these two terms and also most of the commercial products are mixing the two items and indicate VMG but actually showing VMC (and so does AvNav). 
 
-The calculation of laylines is based on the upwind and downwind vectors in the polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result the laylines show the optimal TWA to travel upwind, but not the optimal TWA to get towards the waypoint.  
+The calculation of laylines is based on the `beat_angle` and `run_angle` vectors in the polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result the laylines show the optimal TWA to travel upwind in general, but not the optimal TWA to get towards the waypoint.  
 
-From the boatspeed matrix in the polar data, which is a mapping of TWS and TWA to boatspeed (STW), one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. This plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
+From the `STW` matrix in the polar data, which is a mapping of TWS and TWA to STW, one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. The plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
 
-These calculations require `numpy`, `scipy.optimize` and `scipy.interpolate` to be installed. `scipy.optimize` is not available on OpenPlotter.
+These calculations require `numpy`, `scipy.optimize` and `scipy.interpolate` to be installed. `scipy.optimize` is not available on OpenPlotter as it seems.
