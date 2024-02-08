@@ -82,5 +82,8 @@ To understand the technical background of the laylines one has first to have an 
 - **VMG** - _Velocity Made Good against wind_ is defined as `VMG = boatspeed * cos(TWA)` boatspeed vector projected onto true wind direction
 - **VMC** - _Velocity Made good on Course_ is defined as `VMC = boatspeed * cos(BRG-HDG)` boatspeed vector projected onto direction to waypoint
 
-Unfortunately there is a lot of confusion on these two terms and also most of the commercial products are mixing the two items and indicate VMG but actually showing VMC (and so does AvNav). The calculation of laylines is based on the upwind and downwind vectors in your polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result laylines show the optimal TWA to travel upwind, but not the optimal TWA to get to the waypoint.  
+Unfortunately there is a lot of confusion on these two terms and also most of the commercial products are mixing the two items and indicate VMG but actually showing VMC (and so does AvNav). 
+
+The calculation of laylines is based on the upwind and downwind vectors in your polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result laylines show the optimal TWA to travel upwind, but not the optimal TWA to get to the waypoint.  
+
 From the polar data, which is a mapping of TWS and TWA to boatspeed (STW), one can calculate the optimal TWA such that VMC is maximised, the TWA that gets you fasted towards the waypoint. This plugin calculates this optimum VMC course from the polar data and displays it as a blue line along with the laylines.
