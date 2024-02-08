@@ -350,7 +350,8 @@ def polar_speed(polar, twa, tws):
     wspeeds = polar["TWS"]
     wangles = polar["TWA"]
     bspeeds = polar["STW"]
-    return bilinear(wspeeds, wangles, bspeeds, tws, abs(twa))
+    spl = scipy.interpolate.RectBivariateSpline(wangles, wspeeds, bspeeds)
+    return float(spl(abs(twa), tws))
 
 
 def optimum_vmc(polar, twd, tws, brg):
@@ -368,42 +369,6 @@ def optimum_vmc(polar, twd, tws, brg):
     res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
     if res.success:
         return to360(twd + copysign(res.x, brg_twd)), -res.fun
-
-
-def bilinear(xv, yv, zv, x, y):
-    angle = yv
-    speed = zv
-    # var x2i = ws.findIndex(this.checkfunc, x)
-    x2i = list(filter(lambda lx: xv[lx] >= x, range(len(xv))))
-    if len(x2i) > 0:
-        x2i = 1 if x2i[0] < 1 else x2i[0]
-        x2 = xv[x2i]
-        x1i = x2i - 1
-        x1 = xv[x1i]
-    else:
-        x1 = x2 = xv[len(xv) - 1]
-        x1i = x2i = len(xv) - 1
-
-    # var y2i = angle.findIndex(this.checkfunc, y)
-    y2i = list(filter(lambda lx: angle[lx] >= y, range(len(angle))))
-    if len(y2i) > 0:
-        y2i = 1 if y2i[0] < 1 else y2i[0]
-        # y2i = y2i < 1 ? 1 : y2i
-        y2 = angle[y2i]
-        y1i = y2i - 1
-        y1 = angle[y2i - 1]
-    else:
-        y1 = y2 = angle[len(angle) - 1]
-        y1i = y2i = len(angle) - 1
-
-    ret = ((y2 - y) / (y2 - y1)) * (
-        ((x2 - x) / (x2 - x1)) * speed[y1i][x1i]
-        + ((x - x1) / (x2 - x1)) * speed[y1i][x2i]
-    ) + ((y - y1) / (y2 - y1)) * (
-        ((x2 - x) / (x2 - x1)) * speed[y2i][x1i]
-        + ((x - x1) / (x2 - x1)) * speed[y2i][x2i]
-    )
-    return ret
 
 
 class CourseData:

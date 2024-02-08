@@ -12,7 +12,7 @@ There is a good description of what you can do with it at [blauwasser.de](https:
 
 The plugin calculates true wind, ground wind and set and drift. It needs COG/SOG, HDT/STW and AWA/AWS as input data. If HDT/STW is missing it uses COG/SOG as fallback (you get ground wind instead of true wind, and the direction is wrong if HDT!=COG). If you do not have a wind sensor, you can enter ground wind in the settings for testing purposes.
 
-How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L409).
+How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L347).
 
 The values calculated by the plugin are published in AvNav as `gps.sailinstrument.*`. 
 Optionally you can enable that some of these quantities are written to their well-defined AvNav paths to make them available to widgets or other plugins.
@@ -87,4 +87,6 @@ Unfortunately there is a lot of confusion on these two terms and also most of th
 
 The calculation of laylines is based on the upwind and downwind vectors in the polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result the laylines show the optimal TWA to travel upwind, but not the optimal TWA to get towards the waypoint.  
 
-From the boatspeed matrix in the polar data, which is a mapping of TWS and TWA to boatspeed (STW), one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. This plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines.
+From the boatspeed matrix in the polar data, which is a mapping of TWS and TWA to boatspeed (STW), one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. This plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
+
+These calculations require `numpy`, `scipy.optimize` and `scipy.interpolate` to be installed.
