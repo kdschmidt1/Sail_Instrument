@@ -12,6 +12,8 @@ try:
 except:
     pass
 
+
+PLUGIN_VERSION = 202402
 MIN_AVNAV_VERSION = 20230705
 KNOTS = 1.94384  # knots per m/s
 MPS = 1 / KNOTS
@@ -100,7 +102,7 @@ class Plugin(object):
     def pluginInfo(cls):
         return {
             "description": "sail instrument calculating and displaying, true/apparent wind, tide, laylines",
-            "version": "1.2",
+            "version": PLUGIN_VERSION,
             "config": CONFIG,
             "data": [
                 {
@@ -273,7 +275,7 @@ class Plugin(object):
 
             if hel is None and self.heels and lef and d.has("TWDF", "TWSF"):
                 twaf = to180(d.TWDF - hdt)
-                hel = copysign(polar_heel(self.heels, twaf, d.TWSF * KNOTS), -twaf)
+                hel = polar_heel(self.heels, twaf, d.TWSF * KNOTS)
 
             # self.api.log(
             #    f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws} HEL={hel} LEF={lef}"
@@ -334,8 +336,9 @@ class Plugin(object):
             twa = to180(twd - data.HDT)  # filtered TWA
 
             brg = bearing_to_waypoint()
+            brg_twd = to180(brg - twd)
             if brg:
-                upwind = abs(to180(brg - twd)) < 90
+                upwind = abs(brg_twd) < 90
             else:
                 upwind = abs(twa) < 90
 
@@ -358,7 +361,7 @@ class Plugin(object):
                 self.getConfigValue(LAYLINES_FROM_MATRIX).startswith("T")
                 or ("beat_angle" if upwind else "run_angle") not in self.polar
             ):
-                angle = polar_angle2(self.polar, tws * KNOTS, upwind)
+                angle = optimum_vmc(self.polar, 0, tws * KNOTS, 0 if upwind else 180)
             else:
                 angle = polar_angle(self.polar, tws * KNOTS, upwind)
 
@@ -366,9 +369,9 @@ class Plugin(object):
             data.VPOL = polar_speed(self.polar, twa, tws * KNOTS) * MPS
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
-                data.VMCA, _ = optimum_vmc(self.polar, twd, tws * KNOTS, brg)
-                if upwind and abs(to180(brg - twd)) < angle:
-                    data.VMCB, _ = optimum_vmc(self.polar, twd, tws * KNOTS, brg, -1)
+                data.VMCA = optimum_vmc(self.polar, twd, tws * KNOTS, brg)
+                if upwind and abs(brg_twd) < angle:
+                    data.VMCB = optimum_vmc(self.polar, twd, tws * KNOTS, brg, -1)
 
         except Exception as x:
             self.api.error(f"laylines {x}")
@@ -406,7 +409,7 @@ def polar_heel(polar, twa, tws):
     spl = scipy.interpolate.RectBivariateSpline(
         polar["TWA"], polar["TWS"], polar["heel"]
     )
-    return max(0, float(spl(abs(twa), tws)))
+    return copysign(max(0, float(spl(abs(twa), tws))), -twa)
 
 
 def optimum_vmc(polar, twd, tws, brg, s=1):
@@ -417,14 +420,9 @@ def optimum_vmc(polar, twd, tws, brg, s=1):
         return -polar_speed(polar, twa, tws) * cos(radians(s * twa - abs(brg_twd)))
 
     res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
+
     if res.success:
-        return to360(twd + s * copysign(res.x, brg_twd)), -res.fun
-
-
-def polar_angle2(polar, tws, upwind):
-    "calculate beat/run angle from speed matrix"
-    d, s = optimum_vmc(polar, 0, tws, 0 if upwind else 180)
-    return d
+        return to360(twd + s * copysign(res.x, brg_twd))
 
 
 class CourseData:
@@ -544,7 +542,11 @@ class CourseData:
             self.LEF = 10
 
         if self.misses("LEE") and self.has("HEL", "STW", "LEF"):
-            self.LEE = max(-30, min(30, self.LEF * self.HEL / self.STW**2))
+            self.LEE = (
+                max(-30, min(30, self.LEF * self.HEL / self.STW**2))
+                if self.STW
+                else 0
+            )
 
         if self.misses("LEE"):
             self.LEE = 0

@@ -105,4 +105,4 @@ The laylines are computed from the `beat_angle` and `run_angle` vectors in the p
 
 From the `STW` matrix in the polar data, which is a mapping of TWS and TWA to STW, one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. The plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
 
-These calculations require `numpy`, `scipy.optimize` and `scipy.interpolate` to be installed. `scipy.optimize` is not available on OpenPlotter as it seems.
+These calculations require `numpy.interp`, `scipy.interpolate` and `scipy.optimize` to be installed. 

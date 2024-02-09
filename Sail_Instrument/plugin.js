@@ -287,16 +287,15 @@ function knots(v){
   return 1.94384*v;
 }
 
-var red = "rgb(255,0,0)";
+var red = "red";
 var green = "rgb(0,255,0)";
-var blue = "rgb(0,0,255)";
+var blue = "blue";
 var black = "black";
 var orange = "orange";
 
 function drawWindWidget(ctx,size, maprotation, data){
         DrawOuterRing(ctx, size, maprotation + data.HDT);
         DrawKompassring(ctx, size, maprotation);
-
         if (knots(data.DFTF)>=0.3) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
