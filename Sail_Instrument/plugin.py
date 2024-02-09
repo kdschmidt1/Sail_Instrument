@@ -125,19 +125,14 @@ class Plugin(object):
             ],
         }
 
-    def load_json(self, filename):
+    def get_file(self, filename):
         fn = os.path.join(self.api.getDataDir(), "user", "viewer", filename)
 
         if not os.path.isfile(fn):
             source = os.path.join(os.path.dirname(__file__), filename)
             shutil.copyfile(source, fn)
 
-        try:
-            with open(fn) as f:
-                return json.load(f)
-
-        except Exception as x:
-            self.api.error(f"reading failed {fn} {x}")
+        return fn
 
     def __init__(self, api):
         self.api = api
@@ -148,8 +143,15 @@ class Plugin(object):
         self.api.registerEditableParameters(CONFIG, self.changeParam)
         self.api.registerRequestHandler(self.handleApiRequest)
 
-        self.polar = self.load_json(POLAR_FILE)
-        self.heels = self.load_json(HEEL_FILE)
+        try:
+            self.polar = Polar(self.get_file(POLAR_FILE))
+        except:
+            self.polar = None
+
+        try:
+            self.heels = Polar(self.get_file(HEEL_FILE))
+        except:
+            self.heels = None
 
         self.saveAllConfig()
 
@@ -275,7 +277,7 @@ class Plugin(object):
 
             if hel is None and self.heels and lef and d.has("TWDF", "TWSF"):
                 twaf = to180(d.TWDF - hdt)
-                hel = polar_heel(self.heels, twaf, d.TWSF * KNOTS)
+                hel = self.heels.heel(twaf, d.TWSF * KNOTS)
 
             # self.api.log(
             #    f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws} HEL={hel} LEF={lef}"
@@ -336,9 +338,8 @@ class Plugin(object):
             twa = to180(twd - data.HDT)  # filtered TWA
 
             brg = bearing_to_waypoint()
-            brg_twd = to180(brg - twd)
             if brg:
-                upwind = abs(brg_twd) < 90
+                upwind = abs(to180(brg - twd)) < 90
             else:
                 upwind = abs(twa) < 90
 
@@ -357,21 +358,20 @@ class Plugin(object):
             if not self.polar:
                 return
 
-            if (
-                self.getConfigValue(LAYLINES_FROM_MATRIX).startswith("T")
-                or ("beat_angle" if upwind else "run_angle") not in self.polar
-            ):
-                angle = optimum_vmc(self.polar, 0, tws * KNOTS, 0 if upwind else 180)
+            if self.getConfigValue(LAYLINES_FROM_MATRIX).startswith(
+                "T"
+            ) or not self.polar.has_angle(upwind):
+                angle = self.polar.vmc_angle(0, tws * KNOTS, 0 if upwind else 180)
             else:
-                angle = polar_angle(self.polar, tws * KNOTS, upwind)
+                angle = self.polar.angle(tws * KNOTS, upwind)
 
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
-            data.VPOL = polar_speed(self.polar, twa, tws * KNOTS) * MPS
+            data.VPOL = self.polar.speed(twa, tws * KNOTS) * MPS
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
-                data.VMCA = optimum_vmc(self.polar, twd, tws * KNOTS, brg)
-                if upwind and abs(brg_twd) < angle:
-                    data.VMCB = optimum_vmc(self.polar, twd, tws * KNOTS, brg, -1)
+                data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
+                if upwind and abs(to180(brg - twd)) < angle:
+                    data.VMCB = self.polar.vmc_angle(twd, tws * KNOTS, brg, -1)
 
         except Exception as x:
             self.api.error(f"laylines {x}")
@@ -392,37 +392,41 @@ def bearing_to_waypoint():
         return
 
 
-def polar_angle(polar, tws, upwind):
-    speeds = polar["TWS"]
-    angles = polar["beat_angle" if upwind else "run_angle"]
-    return numpy.interp(tws, speeds, angles)
+class Polar:
+    def __init__(self, filename):
+        with open(filename) as f:
+            self.data = json.load(f)
 
+    def has_angle(self, upwind):
+        return ("beat_angle" if upwind else "run_angle") in self.data
 
-def polar_speed(polar, twa, tws):
-    spl = scipy.interpolate.RectBivariateSpline(
-        polar["TWA"], polar["TWS"], polar["STW"]
-    )
-    return max(0, float(spl(abs(twa), tws)))
+    def angle(self, tws, upwind):
+        angle = self.data["beat_angle" if upwind else "run_angle"]
+        return numpy.interp(tws, self.data["TWS"], angle)
 
+    def speed(self, twa, tws):
+        spl = scipy.interpolate.RectBivariateSpline(
+            self.data["TWA"], self.data["TWS"], self.data["STW"]
+        )
+        return max(0.0, float(spl(abs(twa), tws)))
 
-def polar_heel(polar, twa, tws):
-    spl = scipy.interpolate.RectBivariateSpline(
-        polar["TWA"], polar["TWS"], polar["heel"]
-    )
-    return copysign(max(0, float(spl(abs(twa), tws))), -twa)
+    def heel(self, twa, tws):
+        spl = scipy.interpolate.RectBivariateSpline(
+            self.data["TWA"], self.data["TWS"], self.data["heel"]
+        )
+        return copysign(max(0.0, float(spl(abs(twa), tws))), -twa)
 
+    def vmc_angle(self, twd, tws, brg, s=1):
+        brg_twd = to180(brg - twd)  # BRG from wind
 
-def optimum_vmc(polar, twd, tws, brg, s=1):
-    brg_twd = to180(brg - twd)  # BRG from wind
+        def vmc(twa):
+            # negative sign for minimizer
+            return -self.speed(twa, tws) * cos(radians(s * twa - abs(brg_twd)))
 
-    def vmc(twa):
-        # negative sign for minimizer
-        return -polar_speed(polar, twa, tws) * cos(radians(s * twa - abs(brg_twd)))
+        res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
 
-    res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
-
-    if res.success:
-        return to360(twd + s * copysign(res.x, brg_twd))
+        if res.success:
+            return to360(twd + s * copysign(res.x, brg_twd))
 
 
 class CourseData:
