@@ -265,7 +265,8 @@ class Plugin(object):
             if all(v is None for v in (awa, aws, twa, tws, twd)):
                 gwd, gws = manual_wind() or (None, None)
 
-            hel = None
+            hel = readValue("gps.signalk.navigation.attitude.roll")
+            hel = degrees(hel) if hel else hel
 
             lef = float(self.getConfigValue(LEEWAY_FACTOR)) / KNOTS**2
             assert 0 <= lef
@@ -343,7 +344,7 @@ class Plugin(object):
             gybe_angle = float(self.getConfigValue(GYBE_ANGLE))
             assert 0 <= gybe_angle < 180
 
-            data.VMCD, data.VMCS = -1, 0
+            data.VMCA, data.VMCB = -1, -1
 
             if upwind and tack_angle or not upwind and gybe_angle:
                 angle = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
@@ -365,8 +366,9 @@ class Plugin(object):
             data.VPOL = polar_speed(self.polar, twa, tws * KNOTS) * MPS
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
-                data.VMCD, data.VMCS = optimum_vmc(self.polar, twd, tws * KNOTS, brg)
-                data.VMCS *= MPS
+                data.VMCA, _ = optimum_vmc(self.polar, twd, tws * KNOTS, brg)
+                if upwind and abs(to180(brg - twd)) < angle:
+                    data.VMCB, _ = optimum_vmc(self.polar, twd, tws * KNOTS, brg, -1)
 
         except Exception as x:
             self.api.error(f"laylines {x}")
@@ -407,16 +409,16 @@ def polar_heel(polar, twa, tws):
     return max(0, float(spl(abs(twa), tws)))
 
 
-def optimum_vmc(polar, twd, tws, brg):
+def optimum_vmc(polar, twd, tws, brg, s=1):
     brg_twd = to180(brg - twd)  # BRG from wind
 
     def vmc(twa):
         # negative sign for minimizer
-        return -polar_speed(polar, twa, tws) * cos(radians(twa - abs(brg_twd)))
+        return -polar_speed(polar, twa, tws) * cos(radians(s * twa - abs(brg_twd)))
 
     res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
     if res.success:
-        return to360(twd + copysign(res.x, brg_twd)), -res.fun
+        return to360(twd + s * copysign(res.x, brg_twd)), -res.fun
 
 
 def polar_angle2(polar, tws, upwind):

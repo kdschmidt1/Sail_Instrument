@@ -49,8 +49,8 @@ The following values are computed or copied from their sources.
 | TWDMIN   | min true wind direction relative to TWDF |                         |
 | TWS      | true wind speed                          | gps.trueWindSpeed       |
 | TWSF     | true wind speed filtered                 |                         |
-| VMCD     | optimum VMC direction (course)           |                         |
-| VMCS     | optimum VMC speed                        |                         |
+| VMCA     | optimum VMC direction (course)           |                         |
+| VMCB     | optimum VMC direction (opposite tack)    |                         |
 | VPOL     | speed from polar                         |                         |
 
 ## Config Options
