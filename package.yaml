@@ -5,17 +5,21 @@
 name: "avnav-sailinstrument-plugin"
 arch: "all"
 platform: "linux"
-version: "202204"
+version: "202402"
+license: "MIT"
 keep_version: true
 section: "default"
 priority: "extra"
 depends:
-- avnav (>=20220426)
+  - avnav (>=20220426)
+  - python3-scipy
+  - python3-numpy
 maintainer: "Klaus D. Schmidt <kdschmidt@bluewin.ch>"
 description: |
-  AvNav plugin to show a sailsteer display and Laylines on the map
-homepage: ""
-license: "MIT"
+  AvNav plugin supplying a SailSteer widget and overlay
+  showing true and apparent wind, tide, laylines
+  and optionally optimal VMC course
+homepage: "https://github.com/kdschmidt1/Sail_Instrument"
 contents:
-- src: ./Sail_Instrument/*
-  dst: /usr/lib/avnav/plugins/Sail_Instrument/
+  - src: ./Sail_Instrument/*
+    dst: /usr/lib/avnav/plugins/Sail_Instrument/
