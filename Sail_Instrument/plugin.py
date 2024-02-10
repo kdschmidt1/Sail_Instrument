@@ -408,7 +408,7 @@ class Polar:
     def value(self, twa, tws):
         if not self.spl:
             val = "STW" if "STW" in self.data else "heel"
-            self.spl = scipy.interpolate.RectqBivariateSpline(
+            self.spl = scipy.interpolate.RectBivariateSpline(
                 self.data["TWA"], self.data["TWS"], self.data[val]
             )
         return max(0.0, float(self.spl(abs(twa), tws)))
