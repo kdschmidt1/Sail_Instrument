@@ -1,6 +1,6 @@
 # SailInstrument AvNav-Plugin
 
-![widget overlay](Images/avn1.png)
+![widget overlay](Images/widget.png)
 
 The idea of this [plugin for AvNav](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html) is to display an instrument, that contains all basic information needed for sailing.
 The Instrument is inspired by B&G's sailsteer.  
@@ -67,6 +67,7 @@ There are the following config options.
 - `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
 - `laylines_from_matrix` - calculate laylines from speed matrix, not from beat/run angle in polar data
 - `lee_factor` - leeway factor, if >0 leeway angle is estimated, see below
+- `show_polar` - compute and display normalized polar diagram in the widget
 
 ## Installation
 

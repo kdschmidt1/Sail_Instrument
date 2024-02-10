@@ -149,6 +149,7 @@ var Sail_InstrumentWidget = {
         maxTWD: 'nav.gps.sailinstrument.TWDMAX',
         VMCA: 'nav.gps.sailinstrument.VMCA',
         VMCB: 'nav.gps.sailinstrument.VMCB',
+        POLAR: 'nav.gps.sailinstrument.POLAR',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -262,6 +263,7 @@ let Sail_Instrument_Overlay = {
         maxTWD: 'nav.gps.sailinstrument.TWDMAX',
         VMCA: 'nav.gps.sailinstrument.VMCA',
         VMCB: 'nav.gps.sailinstrument.VMCB',
+        POLAR: 'nav.gps.sailinstrument.POLAR',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -294,12 +296,16 @@ var black = "black";
 var orange = "orange";
 
 function drawWindWidget(ctx,size, maprotation, data){
+        //console.log("draw widget");
         DrawOuterRing(ctx, size, maprotation + data.HDT);
         DrawKompassring(ctx, size, maprotation);
         if (knots(data.DFTF)>=0.3) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
         if (knots(data.TWSF)>=1) {
+          if(data.POLAR){
+            drawPolar(ctx,size,maprotation,data,"black");
+          }
           var mm = [data.minTWD, data.maxTWD];
           DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, green);
           DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, red);
@@ -324,6 +330,32 @@ function drawWindWidget(ctx,size, maprotation, data){
 }
 
 avnav.api.registerWidget(Sail_Instrument_Overlay, Sail_Instrument_OverlayParameter);
+
+function drawPolar(ctx,size,maprotation,data,color){
+    ctx.save();
+    ctx.beginPath();
+    ctx.rotate((maprotation+data.TWDF) * Math.PI/180);
+    var r=0.7*size;
+    //console.log(data.POLAR);
+    var v=[];
+    data.POLAR.split(",").forEach(function(s,i){
+      v.push(parseFloat(s));
+    });;
+    //console.log(v,v.length);
+    for(var s=1; s>-2; s-=2){
+      for(var i=0; i<v.length; i+=1){
+        var a = s*180*i/(v.length-1)+180;
+        var x = r*Math.sin(a*Math.PI/180)*v[i];
+        var y = r*Math.cos(a*Math.PI/180)*v[i];
+        if (i==0) ctx.moveTo(x,y);
+        else      ctx.lineTo(x,y);
+      }
+    }
+    ctx.lineWidth=0.02*r;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+    ctx.restore();
+}
 
 /*##################################################################################################*/
 let LayLines_Overlay = {
@@ -534,7 +566,7 @@ let DrawLaylineArea = function(ctx, radius, angle, minmax, color) {
     ctx.lineTo(0, -radius);
     ctx.closePath();
 
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 0.02*radius;
     ctx.strokeStyle = color;
     //let f = radius / 200;
     //ctx.setLineDash([Math.round(10*f),Math.round(15*f)]); // do not dash, looks ugly

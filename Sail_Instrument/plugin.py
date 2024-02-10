@@ -1,10 +1,12 @@
 import os
 import json
 import time
-import numpy, scipy
+import numpy
+import scipy.interpolate, scipy.optimize
 import re
 from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import shutil
+
 
 try:
     from avnrouter import AVNRouter, WpData
@@ -30,6 +32,7 @@ GYBE_ANGLE = "gybe_angle"
 CALC_VMC = "calc_vmc"
 LEEWAY_FACTOR = "lee_factor"
 LAYLINES_FROM_MATRIX = "laylines_from_matrix"
+SHOW_POLAR = "show_polar"
 
 CONFIG = [
     {
@@ -60,6 +63,12 @@ CONFIG = [
         "name": LAYLINES_FROM_MATRIX,
         "description": "calculate laylines from speed matrix, not from beat/run angle in polar data",
         "default": "False",
+        "type": "BOOLEAN",
+    },
+    {
+        "name": SHOW_POLAR,
+        "description": "compute and display normalized polar diagram in the widget",
+        "default": "True",
         "type": "BOOLEAN",
     },
     {
@@ -244,6 +253,7 @@ class Plugin(object):
         while not self.api.shouldStopMainThread():
             time.sleep(0.5)
 
+            msg = ""
             # get course data
             cog = readValue("gps.track")
             sog = readValue("gps.speed")
@@ -277,7 +287,7 @@ class Plugin(object):
 
             if hel is None and self.heels and lef and d.has("TWDF", "TWSF"):
                 twaf = to180(d.TWDF - hdt)
-                hel = self.heels.heel(twaf, d.TWSF * KNOTS)
+                hel = self.heels.value(twaf, d.TWSF * KNOTS)
 
             # self.api.log(
             #    f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws} HEL={hel} LEF={lef}"
@@ -328,7 +338,7 @@ class Plugin(object):
                 writeValue(d, "GWS", "gps.groundWindSpeed")
                 writeValue(d, "GWD", "gps.groundWindDirection")
 
-            self.api.setStatus("NMEA", "computing data")
+            self.api.setStatus("NMEA", "computing data" + msg)
 
     def laylines(self, data):
         try:
@@ -366,7 +376,18 @@ class Plugin(object):
                 angle = self.polar.angle(tws * KNOTS, upwind)
 
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
-            data.VPOL = self.polar.speed(twa, tws * KNOTS) * MPS
+            data.VPOL, data.POLAR = 0, 0
+            data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
+
+            if self.getConfigValue(SHOW_POLAR).startswith("T"):
+                values = numpy.array(
+                    [
+                        self.polar.value(a, tws * KNOTS)
+                        for a in numpy.linspace(0, 180, 36)
+                    ]
+                )
+                values /= max(1, values.max())
+                data.POLAR = ",".join(map(str, values))
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
                 data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
@@ -396,6 +417,7 @@ class Polar:
     def __init__(self, filename):
         with open(filename) as f:
             self.data = json.load(f)
+        self.spl = None
 
     def has_angle(self, upwind):
         return ("beat_angle" if upwind else "run_angle") in self.data
@@ -404,24 +426,23 @@ class Polar:
         angle = self.data["beat_angle" if upwind else "run_angle"]
         return numpy.interp(tws, self.data["TWS"], angle)
 
-    def speed(self, twa, tws):
-        spl = scipy.interpolate.RectBivariateSpline(
-            self.data["TWA"], self.data["TWS"], self.data["STW"]
-        )
-        return max(0.0, float(spl(abs(twa), tws)))
+    def value(self, twa, tws):
+        if not self.spl:
+            val = "STW" if "STW" in self.data else "heel"
+            try:
+                interp2d = scipy.interpolate.RectBivariateSpline
+            except:
+                interp2d = scipy.interpolate.interp2d
+            self.spl = interp2d(self.data["TWA"], self.data["TWS"], self.data[val])
 
-    def heel(self, twa, tws):
-        spl = scipy.interpolate.RectBivariateSpline(
-            self.data["TWA"], self.data["TWS"], self.data["heel"]
-        )
-        return copysign(max(0.0, float(spl(abs(twa), tws))), -twa)
+        return max(0.0, float(self.spl(abs(twa), tws)))
 
     def vmc_angle(self, twd, tws, brg, s=1):
         brg_twd = to180(brg - twd)  # BRG from wind
 
         def vmc(twa):
             # negative sign for minimizer
-            return -self.speed(twa, tws) * cos(radians(s * twa - abs(brg_twd)))
+            return -self.value(twa, tws) * cos(radians(s * twa - abs(brg_twd)))
 
         res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
 
@@ -609,7 +630,7 @@ class CourseData:
 
     def __contains__(self, item):
         v = self[item]
-        return v is not None and isfinite(v)
+        return v is not None and (type(v) != float or isfinite(v))
 
     def __str__(self):
         return "\n".join(f"{k}={self[k]}" for k in self.keys())
