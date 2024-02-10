@@ -1,10 +1,13 @@
 import os
 import json
 import time
-import numpy, scipy
+import numpy
+import scipy.interpolate
 import re
 from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import shutil
+
+import numpy as np
 
 try:
     from avnrouter import AVNRouter, WpData
@@ -366,7 +369,14 @@ class Plugin(object):
                 angle = self.polar.angle(tws * KNOTS, upwind)
 
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
+            data.VPOL, data.POLAR = 0, 0
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
+
+            v = np.array(
+                [self.polar.value(a, tws * KNOTS) for a in np.linspace(0, 180, 36)]
+            )
+            v /= max(1, v.max())
+            data.POLAR = ",".join(map(str, v))
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
                 data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
@@ -408,9 +418,12 @@ class Polar:
     def value(self, twa, tws):
         if not self.spl:
             val = "STW" if "STW" in self.data else "heel"
-            self.spl = scipy.interpolate.RectBivariateSpline(
-                self.data["TWA"], self.data["TWS"], self.data[val]
-            )
+            try:
+                interp2d = scipy.interpolate.RectBivariateSpline
+            except:
+                interp2d = scipy.interpolate.interp2d
+            self.spl = interp2d(self.data["TWA"], self.data["TWS"], self.data[val])
+
         return max(0.0, float(self.spl(abs(twa), tws)))
 
     def vmc_angle(self, twd, tws, brg, s=1):
@@ -606,7 +619,7 @@ class CourseData:
 
     def __contains__(self, item):
         v = self[item]
-        return v is not None and isfinite(v)
+        return v is not None and (type(v) != float or isfinite(v))
 
     def __str__(self):
         return "\n".join(f"{k}={self[k]}" for k in self.keys())
