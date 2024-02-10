@@ -33,6 +33,7 @@ GYBE_ANGLE = "gybe_angle"
 CALC_VMC = "calc_vmc"
 LEEWAY_FACTOR = "lee_factor"
 LAYLINES_FROM_MATRIX = "laylines_from_matrix"
+SHOW_POLAR = "show_polar"
 
 CONFIG = [
     {
@@ -63,6 +64,12 @@ CONFIG = [
         "name": LAYLINES_FROM_MATRIX,
         "description": "calculate laylines from speed matrix, not from beat/run angle in polar data",
         "default": "False",
+        "type": "BOOLEAN",
+    },
+    {
+        "name": SHOW_POLAR,
+        "description": "compute and display normalized polar diagram in the widget",
+        "default": "True",
         "type": "BOOLEAN",
     },
     {
@@ -372,11 +379,12 @@ class Plugin(object):
             data.VPOL, data.POLAR = 0, 0
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
 
-            v = np.array(
-                [self.polar.value(a, tws * KNOTS) for a in np.linspace(0, 180, 36)]
-            )
-            v /= max(1, v.max())
-            data.POLAR = ",".join(map(str, v))
+            if self.getConfigValue(SHOW_POLAR).startswith("T"):
+                values = np.array(
+                    [self.polar.value(a, tws * KNOTS) for a in np.linspace(0, 180, 36)]
+                )
+                values /= max(1, values.max())
+                data.POLAR = ",".join(map(str, values))
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
                 data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)

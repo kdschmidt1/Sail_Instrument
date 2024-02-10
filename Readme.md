@@ -67,6 +67,7 @@ There are the following config options.
 - `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
 - `laylines_from_matrix` - calculate laylines from speed matrix, not from beat/run angle in polar data
 - `lee_factor` - leeway factor, if >0 leeway angle is estimated, see below
+- `show_polar` - compute and display normalized polar diagram in the widget
 
 ## Installation
 
