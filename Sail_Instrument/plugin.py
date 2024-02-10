@@ -277,7 +277,7 @@ class Plugin(object):
 
             if hel is None and self.heels and lef and d.has("TWDF", "TWSF"):
                 twaf = to180(d.TWDF - hdt)
-                hel = self.heels.heel(twaf, d.TWSF * KNOTS)
+                hel = self.heels.value(twaf, d.TWSF * KNOTS)
 
             # self.api.log(
             #    f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws} HEL={hel} LEF={lef}"
@@ -366,7 +366,7 @@ class Plugin(object):
                 angle = self.polar.angle(tws * KNOTS, upwind)
 
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
-            data.VPOL = self.polar.speed(twa, tws * KNOTS) * MPS
+            data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
                 data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
@@ -396,6 +396,7 @@ class Polar:
     def __init__(self, filename):
         with open(filename) as f:
             self.data = json.load(f)
+        self.spl = None
 
     def has_angle(self, upwind):
         return ("beat_angle" if upwind else "run_angle") in self.data
@@ -404,24 +405,20 @@ class Polar:
         angle = self.data["beat_angle" if upwind else "run_angle"]
         return numpy.interp(tws, self.data["TWS"], angle)
 
-    def speed(self, twa, tws):
-        spl = scipy.interpolate.RectBivariateSpline(
-            self.data["TWA"], self.data["TWS"], self.data["STW"]
-        )
-        return max(0.0, float(spl(abs(twa), tws)))
-
-    def heel(self, twa, tws):
-        spl = scipy.interpolate.RectBivariateSpline(
-            self.data["TWA"], self.data["TWS"], self.data["heel"]
-        )
-        return copysign(max(0.0, float(spl(abs(twa), tws))), -twa)
+    def value(self, twa, tws):
+        if not self.spl:
+            val = "STW" if "STW" in self.data else "heel"
+            self.spl = scipy.interpolate.RectqBivariateSpline(
+                self.data["TWA"], self.data["TWS"], self.data[val]
+            )
+        return max(0.0, float(self.spl(abs(twa), tws)))
 
     def vmc_angle(self, twd, tws, brg, s=1):
         brg_twd = to180(brg - twd)  # BRG from wind
 
         def vmc(twa):
             # negative sign for minimizer
-            return -self.speed(twa, tws) * cos(radians(s * twa - abs(brg_twd)))
+            return -self.value(twa, tws) * cos(radians(s * twa - abs(brg_twd)))
 
         res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
 
