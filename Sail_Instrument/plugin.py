@@ -190,6 +190,8 @@ class Plugin(object):
         return {"status", "unknown request"}
 
     def run(self):
+        self.api.setStatus("STARTED", "running")
+
         def manual_wind():
             w = self.getConfigValue(GROUND_WIND)
             if w:  # manually entered wind data
@@ -247,13 +249,11 @@ class Plugin(object):
             if a is None or "Sail_Instrument" in a.source:
                 self.api.addData(path, data[key])
 
-        self.api.log("started")
-        self.api.setStatus("STARTED", "running")
         d = CourseData()
         while not self.api.shouldStopMainThread():
             time.sleep(0.5)
 
-            msg = ""
+            self.msg = ""
             # get course data
             cog = readValue("gps.track")
             sog = readValue("gps.speed")
@@ -261,9 +261,15 @@ class Plugin(object):
             hdm = readValue("gps.headingMag")
             stw = readValue("gps.waterSpeed")
             if self.getConfigValue(FALLBACK).startswith("T"):
-                hdt = hdm if hdt is None else hdt  # fallback to HDM
-                hdt = cog if hdt is None else hdt  # fallback to COG
-                stw = sog if stw is None else stw  # fallback to SOG
+                if hdt is None and hdm is not None:
+                    hdt = hdm
+                    self.msg += ", HDT=HDM"
+                if hdt is None and cog is not None:
+                    hdt = cog
+                    self.msg += ", HDT=COG"
+                if stw is None and sog is not None:
+                    stw = sog
+                    self.msg += ", STW=SOG"
 
             if any(v is None for v in (hdt, stw)):
                 self.api.setStatus("ERROR", "missing HDT/STW")
@@ -278,6 +284,9 @@ class Plugin(object):
             gwd, gws = None, None
             if all(v is None for v in (awa, aws, twa, tws, twd)):
                 gwd, gws = manual_wind() or (None, None)
+                self.msg += (
+                    f", manually entered wind {(gwd,gws)}" if gwd is not None else ""
+                )
 
             hel = readValue("gps.signalk.navigation.attitude.roll")
             hel = degrees(hel) if hel else hel
@@ -288,6 +297,7 @@ class Plugin(object):
             if hel is None and self.heels and lef and d.has("TWDF", "TWSF"):
                 twaf = to180(d.TWDF - hdt)
                 hel = self.heels.value(twaf, d.TWSF * KNOTS)
+                self.msg += ", heel from polar"
 
             # self.api.log(
             #    f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws} HEL={hel} LEF={lef}"
@@ -317,6 +327,7 @@ class Plugin(object):
             for k in ("AWS", "TWS", "DFT"):
                 if k not in d:
                     d[k + "F"] = 0
+                    self.msg += ", no " + k
 
             self.laylines(d)
 
@@ -338,7 +349,7 @@ class Plugin(object):
                 writeValue(d, "GWS", "gps.groundWindSpeed")
                 writeValue(d, "GWD", "gps.groundWindDirection")
 
-            self.api.setStatus("NMEA", "computing data" + msg)
+            self.api.setStatus("NMEA", "computing data" + self.msg)
 
     def laylines(self, data):
         try:
@@ -363,6 +374,7 @@ class Plugin(object):
             if upwind and tack_angle or not upwind and gybe_angle:
                 angle = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
                 data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
+                self.msg += ", fixed laylines"
                 return
 
             if not self.polar:
@@ -372,12 +384,15 @@ class Plugin(object):
                 "T"
             ) or not self.polar.has_angle(upwind):
                 angle = self.polar.vmc_angle(0, tws * KNOTS, 0 if upwind else 180)
+                self.msg += ", laylines from matrix"
             else:
                 angle = self.polar.angle(tws * KNOTS, upwind)
+                self.msg += ", laylines"
 
             data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
             data.VPOL, data.POLAR = 0, 0
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
+            self.msg += ", VPOL"
 
             if self.getConfigValue(SHOW_POLAR).startswith("T"):
                 values = numpy.array(
@@ -388,11 +403,13 @@ class Plugin(object):
                 )
                 values /= max(1, values.max())
                 data.POLAR = ",".join(map(str, values))
+                self.msg += ", show polar"
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
                 data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
                 if upwind and abs(to180(brg - twd)) < angle:
                     data.VMCB = self.polar.vmc_angle(twd, tws * KNOTS, brg, -1)
+                self.msg += ", VMC"
 
         except Exception as x:
             self.api.error(f"laylines {x}")
