@@ -253,6 +253,7 @@ class Plugin(object):
         while not self.api.shouldStopMainThread():
             time.sleep(0.5)
 
+            msg = ""
             # get course data
             cog = readValue("gps.track")
             sog = readValue("gps.speed")
@@ -337,7 +338,7 @@ class Plugin(object):
                 writeValue(d, "GWS", "gps.groundWindSpeed")
                 writeValue(d, "GWD", "gps.groundWindDirection")
 
-            self.api.setStatus("NMEA", "computing data")
+            self.api.setStatus("NMEA", "computing data" + msg)
 
     def laylines(self, data):
         try:
@@ -380,7 +381,10 @@ class Plugin(object):
 
             if self.getConfigValue(SHOW_POLAR).startswith("T"):
                 values = numpy.array(
-                    [self.polar.value(a, tws * KNOTS) for a in numpy.linspace(0, 180, 36)]
+                    [
+                        self.polar.value(a, tws * KNOTS)
+                        for a in numpy.linspace(0, 180, 36)
+                    ]
                 )
                 values /= max(1, values.max())
                 data.POLAR = ",".join(map(str, values))
