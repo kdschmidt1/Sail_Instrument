@@ -7,7 +7,6 @@ import re
 from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import shutil
 
-import numpy as np
 
 try:
     from avnrouter import AVNRouter, WpData
@@ -380,8 +379,8 @@ class Plugin(object):
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
 
             if self.getConfigValue(SHOW_POLAR).startswith("T"):
-                values = np.array(
-                    [self.polar.value(a, tws * KNOTS) for a in np.linspace(0, 180, 36)]
+                values = numpy.array(
+                    [self.polar.value(a, tws * KNOTS) for a in numpy.linspace(0, 180, 36)]
                 )
                 values /= max(1, values.max())
                 data.POLAR = ",".join(map(str, values))
