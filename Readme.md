@@ -1,6 +1,6 @@
 # SailInstrument AvNav-Plugin
 
-![widget overlay](Images/avn1.png)
+![widget overlay](Images/widget.png)
 
 The idea of this [plugin for AvNav](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html) is to display an instrument, that contains all basic information needed for sailing.
 The Instrument is inspired by B&G's sailsteer.  

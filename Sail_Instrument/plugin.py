@@ -2,7 +2,7 @@ import os
 import json
 import time
 import numpy
-import scipy.interpolate
+import scipy.interpolate, scipy.optimize
 import re
 from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import shutil
