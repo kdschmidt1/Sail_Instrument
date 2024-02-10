@@ -70,8 +70,25 @@ There are the following config options.
 - `show_polar` - compute and display normalized polar diagram in the widget
 
 ## Installation
+You can use the plugin in 2 different ways.
 
-Place the `Sail_Instrument` folder inside `avnav/data/plugins`.
+1. Download the Sail_Instrument code as a zip and unpack the Sail_Instrument-Folder into a directory /home/pi/avnav/data/plugins/Sail_Instrument.
+
+ If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/Sail_Instrument.
+
+ In this case the internal name of the plugin will be user-Sail_Instrument. 
+
+
+2. Download the package provided in the releases section [Sail_Instrument](https://github.com/kdschmidt1/Sail_Instrument/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
+
+ ```
+sudo apt install /path/to/avnav-sailinstrument-plugin_xxxx.deb
+
+ ```
+Add the Laylines to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
+
+Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)  
+(you have to use the new Button ![Button](https://github.com/wellenvogel/avnav/blob/d5cf9802d507bd5c23e1b999b78dbe0c76252fa9/viewer/images/icons-new/assistant_nav.svg)).
 
 ## Polar Data
 
