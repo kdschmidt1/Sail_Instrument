@@ -89,7 +89,6 @@ Add the Laylines to your map in the [WidgetDialog](https://www.wellenvogel.net/s
 
 Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)  
 (you have to use the new Button ![Button](https://github.com/wellenvogel/avnav/blob/d5cf9802d507bd5c23e1b999b78dbe0c76252fa9/viewer/images/icons-new/assistant_nav.svg)).
-
 ## Polar Data
 
 ![polar](Images/polar.png)
