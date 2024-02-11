@@ -383,7 +383,9 @@ class Plugin(object):
             if self.getConfigValue(LAYLINES_FROM_MATRIX).startswith(
                 "T"
             ) or not self.polar.has_angle(upwind):
-                angle = self.polar.vmc_angle(0, tws * KNOTS, 0 if upwind else 180)
+                angle = abs(
+                    to180(self.polar.vmc_angle(0, tws * KNOTS, 0 if upwind else 180))
+                )
                 self.msg += ", laylines from matrix"
             else:
                 angle = self.polar.angle(tws * KNOTS, upwind)
