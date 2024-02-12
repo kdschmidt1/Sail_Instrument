@@ -382,9 +382,10 @@ let LayLines_Overlay = {
             ctx.globalAlpha *= props.Opacity;
 
             intersections = calc_intersections(self, props);
-            console.log(intersections);
-            if (typeof(intersections) != 'undefined')
+            //console.log(intersections);
+            if (typeof(intersections) != 'undefined') {
                 DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
+            }
             ctx.restore();
         }
     },
@@ -419,7 +420,7 @@ avnav.api.registerWidget(LayLines_Overlay, LayLines_OverlayParameter);
 
 let LatLon = avnav.api.LatLon();
 let calc_intersections = function(self, props) {
-    console.log(props);
+    //console.log(props);
     intersections = null;
     let b_pos = new LatLon(props.POS.lat, props.POS.lon);
     //b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
@@ -427,10 +428,10 @@ let calc_intersections = function(self, props) {
         WP_pos = new LatLon(props.WP.lat, props.WP.lon);
 
         // Intersections berechnen
-        console.log(props.TWDF-props.LAY,props.TWDF+props.LAY);
+        //console.log(props.TWDF-props.LAY,props.TWDF+props.LAY);
         var is_SB = LatLon.intersection(b_pos, to360(props.TWDF-props.LAY), WP_pos, to360(props.TWDF+props.LAY + 180));
         var is_BB = LatLon.intersection(b_pos, to360(props.TWDF+props.LAY), WP_pos, to360(props.TWDF-props.LAY + 180));
-        console.log(b_pos,is_SB,is_BB);
+        //console.log(b_pos,is_SB,is_BB);
         calc_endpoint = function(intersection, pos) {
             let is_xx = {};
             is_xx.dist = pos.rhumbDistanceTo(intersection); // in m
@@ -503,9 +504,10 @@ let DrawMapLaylines = function(self, ctx, scale, intersections, props) {
         ctx.moveTo(p1[0], p1[1]);
         ctx.lineTo(p2[0], p2[1]);
         ctx.closePath();
-        ctx.lineWidth = 5;
+        ctx.lineWidth = 3;
         ctx.strokeStyle = color;
-        ctx.setLineDash([10 * scale, 20 * scale])
+        //ctx.setLineDash([10 * scale, 20 * scale]);
+        ctx.setLineDash([10,10]);
         ctx.stroke();
     }
     ctx.save();
@@ -523,11 +525,11 @@ let DrawMapLaylines = function(self, ctx, scale, intersections, props) {
         // port
         p1 = self.lonLatToPixel(intersections.WP.BB.P1._lon, intersections.WP.BB.P1._lat);
         p2 = self.lonLatToPixel(intersections.WP.BB.P2._lon, intersections.WP.BB.P2._lat);
-        drawLine(p1, p2, red);
+        drawLine(p1, p2, green);
         // starboard
         p1 = self.lonLatToPixel(intersections.WP.SB.P1._lon, intersections.WP.SB.P1._lat);
         p2 = self.lonLatToPixel(intersections.WP.SB.P2._lon, intersections.WP.SB.P2._lat);
-        drawLine(p1, p2, green);
+        drawLine(p1, p2, red);
 
     }
     ctx.restore()
