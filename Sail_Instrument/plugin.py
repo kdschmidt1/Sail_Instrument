@@ -31,7 +31,7 @@ TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
 CALC_VMC = "calc_vmc"
 LEEWAY_FACTOR = "lee_factor"
-LAYLINES_FROM_MATRIX = "laylines_from_matrix"
+LAYLINES_FROM_MATRIX = "laylines_polar"
 SHOW_POLAR = "show_polar"
 
 CONFIG = [
@@ -49,7 +49,7 @@ CONFIG = [
     },
     {
         "name": FALLBACK,
-        "description": "allow fallback to use HDM/COG/SOG for HDT/STW",
+        "description": "allow fallback to HDT=HDM/HDT=COG/STW=SOG",
         "default": "True",
         "type": "BOOLEAN",
     },
@@ -61,7 +61,7 @@ CONFIG = [
     },
     {
         "name": LAYLINES_FROM_MATRIX,
-        "description": "calculate laylines from speed matrix, not from beat/run angle in polar data",
+        "description": "calculate laylines from polar speed, not from beat/run angle table",
         "default": "False",
         "type": "BOOLEAN",
     },
@@ -288,16 +288,23 @@ class Plugin(object):
                     f", manually entered wind {(gwd,gws)}" if gwd is not None else ""
                 )
 
-            hel = readValue("gps.signalk.navigation.attitude.roll")
-            hel = degrees(hel) if hel else hel
-
             lef = float(self.getConfigValue(LEEWAY_FACTOR)) / KNOTS**2
             assert 0 <= lef
+            hel = None
 
-            if hel is None and self.heels and lef and d.has("TWDF", "TWSF"):
-                twaf = to180(d.TWDF - hdt)
-                hel = self.heels.value(twaf, d.TWSF * KNOTS)
-                self.msg += ", heel from polar"
+            if lef:
+                hel = readValue("gps.signalk.navigation.attitude.roll")
+                if hel is not None:
+                    hel = degrees(hel)
+                    self.msg += ", heel from SignalK"
+
+                if hel is None and self.heels and d.has("TWDF", "TWSF"):
+                    twaf = to180(d.TWDF - hdt)
+                    hel = self.heels.value(twaf, d.TWSF * KNOTS)
+                    self.msg += ", heel from polar"
+
+                if hel:
+                    self.msg += ", leeway estimation"
 
             # self.api.log(
             #    f"\nCOG={cog} SOG={sog} HDT={hdt} STW={stw} AWA={awa} AWS={aws} TWA={twa} TWS={tws} TWD={twd} GWD={gwd} GWS={gws} HEL={hel} LEF={lef}"
@@ -349,7 +356,10 @@ class Plugin(object):
                 writeValue(d, "GWS", "gps.groundWindSpeed")
                 writeValue(d, "GWD", "gps.groundWindDirection")
 
-            self.api.setStatus("NMEA", "computing data" + self.msg)
+            self.api.setStatus(
+                "ERROR" if "error" in self.msg else "NMEA",
+                "computing data" + self.msg,
+            )
 
     def laylines(self, data):
         try:
@@ -372,8 +382,7 @@ class Plugin(object):
             data.VMCA, data.VMCB = -1, -1
 
             if upwind and tack_angle or not upwind and gybe_angle:
-                angle = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
-                data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
+                data.LAY = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
                 self.msg += ", fixed laylines"
                 return
 
@@ -383,15 +392,14 @@ class Plugin(object):
             if self.getConfigValue(LAYLINES_FROM_MATRIX).startswith(
                 "T"
             ) or not self.polar.has_angle(upwind):
-                angle = abs(
+                data.LAY = abs(
                     to180(self.polar.vmc_angle(0, tws * KNOTS, 0 if upwind else 180))
                 )
-                self.msg += ", laylines from matrix"
+                self.msg += ", laylines from polar"
             else:
-                angle = self.polar.angle(tws * KNOTS, upwind)
-                self.msg += ", laylines"
+                data.LAY = self.polar.angle(tws * KNOTS, upwind)
+                self.msg += ", laylines from table"
 
-            data.LLSB, data.LLBB = to360(twd - angle), to360(twd + angle)
             data.VPOL, data.POLAR = 0, 0
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
             self.msg += ", VPOL"
@@ -404,17 +412,18 @@ class Plugin(object):
                     ]
                 )
                 values /= max(1, values.max())
-                data.POLAR = ",".join(map(str, values))
+                data.POLAR = ",".join([f"{v:.2f}" for v in values])
                 self.msg += ", show polar"
 
             if brg and self.getConfigValue(CALC_VMC).startswith("T"):
                 data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
-                if upwind and abs(to180(brg - twd)) < angle:
+                if upwind and abs(to180(brg - twd)) < data.LAY:
                     data.VMCB = self.polar.vmc_angle(twd, tws * KNOTS, brg, -1)
                 self.msg += ", VMC"
 
         except Exception as x:
             self.api.error(f"laylines {x}")
+            self.msg += f", laylines error {x}"
 
 
 def bearing_to_waypoint():

@@ -36,8 +36,7 @@ The following values are computed or copied from their sources.
 | HEL      | heel angle                               |                         |
 | LEE      | leeway angle                             |                         |
 | LEF      | leeway factor                            |                         |
-| LLBB     | port layline direction                   |                         |
-| LLSB     | starboard layline direction              |                         |
+| LAY      | layline angle rel. to TWD                |                         |
 | SET      | tide set direction                       | gps.currentSet          |
 | SETF     | tide set direction filtered              |                         |
 | SOG      | speed over ground                        |                         |

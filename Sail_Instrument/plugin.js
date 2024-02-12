@@ -135,8 +135,7 @@ var Sail_InstrumentWidget = {
     storeKeys: {
         BRG: 'nav.wp.course',
         POS: 'nav.gps.position',
-        LLSB: 'nav.gps.sailinstrument.LLSB',
-        LLBB: 'nav.gps.sailinstrument.LLBB',
+        LAY: 'nav.gps.sailinstrument.LAY',
         HDT: 'nav.gps.sailinstrument.HDT',
         COG: 'nav.gps.sailinstrument.COG',
         TWDF: 'nav.gps.sailinstrument.TWDF',
@@ -249,8 +248,7 @@ let Sail_Instrument_Overlay = {
     storeKeys: {
         BRG: 'nav.wp.course',
         POS: 'nav.gps.position',
-        LLSB: 'nav.gps.sailinstrument.LLSB',
-        LLBB: 'nav.gps.sailinstrument.LLBB',
+        LAY: 'nav.gps.sailinstrument.LAY',
         HDT: 'nav.gps.sailinstrument.HDT',
         COG: 'nav.gps.sailinstrument.COG',
         TWDF: 'nav.gps.sailinstrument.TWDF',
@@ -307,8 +305,8 @@ function drawWindWidget(ctx,size, maprotation, data){
             drawPolar(ctx,size,maprotation,data,"black");
           }
           var mm = [data.minTWD, data.maxTWD];
-          DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, green);
-          DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, red);
+          DrawLaylineArea(ctx, size, maprotation + data.TWDF - data.LAY, mm, green);
+          DrawLaylineArea(ctx, size, maprotation + data.TWDF + data.LAY, mm, red);
         }
         if (data.VMCA>=0) {
           DrawLaylineArea(ctx, size, maprotation + data.VMCA, [0,0], blue);
@@ -372,8 +370,7 @@ let LayLines_Overlay = {
     storeKeys: {
         WP: 'nav.wp.position',
         POS: 'nav.gps.position',
-        LLSB: 'nav.gps.sailinstrument.LLSB',
-        LLBB: 'nav.gps.sailinstrument.LLBB',
+        LAY: 'nav.gps.sailinstrument.LAY',
         TWDF: 'nav.gps.sailinstrument.TWDF',
     },
     initFunction: function() {},
@@ -385,8 +382,9 @@ let LayLines_Overlay = {
             ctx.globalAlpha *= props.Opacity;
 
             intersections = calc_intersections(self, props);
+            console.log(intersections);
             if (typeof(intersections) != 'undefined')
-                DrawMapLaylines(this, ctx, this.getScale(), intersections, props, props.TWDF);
+                DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
             ctx.restore();
         }
     },
@@ -421,6 +419,7 @@ avnav.api.registerWidget(LayLines_Overlay, LayLines_OverlayParameter);
 
 let LatLon = avnav.api.LatLon();
 let calc_intersections = function(self, props) {
+    console.log(props);
     intersections = null;
     let b_pos = new LatLon(props.POS.lat, props.POS.lon);
     //b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
@@ -428,8 +427,10 @@ let calc_intersections = function(self, props) {
         WP_pos = new LatLon(props.WP.lat, props.WP.lon);
 
         // Intersections berechnen
-        var is_SB = LatLon.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
-        var is_BB = LatLon.intersection(b_pos, props.LLBB, WP_pos, props.LLSB + 180);
+        console.log(props.TWDF-props.LAY,props.TWDF+props.LAY);
+        var is_SB = LatLon.intersection(b_pos, to360(props.TWDF-props.LAY), WP_pos, to360(props.TWDF+props.LAY + 180));
+        var is_BB = LatLon.intersection(b_pos, to360(props.TWDF+props.LAY), WP_pos, to360(props.TWDF-props.LAY + 180));
+        console.log(b_pos,is_SB,is_BB);
         calc_endpoint = function(intersection, pos) {
             let is_xx = {};
             is_xx.dist = pos.rhumbDistanceTo(intersection); // in m
@@ -496,8 +497,8 @@ let calc_intersections = function(self, props) {
 
 
 
-let DrawMapLaylines = function(self, ctx, scale, intersections, props, TWD) {
-    DrawLine = function(p1, p2, color) {
+let DrawMapLaylines = function(self, ctx, scale, intersections, props) {
+    function drawLine(p1, p2, color) {
         ctx.beginPath();
         ctx.moveTo(p1[0], p1[1]);
         ctx.lineTo(p2[0], p2[1]);
@@ -509,26 +510,24 @@ let DrawMapLaylines = function(self, ctx, scale, intersections, props, TWD) {
     }
     ctx.save();
     if (typeof(props.LaylineBoat) != 'undefined' && props.LaylineBoat == true && intersections != null) {
-        // Layline vom Boot:
-        // BB
+        // port
         p1 = self.lonLatToPixel(intersections.Boat.BB.P1._lon, intersections.Boat.BB.P1._lat);
         p2 = self.lonLatToPixel(intersections.Boat.BB.P2._lon, intersections.Boat.BB.P2._lat);
-        DrawLine(p1, p2, to180(props.LLBB - TWD) < 0 ? "rgb(0,255,0)" : "red");
-        // SB
+        drawLine(p1, p2, red);
+        // starboard
         p1 = self.lonLatToPixel(intersections.Boat.SB.P1._lon, intersections.Boat.SB.P1._lat);
         p2 = self.lonLatToPixel(intersections.Boat.SB.P2._lon, intersections.Boat.SB.P2._lat);
-        DrawLine(p1, p2, to180(props.LLSB - TWD) < 0 ? "rgb(0,255,0)" : "red");
+        drawLine(p1, p2, green);
     }
     if (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP == true && intersections != null) {
-        // Layline vom Wegpunkt:
-        // BB
+        // port
         p1 = self.lonLatToPixel(intersections.WP.BB.P1._lon, intersections.WP.BB.P1._lat);
         p2 = self.lonLatToPixel(intersections.WP.BB.P2._lon, intersections.WP.BB.P2._lat);
-        DrawLine(p1, p2, to180(props.LLBB - TWD) > 0 ? "rgb(0,255,0)" : "red");
-        // SB
+        drawLine(p1, p2, red);
+        // starboard
         p1 = self.lonLatToPixel(intersections.WP.SB.P1._lon, intersections.WP.SB.P1._lat);
         p2 = self.lonLatToPixel(intersections.WP.SB.P2._lon, intersections.WP.SB.P2._lat);
-        DrawLine(p1, p2, to180(props.LLSB - TWD) > 0 ? "rgb(0,255,0)" : "red");
+        drawLine(p1, p2, green);
 
     }
     ctx.restore()
