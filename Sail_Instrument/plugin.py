@@ -92,6 +92,13 @@ CONFIG = [
         "type": "BOOLEAN",
     },
     {
+          'name': 'allowKeyOverwrite',
+          'description': 'necessary to be able to set our time directly from canboat',
+          'default': False,
+          'type': 'BOOLEAN'
+    },
+
+    {
         "name": GROUND_WIND,
         "description": "manually entered ground wind for testing, enter as 'direction,speed', is used if no other wind data is present",
         "default": "",
@@ -149,6 +156,7 @@ class Plugin(object):
             MIN_AVNAV_VERSION <= self.api.getAvNavVersion()
         ), "incompatible AvNav version"
 
+        self.api.registerRestart(self.stop)
         self.api.registerEditableParameters(CONFIG, self.changeParam)
         self.api.registerRequestHandler(self.handleApiRequest)
 
@@ -188,6 +196,12 @@ class Plugin(object):
 
     def handleApiRequest(self, url, handler, args):
         return {"status", "unknown request"}
+    def stop(self):
+        self.changeSequence+=1
+        try:
+            self.socket.close()
+        except:
+            pass
 
     def run(self):
         def manual_wind():
