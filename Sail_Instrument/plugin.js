@@ -384,7 +384,7 @@ let LayLines_Overlay = {
             intersections = calc_intersections(self, props);
             //console.log(intersections);
             if (typeof(intersections) != 'undefined') {
-                DrawMapLaylines(this, ctx, this.getScale(), intersections, props);
+                DrawMapLaylines(this, ctx, intersections, props);
             }
             ctx.restore();
         }
@@ -496,21 +496,18 @@ let calc_intersections = function(self, props) {
 }
 
 
-
-
-let DrawMapLaylines = function(self, ctx, scale, intersections, props) {
+let DrawMapLaylines = function(self, ctx, intersections, props) {
+    ctx.save();
     function drawLine(p1, p2, color) {
         ctx.beginPath();
         ctx.moveTo(p1[0], p1[1]);
         ctx.lineTo(p2[0], p2[1]);
-        ctx.closePath();
         ctx.lineWidth = 3;
         ctx.strokeStyle = color;
-        //ctx.setLineDash([10 * scale, 20 * scale]);
-        ctx.setLineDash([10,10]);
+        var d=5*window.devicePixelRatio;
+        ctx.setLineDash([2*d,d]);
         ctx.stroke();
     }
-    ctx.save();
     if (typeof(props.LaylineBoat) != 'undefined' && props.LaylineBoat == true && intersections != null) {
         // port
         p1 = self.lonLatToPixel(intersections.Boat.BB.P1._lon, intersections.Boat.BB.P1._lat);
@@ -565,12 +562,10 @@ let DrawLaylineArea = function(ctx, radius, angle, minmax, color) {
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(0, -radius);
-    ctx.closePath();
-
     ctx.lineWidth = 0.02*radius;
     ctx.strokeStyle = color;
-    //let f = radius / 200;
-    //ctx.setLineDash([Math.round(10*f),Math.round(15*f)]); // do not dash, looks ugly
+    var d=5*window.devicePixelRatio;
+    ctx.setLineDash([2*d,d]);
     ctx.stroke();
 
     // sectors
