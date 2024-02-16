@@ -384,8 +384,10 @@ let LayLines_Overlay = {
             ctx.globalAlpha *= props.Opacity;
 
             intersections = calc_intersections(self, props);
-            if (typeof(intersections) != 'undefined')
-                DrawMapLaylines(this, ctx, this.getScale(), intersections, props, props.TWDF);
+            //console.log(intersections);
+            if (typeof(intersections) != 'undefined') {
+                DrawMapLaylines(this, ctx, intersections, props);
+            }
             ctx.restore();
         }
     },
@@ -495,8 +497,10 @@ let calc_intersections = function(self, props) {
 
 
 
-let DrawMapLaylines = function(self, ctx, scale, intersections, props, TWD) {
-    DrawLine = function(p1, p2, color) {
+
+let DrawMapLaylines = function(self, ctx, intersections, props) {
+    ctx.save();
+    function drawLine(p1, p2, color) {
         ctx.beginPath();
         ctx.moveTo(p1[0], p1[1]);
         ctx.lineTo(p2[0], p2[1]);
@@ -506,7 +510,6 @@ let DrawMapLaylines = function(self, ctx, scale, intersections, props, TWD) {
         ctx.setLineDash([10 * scale, 20 * scale])
         ctx.stroke();
     }
-    ctx.save();
     if (typeof(props.LaylineBoat) != 'undefined' && props.LaylineBoat == true && intersections != null) {
         // Layline vom Boot:
         // BB
@@ -563,12 +566,10 @@ let DrawLaylineArea = function(ctx, radius, angle, minmax, color) {
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(0, -radius);
-    ctx.closePath();
-
     ctx.lineWidth = 0.02*radius;
     ctx.strokeStyle = color;
-    //let f = radius / 200;
-    //ctx.setLineDash([Math.round(10*f),Math.round(15*f)]); // do not dash, looks ugly
+    var d=5*window.devicePixelRatio;
+    ctx.setLineDash([2*d,d]);
     ctx.stroke();
 
     // sectors
