@@ -1,5 +1,6 @@
 (function(){
 console.log("Sailinstrument loaded");
+
 //globalThis.globalParameter={};
 
 
