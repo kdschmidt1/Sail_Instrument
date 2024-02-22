@@ -372,6 +372,8 @@ let LayLines_Overlay = {
     storeKeys: {
         WP: 'nav.wp.position',
         POS: 'nav.gps.position',
+        WPposition: 'nav.wp.position',
+        boatposition: 'nav.gps.position',
         LLSB: 'nav.gps.sailinstrument.LLSB',
         LLBB: 'nav.gps.sailinstrument.LLBB',
         TWDF: 'nav.gps.sailinstrument.TWDF',
@@ -385,6 +387,8 @@ let LayLines_Overlay = {
             ctx.globalAlpha *= props.Opacity;
 
             intersections = calc_intersections(self, props);
+            intersections_old = calc_intersections_old(self, props);
+            
             //console.log(intersections);
             if (typeof(intersections) != 'undefined') {
                 DrawMapLaylines(this, ctx, intersections, props);
@@ -493,6 +497,60 @@ let calc_intersections = function(self, props) {
             intersections = null;
     }
     return intersections
+}
+
+
+		let calc_intersections_old = function(self, props) {
+	intersections = null;
+	let b_pos = new LatLon(props.boatposition.lat, props.boatposition.lon);
+	//b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
+	if (props.WPposition) {
+		WP_pos = new LatLon(props.WPposition.lat, props.WPposition.lon);
+
+		// Intersections berechnen
+		var is_SB = LatLon.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
+		var is_BB = LatLon.intersection(b_pos, props.LLBB, WP_pos, props.LLSB + 180);
+		calc_endpoint = function(intersection, pos) {
+			let is_xx={};
+			is_xx.dist = pos.rhumbDistanceTo(intersection);	// in m
+			if (is_xx.dist/1000>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
+					return null;
+			if(is_xx.dist > props.Laylinelength_nm*1852) // beides in m// wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
+			is_xx.pos = pos.rhumbDestinationPoint(props.Laylinelength_nm*1852,pos.rhumbBearingTo(intersection)) // abstand in m
+			else if(is_xx.dist< props.Laylinelength*1852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
+				is_xx.pos = pos.rhumbDestinationPoint(props.Laylinelength_nm*1852,pos.rhumbBearingTo(intersection)) // abstand in m
+			else
+				is_xx.pos= intersection;
+			return(is_xx)
+		};
+
+		is_BB_boat=is_BB_WP = is_SB_boat=is_SB_WP =null;
+		if(is_BB)
+		{
+			is_BB_boat=calc_endpoint(is_BB, b_pos);
+			is_BB_WP = calc_endpoint(is_BB, WP_pos);
+		}
+		if(is_SB)
+		{
+			is_SB_boat=calc_endpoint(is_SB, b_pos);
+			is_SB_WP = calc_endpoint(is_SB, WP_pos);
+		}
+
+		if(is_SB_boat && is_SB_WP && is_BB_boat && is_BB_WP){	
+			// es gibt schnittpunkte
+			intersections = 
+			{ 
+			Boat: { SB: { P1: b_pos, P2: is_SB_boat.pos, color: 'rgb(0,255,0)' ,dist: is_SB_boat.dist}, 
+			BB: { P1: b_pos, P2: is_BB_boat.pos, color: 'red' ,dist: is_BB_boat.dist} }, 
+			WP:   { SB: { P1: WP_pos, P2: is_SB_WP.pos, color: 'red' ,dist: is_SB_WP.dist}, 
+			BB: { P1: WP_pos, P2: is_BB_WP.pos, color: 'rgb(0,255,0)' ,dist: is_BB_WP.dist} } 
+			}
+		}
+		else
+			// keine schnittpunkte
+		intersections = null;
+	}
+	return intersections
 }
 
 
