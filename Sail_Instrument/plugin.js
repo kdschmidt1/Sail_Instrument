@@ -155,7 +155,7 @@ var Sail_InstrumentWidget = {
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data) {
       //console.log(data);
-      var ctx = canvas.getContext('2d');
+      let ctx = canvas.getContext('2d');
       // Set scale factor for all values
       var crect = canvas.getBoundingClientRect();
       var w = crect.width;
@@ -269,6 +269,9 @@ let Sail_Instrument_Overlay = {
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data, center) {
         //console.log(data);
+            let ctx = canvas.getContext('2d')
+            ctx.save();
+        
         if (data.Widgetposition == 'Mapcenter')
             ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
         else if (data.Widgetposition == 'Boatposition') {
@@ -281,6 +284,9 @@ let Sail_Instrument_Overlay = {
         ctx.globalAlpha *= data.Opacity;
 
         drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
+                    ctx.restore();
+
+        
     }
 
 }
@@ -382,7 +388,7 @@ let LayLines_Overlay = {
     finalizeFunction: function() {},
     renderCanvas: function(canvas, props, center) {
         if (typeof(props.POS) != 'undefined') {
-            ctx = canvas.getContext('2d')
+            let ctx = canvas.getContext('2d')
             ctx.save();
             ctx.globalAlpha *= props.Opacity;
 
@@ -392,7 +398,6 @@ let LayLines_Overlay = {
             //console.log(intersections);
             if (typeof(intersections) != 'undefined') {
                 DrawMapLaylines(this, ctx, intersections, props);
-                DrawMapLaylines_old(this, ctx, this.getScale(), intersections, props,gpsdata.TWD);
             }
             ctx.restore();
         }
@@ -560,37 +565,35 @@ let calc_intersections = function(self, props) {
 
 let DrawMapLaylines = function(self, ctx, intersections, props) {
     ctx.save();
-    function DrawLine(p1, p2, color) {
+    function drawLine(p1, p2, color) {
         ctx.beginPath();
         ctx.moveTo(p1[0], p1[1]);
         ctx.lineTo(p2[0], p2[1]);
-        ctx.closePath();
-        ctx.lineWidth = 5;
+        ctx.lineWidth = 3;
         ctx.strokeStyle = color;
-        ctx.setLineDash([10 * scale, 20 * scale])
+        var d=5*window.devicePixelRatio;
+        ctx.setLineDash([2*d,d]);
         ctx.stroke();
     }
     if (typeof(props.LaylineBoat) != 'undefined' && props.LaylineBoat == true && intersections != null) {
-        // Layline vom Boot:
-        // BB
+        // port
         p1 = self.lonLatToPixel(intersections.Boat.BB.P1._lon, intersections.Boat.BB.P1._lat);
         p2 = self.lonLatToPixel(intersections.Boat.BB.P2._lon, intersections.Boat.BB.P2._lat);
-        DrawLine(p1, p2, to180(props.LLBB - props.TWDF) < 0 ? "rgb(0,255,0)" : "red");
-        // SB
+        drawLine(p1, p2, red);
+        // starboard
         p1 = self.lonLatToPixel(intersections.Boat.SB.P1._lon, intersections.Boat.SB.P1._lat);
         p2 = self.lonLatToPixel(intersections.Boat.SB.P2._lon, intersections.Boat.SB.P2._lat);
-        DrawLine(p1, p2, to180(props.LLSB - props.TWDF) < 0 ? "rgb(0,255,0)" : "red");
+        drawLine(p1, p2, green);
     }
     if (typeof(props.LaylineWP) != 'undefined' && props.LaylineWP == true && intersections != null) {
-        // Layline vom Wegpunkt:
-        // BB
+        // port
         p1 = self.lonLatToPixel(intersections.WP.BB.P1._lon, intersections.WP.BB.P1._lat);
         p2 = self.lonLatToPixel(intersections.WP.BB.P2._lon, intersections.WP.BB.P2._lat);
-        DrawLine(p1, p2, to180(props.LLBB - props.TWDF) > 0 ? "rgb(0,255,0)" : "red");
-        // SB
+        drawLine(p1, p2, green);
+        // starboard
         p1 = self.lonLatToPixel(intersections.WP.SB.P1._lon, intersections.WP.SB.P1._lat);
         p2 = self.lonLatToPixel(intersections.WP.SB.P2._lon, intersections.WP.SB.P2._lat);
-        DrawLine(p1, p2, to180(props.LLSB - props.TWDF) > 0 ? "rgb(0,255,0)" : "red");
+        drawLine(p1, p2, red);
 
     }
     ctx.restore()
