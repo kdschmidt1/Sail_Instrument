@@ -155,10 +155,7 @@ var Sail_InstrumentWidget = {
     renderCanvas: function(canvas, data) {
       //console.log(data);
       let ctx = canvas.getContext('2d');
-<<<<<<< HEAD
       ctx.save();
-=======
->>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
       // Set scale factor for all values
       var crect = canvas.getBoundingClientRect();
       var w = crect.width;
@@ -271,8 +268,6 @@ let Sail_Instrument_Overlay = {
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data, center) {
-		let ctx = canvas.getContext('2d');
-		ctx.save();
         //console.log(data);
             let ctx = canvas.getContext('2d')
             ctx.save();
@@ -289,13 +284,7 @@ let Sail_Instrument_Overlay = {
         ctx.globalAlpha *= data.Opacity;
 
         drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
-<<<<<<< HEAD
-        ctx.restore();
-=======
                     ctx.restore();
-
-        
->>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
     }
 
 }
@@ -387,38 +376,23 @@ let LayLines_Overlay = {
     storeKeys: {
         WP: 'nav.wp.position',
         POS: 'nav.gps.position',
-<<<<<<< HEAD
         LAY: 'nav.gps.sailinstrument.LAY',
-=======
         WPposition: 'nav.wp.position',
         boatposition: 'nav.gps.position',
         LLSB: 'nav.gps.sailinstrument.LLSB',
         LLBB: 'nav.gps.sailinstrument.LLBB',
->>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
         TWDF: 'nav.gps.sailinstrument.TWDF',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, props, center) {
         if (typeof(props.POS) != 'undefined') {
-<<<<<<< HEAD
             let ctx = canvas.getContext('2d');
-=======
-            let ctx = canvas.getContext('2d')
->>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
             ctx.save();
             ctx.globalAlpha *= props.Opacity;
 
             intersections = calc_intersections(self, props);
-<<<<<<< HEAD
-            //console.log(intersections);
-            if (typeof(intersections) != 'undefined' && intersections!=null) {
-=======
-            intersections_old = calc_intersections_old(self, props);
-            
-            //console.log(intersections);
             if (typeof(intersections) != 'undefined') {
->>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
                 DrawMapLaylines(this, ctx, intersections, props);
             }
             ctx.restore();
@@ -531,66 +505,8 @@ let calc_intersections = function(self, props) {
 }
 
 
-<<<<<<< HEAD
-=======
-		let calc_intersections_old = function(self, props) {
-	intersections = null;
-	let b_pos = new LatLon(props.boatposition.lat, props.boatposition.lon);
-	//b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
-	if (props.WPposition) {
-		WP_pos = new LatLon(props.WPposition.lat, props.WPposition.lon);
-
-		// Intersections berechnen
-		var is_SB = LatLon.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
-		var is_BB = LatLon.intersection(b_pos, props.LLBB, WP_pos, props.LLSB + 180);
-		calc_endpoint = function(intersection, pos) {
-			let is_xx={};
-			is_xx.dist = pos.rhumbDistanceTo(intersection);	// in m
-			if (is_xx.dist/1000>20000)	// Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
-					return null;
-			if(is_xx.dist > props.Laylinelength_nm*1852) // beides in m// wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
-			is_xx.pos = pos.rhumbDestinationPoint(props.Laylinelength_nm*1852,pos.rhumbBearingTo(intersection)) // abstand in m
-			else if(is_xx.dist< props.Laylinelength*1852 && props.Laylineoverlap==true)// wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
-				is_xx.pos = pos.rhumbDestinationPoint(props.Laylinelength_nm*1852,pos.rhumbBearingTo(intersection)) // abstand in m
-			else
-				is_xx.pos= intersection;
-			return(is_xx)
-		};
-
-		is_BB_boat=is_BB_WP = is_SB_boat=is_SB_WP =null;
-		if(is_BB)
-		{
-			is_BB_boat=calc_endpoint(is_BB, b_pos);
-			is_BB_WP = calc_endpoint(is_BB, WP_pos);
-		}
-		if(is_SB)
-		{
-			is_SB_boat=calc_endpoint(is_SB, b_pos);
-			is_SB_WP = calc_endpoint(is_SB, WP_pos);
-		}
-
-		if(is_SB_boat && is_SB_WP && is_BB_boat && is_BB_WP){	
-			// es gibt schnittpunkte
-			intersections = 
-			{ 
-			Boat: { SB: { P1: b_pos, P2: is_SB_boat.pos, color: 'rgb(0,255,0)' ,dist: is_SB_boat.dist}, 
-			BB: { P1: b_pos, P2: is_BB_boat.pos, color: 'red' ,dist: is_BB_boat.dist} }, 
-			WP:   { SB: { P1: WP_pos, P2: is_SB_WP.pos, color: 'red' ,dist: is_SB_WP.dist}, 
-			BB: { P1: WP_pos, P2: is_BB_WP.pos, color: 'rgb(0,255,0)' ,dist: is_BB_WP.dist} } 
-			}
-		}
-		else
-			// keine schnittpunkte
-		intersections = null;
-	}
-	return intersections
-}
 
 
-
-
-
->>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
 let DrawMapLaylines = function(self, ctx, intersections, props) {
     ctx.save();
     function drawLine(p1, p2, color) {
