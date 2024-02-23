@@ -135,8 +135,7 @@ var Sail_InstrumentWidget = {
     storeKeys: {
         BRG: 'nav.wp.course',
         POS: 'nav.gps.position',
-        LLSB: 'nav.gps.sailinstrument.LLSB',
-        LLBB: 'nav.gps.sailinstrument.LLBB',
+        LAY: 'nav.gps.sailinstrument.LAY',
         HDT: 'nav.gps.sailinstrument.HDT',
         COG: 'nav.gps.sailinstrument.COG',
         TWDF: 'nav.gps.sailinstrument.TWDF',
@@ -156,6 +155,10 @@ var Sail_InstrumentWidget = {
     renderCanvas: function(canvas, data) {
       //console.log(data);
       let ctx = canvas.getContext('2d');
+<<<<<<< HEAD
+      ctx.save();
+=======
+>>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
       // Set scale factor for all values
       var crect = canvas.getBoundingClientRect();
       var w = crect.width;
@@ -214,6 +217,7 @@ var Sail_InstrumentWidget = {
       ctx.fillText("TWS", 1.4*radius,-1.3*radius);
       ctx.fillText(knots(data.TWSF).toFixed(1), 1.4*radius,-1.1*radius);
       ctx.restore();
+      ctx.restore();
     },
 };
 
@@ -249,8 +253,7 @@ let Sail_Instrument_Overlay = {
     storeKeys: {
         BRG: 'nav.wp.course',
         POS: 'nav.gps.position',
-        LLSB: 'nav.gps.sailinstrument.LLSB',
-        LLBB: 'nav.gps.sailinstrument.LLBB',
+        LAY: 'nav.gps.sailinstrument.LAY',
         HDT: 'nav.gps.sailinstrument.HDT',
         COG: 'nav.gps.sailinstrument.COG',
         TWDF: 'nav.gps.sailinstrument.TWDF',
@@ -268,6 +271,8 @@ let Sail_Instrument_Overlay = {
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data, center) {
+		let ctx = canvas.getContext('2d');
+		ctx.save();
         //console.log(data);
             let ctx = canvas.getContext('2d')
             ctx.save();
@@ -284,9 +289,13 @@ let Sail_Instrument_Overlay = {
         ctx.globalAlpha *= data.Opacity;
 
         drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
+<<<<<<< HEAD
+        ctx.restore();
+=======
                     ctx.restore();
 
         
+>>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
     }
 
 }
@@ -313,8 +322,8 @@ function drawWindWidget(ctx,size, maprotation, data){
             drawPolar(ctx,size,maprotation,data,"black");
           }
           var mm = [data.minTWD, data.maxTWD];
-          DrawLaylineArea(ctx, size, maprotation + data.LLSB, mm, green);
-          DrawLaylineArea(ctx, size, maprotation + data.LLBB, mm, red);
+          DrawLaylineArea(ctx, size, maprotation + data.TWDF - data.LAY, mm, green);
+          DrawLaylineArea(ctx, size, maprotation + data.TWDF + data.LAY, mm, red);
         }
         if (data.VMCA>=0) {
           DrawLaylineArea(ctx, size, maprotation + data.VMCA, [0,0], blue);
@@ -378,25 +387,38 @@ let LayLines_Overlay = {
     storeKeys: {
         WP: 'nav.wp.position',
         POS: 'nav.gps.position',
+<<<<<<< HEAD
+        LAY: 'nav.gps.sailinstrument.LAY',
+=======
         WPposition: 'nav.wp.position',
         boatposition: 'nav.gps.position',
         LLSB: 'nav.gps.sailinstrument.LLSB',
         LLBB: 'nav.gps.sailinstrument.LLBB',
+>>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
         TWDF: 'nav.gps.sailinstrument.TWDF',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, props, center) {
         if (typeof(props.POS) != 'undefined') {
+<<<<<<< HEAD
+            let ctx = canvas.getContext('2d');
+=======
             let ctx = canvas.getContext('2d')
+>>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
             ctx.save();
             ctx.globalAlpha *= props.Opacity;
 
             intersections = calc_intersections(self, props);
+<<<<<<< HEAD
+            //console.log(intersections);
+            if (typeof(intersections) != 'undefined' && intersections!=null) {
+=======
             intersections_old = calc_intersections_old(self, props);
             
             //console.log(intersections);
             if (typeof(intersections) != 'undefined') {
+>>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
                 DrawMapLaylines(this, ctx, intersections, props);
             }
             ctx.restore();
@@ -433,6 +455,7 @@ avnav.api.registerWidget(LayLines_Overlay, LayLines_OverlayParameter);
 
 let LatLon = avnav.api.LatLon();
 let calc_intersections = function(self, props) {
+    //console.log(props);
     intersections = null;
     let b_pos = new LatLon(props.POS.lat, props.POS.lon);
     //b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
@@ -440,8 +463,10 @@ let calc_intersections = function(self, props) {
         WP_pos = new LatLon(props.WP.lat, props.WP.lon);
 
         // Intersections berechnen
-        var is_SB = LatLon.intersection(b_pos, props.LLSB, WP_pos, props.LLBB + 180);
-        var is_BB = LatLon.intersection(b_pos, props.LLBB, WP_pos, props.LLSB + 180);
+        //console.log(props.TWDF-props.LAY,props.TWDF+props.LAY);
+        var is_SB = LatLon.intersection(b_pos, to360(props.TWDF-props.LAY), WP_pos, to360(props.TWDF+props.LAY + 180));
+        var is_BB = LatLon.intersection(b_pos, to360(props.TWDF+props.LAY), WP_pos, to360(props.TWDF-props.LAY + 180));
+        //console.log(b_pos,is_SB,is_BB);
         calc_endpoint = function(intersection, pos) {
             let is_xx = {};
             is_xx.dist = pos.rhumbDistanceTo(intersection); // in m
@@ -506,6 +531,8 @@ let calc_intersections = function(self, props) {
 }
 
 
+<<<<<<< HEAD
+=======
 		let calc_intersections_old = function(self, props) {
 	intersections = null;
 	let b_pos = new LatLon(props.boatposition.lat, props.boatposition.lon);
@@ -563,6 +590,7 @@ let calc_intersections = function(self, props) {
 
 
 
+>>>>>>> branch 'master' of https://github.com/kdschmidt1/Sail_Instrument.git
 let DrawMapLaylines = function(self, ctx, intersections, props) {
     ctx.save();
     function drawLine(p1, p2, color) {
