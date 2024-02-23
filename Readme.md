@@ -60,18 +60,45 @@ There are the following config options.
 - `smoothing_factor` - factor within (0,1] for [exponential smoothing](https://en.wikipedia.org/wiki/Exponential_smoothing) (filtering) of wind and tide, 1 = no smoothing, filtered data as suffix `F`
 - `minmax_samples` - number of samples used for calculating min/max TWD
 - `allow_fallback` - allow fallback to use COG/SOG if HDT/STW is not available
+- `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
+- `laylines_polar` - calculate laylines from speed matrix, not from beat/run angle in polar data`
+show_polar` - compute and display normalized polar diagram in the widget
 - `tack_angle` - tack angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
 - `gybe_angle` - gybe angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
 - `write_data` - write calculated data to their well-defined AvNav paths, requires `allowKeyOverwrite=true`
+- `allowKeyOverwrite` - necessary to allow overwriting the defined AvNav paths
 - `ground_wind` - manually entered ground wind as `direction,speed`, used to calculate true and apparent wind if no other wind data is present (for simulation)
-- `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
-- `laylines_from_matrix` - calculate laylines from speed matrix, not from beat/run angle in polar data
 - `lee_factor` - leeway factor, if >0 leeway angle is estimated, see below
 - `show_polar` - compute and display normalized polar diagram in the widget
 
 ## Installation
-You can use the plugin in 2 different ways.
+You can install the plugin either by using the debian package:
 
+Download the package provided in the releases section [Sail_Instrument](https://github.com/kdschmidt1/Sail_Instrument/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
+
+ ```
+sudo apt install /path/to/avnav-sailinstrument-plugin_xxxx.deb
+
+ ```
+this will include the numpy and scipy package
+
+
+OR
+
+ by downloading the Sail_Instrument code as a zip and unzip the Sail_Instrument-Folder into a directory /home/pi/avnav/data/plugins/Sail_Instrument.
+ If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/Sail_Instrument.
+ 
+ 
+ If not already on your system, you have aditionally to install the numpy and scipy packages witH:
+
+ ```
+  sudo apt-get install python3-scipy python3-numpy
+
+ ```
+ With this procedure the internal name of the plugin will be user-Sail_Instrument. 
+
+
+=======
 1. Download the Sail_Instrument code as a zip and unpack the Sail_Instrument-Folder into a directory /home/pi/avnav/data/plugins/Sail_Instrument.
 
  If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/Sail_Instrument.
@@ -122,4 +149,7 @@ The laylines are computed from the `beat_angle` and `run_angle` vectors in the p
 
 From the `STW` matrix in the polar data, which is a mapping of TWS and TWA to STW, one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. The plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
 
+<<<<<<< HEAD
+These calculations require numpy and scipy. they are automatically installed with the debian-package of the plugin.
+=======
 These calculations require numpy.interp, scipy.interpolate and scipy. they are automatically installed with the plugin.
