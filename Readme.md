@@ -12,7 +12,7 @@ There is a good description of what you can do with it at [blauwasser.de](https:
 
 The plugin calculates true wind, ground wind and set and drift. It needs COG/SOG, HDT/STW and AWA/AWS as input data. If HDT/STW is missing it uses COG/SOG as fallback (you get ground wind instead of true wind, and the direction is wrong if HDT!=COG). If you do not have a wind sensor, you can enter ground wind in the settings for testing purposes.
 
-How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L518).
+How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L530).
 
 The values calculated by the plugin are published in AvNav as `gps.sailinstrument.*`. 
 Optionally you can enable that some of these quantities are written to their well-defined AvNav paths to make them available to widgets or other plugins.
@@ -62,7 +62,7 @@ There are the following config options.
 - `allow_fallback` - allow fallback to use COG/SOG if HDT/STW is not available
 - `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
 - `laylines_polar` - calculate laylines from speed matrix, not from beat/run angle in polar data`
-show_polar` - compute and display normalized polar diagram in the widget
+- `show_polar` - compute and display normalized polar diagram in the widget
 - `tack_angle` - tack angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
 - `gybe_angle` - gybe angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
 - `write_data` - write calculated data to their well-defined AvNav paths, requires `allowKeyOverwrite=true`
@@ -99,23 +99,9 @@ OR
 
 
 =======
-1. Download the Sail_Instrument code as a zip and unpack the Sail_Instrument-Folder into a directory /home/pi/avnav/data/plugins/Sail_Instrument.
-
- If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/Sail_Instrument.
-
- In this case the internal name of the plugin will be user-Sail_Instrument. 
-
-
-2. Download the package provided in the releases section [Sail_Instrument](https://github.com/kdschmidt1/Sail_Instrument/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
-
- ```
-sudo apt install /path/to/avnav-sailinstrument-plugin_xxxx.deb
-
- ```
-Add the Laylines to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)
 
 Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)  
-(you have to use the new Button ![Button](https://github.com/wellenvogel/avnav/blob/d5cf9802d507bd5c23e1b999b78dbe0c76252fa9/viewer/images/icons-new/assistant_nav.svg)).
+using the Button ![Button](https://github.com/wellenvogel/avnav/blob/d5cf9802d507bd5c23e1b999b78dbe0c76252fa9/viewer/images/icons-new/assistant_nav.svg)).
 ## Polar Data
 
 ![polar](Images/polar.png)
@@ -149,7 +135,5 @@ The laylines are computed from the `beat_angle` and `run_angle` vectors in the p
 
 From the `STW` matrix in the polar data, which is a mapping of TWS and TWA to STW, one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. The plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
 
-<<<<<<< HEAD
-These calculations require numpy and scipy. they are automatically installed with the debian-package of the plugin.
-=======
-These calculations require numpy.interp, scipy.interpolate and scipy. they are automatically installed with the plugin.
+These calculations require numpy and scipy. Both are automatically installed using the debian-package of the plugin.
+
