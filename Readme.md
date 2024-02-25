@@ -100,7 +100,7 @@ OR
 =======
 
 Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)  
-using the Button ![Button](https://github.com/wellenvogel/avnav/blob/d5cf9802d507bd5c23e1b999b78dbe0c76252fa9/viewer/images/icons-new/assistant_nav.svg)).
+using the Map Widgets Button <img src="Images/assistant_nav.svg" width="25" height="25">
 ## Polar Data
 
 ![polar](Images/polar.png)
