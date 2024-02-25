@@ -377,10 +377,7 @@ let LayLines_Overlay = {
         WP: 'nav.wp.position',
         POS: 'nav.gps.position',
         LAY: 'nav.gps.sailinstrument.LAY',
-        WPposition: 'nav.wp.position',
-        boatposition: 'nav.gps.position',
-        LLSB: 'nav.gps.sailinstrument.LLSB',
-        LLBB: 'nav.gps.sailinstrument.LLBB',
+
         TWDF: 'nav.gps.sailinstrument.TWDF',
     },
     initFunction: function() {},
@@ -392,6 +389,10 @@ let LayLines_Overlay = {
             ctx.globalAlpha *= props.Opacity;
 
             intersections = calc_intersections(self, props);
+<<<<<<< HEAD
+=======
+            //console.log(intersections);
+>>>>>>> refs/remotes/q/master
             if (typeof(intersections) != 'undefined') {
                 DrawMapLaylines(this, ctx, intersections, props);
             }
@@ -503,7 +504,6 @@ let calc_intersections = function(self, props) {
     }
     return intersections
 }
-
 
 
 
