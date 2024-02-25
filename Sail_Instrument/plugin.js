@@ -389,10 +389,7 @@ let LayLines_Overlay = {
             ctx.globalAlpha *= props.Opacity;
 
             intersections = calc_intersections(self, props);
-<<<<<<< HEAD
-=======
-            //console.log(intersections);
->>>>>>> refs/remotes/q/master
+
             if (typeof(intersections) != 'undefined') {
                 DrawMapLaylines(this, ctx, intersections, props);
             }
