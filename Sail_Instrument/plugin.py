@@ -9,6 +9,7 @@ from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import numpy
 import scipy.interpolate
 import scipy.optimize
+
 from avnav_nmea import NMEAParser
 
 try:
@@ -299,7 +300,7 @@ class Plugin(object):
       value = self.getConfigValue(name)
       value = TYPES.get(c.get("type"), str)(value)
       config[name] = value
-    print("config", config)
+    # print("config", config)
     assert config[PERIOD] > 0
     assert config[PRIORITY] > 0
     assert len(config[TALKER_ID]) == 2
@@ -428,9 +429,9 @@ class Plugin(object):
         data = d = CourseData(**data)  # compute missing values
 
         self.smooth(data, "AWA", "AWS")
-        data["AWDF"] = data["AWAF"] + data["HDT"] if d.has("AWAF", "HDT") else None
+        data["AWDF"] = to360(data["AWAF"] + data["HDT"]) if d.has("AWAF", "HDT") else None
         self.smooth(data, "TWD", "TWS")
-        data["TWAF"] = data["TWDF"] - data["HDT"] if d.has("TWDF", "HDT") else None
+        data["TWAF"] = to180(data["TWDF"] - data["HDT"]) if d.has("TWDF", "HDT") else None
         self.smooth(data, "SET", "DFT")
         self.min_max(data, "TWD", lambda v: to180(v - data["TWDF"]))
         for k in ("AWS", "TWS", "DFT"):
