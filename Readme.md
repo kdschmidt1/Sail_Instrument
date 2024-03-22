@@ -5,7 +5,7 @@
 The idea of this [plugin for AvNav](https://www.wellenvogel.net/software/avnav/docs/hints/plugins.html) is to display an instrument, that contains all basic information needed for sailing.
 The Instrument is inspired by B&G's sailsteer.  
 With the possibility to show the instrument directly on the map at the boat position the sailor has all information in view.
-The laylines will inform you about the course for optimal VMG upwind and if displayed on the map you can follow these lines. 
+The laylines will inform you about the course for optimal VMG upwind and if displayed on the map you can follow these lines.
 There is a good description of what you can do with it at [blauwasser.de](https://www.blauwasser.de/navigation/app-sailsteer-bandg) and [mark-chisnell](https://www.bandg.com/de-de/blog/sailsteer-with-mark-chisnell/).
 
 ## Calculated Data
@@ -14,93 +14,85 @@ The plugin calculates true wind, ground wind and set and drift. It needs COG/SOG
 
 How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L530).
 
-The values calculated by the plugin are published in AvNav as `gps.sailinstrument.*`. 
-Optionally you can enable that some of these quantities are written to their well-defined AvNav paths to make them available to widgets or other plugins.
-The plugin never overwrites data that origins from other sources.
+The values calculated by the plugin are published in AvNav as `gps.sailinstrument.*`.
+Optionally the plugin can [emit NMEA sentences](Sail_Instrument/plugin.py#88) to make the computed data available to other devices. If decoding of own NMEA sentences is enabled, these data are fed back into AvNav, get parsed and written to their standard paths in `gps.*`.
 The following values are computed or copied from their sources.
 
-| quantity | meaning                                  | path                    | 
-|----------|------------------------------------------|-------------------------|
-| AWA      | apparent wind angle                      | gps.windAngle           |
-| AWD      | apparent wind direction                  |                         |
-| AWDF     | apparent wind direction, filtered        |                         |
-| AWS      | apparent wind speed                      | gps.windSpeed           |
-| AWSF     | apparent wind speed filtered             |                         |
-| COG      | course over ground                       |                         |
-| DFT      | tide drift rate                          | gps.currentDrift        |
-| DFTF     | tide drift rate filtered                 |                         |
-| GWA      | ground wind angle                        | gps.groundWindAngle     |
-| GWD      | ground wind direction                    | gps.groundWindDirection |
-| GWS      | ground wind speed                        | gps.groundWindSpeed     |
-| HDT      | true heading                             |                         |
-| HEL      | heel angle                               |                         |
-| LEE      | leeway angle                             |                         |
-| LEF      | leeway factor                            |                         |
-| LAY      | layline angle rel. to TWD                |                         |
-| SET      | tide set direction                       | gps.currentSet          |
-| SETF     | tide set direction filtered              |                         |
-| SOG      | speed over ground                        |                         |
-| STW      | speed through water                      |                         |
-| TWA      | true wind angle                          | gps.trueWindAngle       |
-| TWD      | true wind direction                      | gps.trueWindDirection   |
-| TWDF     | true wind direction filtered             |                         |
-| TWDMAX   | max true wind direction relative to TWDF |                         |
-| TWDMIN   | min true wind direction relative to TWDF |                         |
-| TWS      | true wind speed                          | gps.trueWindSpeed       |
-| TWSF     | true wind speed filtered                 |                         |
-| VMCA     | optimum VMC direction (course)           |                         |
-| VMCB     | optimum VMC direction (opposite tack)    |                         |
-| VPOL     | speed from polar                         |                         |
+| quantity | meaning                           | quantity | meaning                                  |
+|----------|-----------------------------------|----------|------------------------------------------|
+| AWA      | apparent wind angle               | STW      | speed through water                      |
+| AWAF     | apparent wind angle , filtered    | TWA      | true wind angle                          |
+| AWD      | apparent wind direction           | TWAF     | true wind angle, filtered                |
+| AWDF     | apparent wind direction, filtered | TWD      | true wind direction                      |
+| AWS      | apparent wind speed               | TWDF     | true wind direction filtered             |
+| AWSF     | apparent wind speed filtered      | TWDMAX   | max true wind direction relative to TWDF |
+| COG      | course over ground                | TWDMIN   | min true wind direction relative to TWDF |
+| DFT      | tide drift rate                   | TWS      | true wind speed                          |
+| DFTF     | tide drift rate filtered          | TWSF     | true wind speed filtered                 |
+| GWA      | ground wind angle                 | VMCA     | optimum VMC direction (course)           |
+| GWD      | ground wind direction             | VMCB     | optimum VMC direction (opposite tack)    |
+| GWS      | ground wind speed                 | VPOL     | speed from polar                         |
+| HDT      | true heading                      | VMG      | velocity made good upwind                |
+| HEL      | heel angle                        | VAR      | magnetic variation                       |
+| LEE      | leeway angle                      | DOT      | depth of transducer                      |
+| LEF      | leeway factor                     | DRT      | draught                                  |
+| LAY      | layline angle rel. to TWD         | DBT      | depth below transducer                   |
+| SET      | tide set direction                | DBS      | depth below surface                      |
+| SETF     | tide set direction filtered       | DBK      | depth below keel                         |
+| SOG      | speed over ground                 |          |                                          |
 
 ## Config Options
 
 There are the following config options.
 
+- `period` - computation interval (s)
 - `smoothing_factor` - factor within (0,1] for [exponential smoothing](https://en.wikipedia.org/wiki/Exponential_smoothing) (filtering) of wind and tide, 1 = no smoothing, filtered data as suffix `F`
 - `minmax_samples` - number of samples used for calculating min/max TWD
-- `allow_fallback` - allow fallback to use COG/SOG if HDT/STW is not available
+- `allow_fallback` - allow fallback to use HDT=COG and/or STW=SOG if former are not available
 - `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
 - `laylines_polar` - calculate laylines from speed matrix, not from beat/run angle in polar data`
 - `show_polar` - compute and display normalized polar diagram in the widget
-- `tack_angle` - tack angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
-- `gybe_angle` - gybe angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
-- `write_data` - write calculated data to their well-defined AvNav paths, requires `allowKeyOverwrite=true`
-- `allowKeyOverwrite` - necessary to allow overwriting the defined AvNav paths
+- `tack_angle` - tack angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data
+- `gybe_angle` - gybe angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data
 - `ground_wind` - manually entered ground wind as `direction,speed`, used to calculate true and apparent wind if no other wind data is present (for simulation)
 - `lee_factor` - leeway factor, if >0 leeway angle is estimated, see below
-- `show_polar` - compute and display normalized polar diagram in the widget
+- `wmm_file` - file with WMM-coefficents for magnetic deviation
+- `wmm_period` - period (s) to recompute magnetic variation
+- `depth_transducer` - depth of transducer (m) (negative=disabled)
+- `draught` - draught (m) (negative=disabled)
+- `nmea_write` - write NMEA sentences (sent to outputs and parsed by AvNav)
+- `nmea_filter` - filter for NMEA sentences to be sent
+- `nmea_priority` - NMEA source priority
+- `nmea_id` - NMEA talker ID for emitted sentences
+- `nmea_decode` - decode own NMEA sentences
 
 ## Installation
-You can install the plugin either by using the debian package:
 
-Download the package provided in the releases section [Sail_Instrument](https://github.com/kdschmidt1/Sail_Instrument/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
+You can install the plugin either by using the Debian-Package:
+
+Download the package provided in the releases section [Sail_Instrument](https://github.com/kdschmidt1/Sail_Instrument/releases) or build your own package using `buildPackage.sh` (requires a linux machine with docker installed). Install the package using the command
 
  ```
 sudo apt install /path/to/avnav-sailinstrument-plugin_xxxx.deb
-
  ```
-this will include the numpy and scipy package
 
+this will include the `numpy` and `scipy` package
 
 OR
 
- by downloading the Sail_Instrument code as a zip and unzip the Sail_Instrument-Folder into a directory /home/pi/avnav/data/plugins/Sail_Instrument.
- If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/Sail_Instrument.
- 
- 
- If not already on your system, you have aditionally to install the numpy and scipy packages witH:
+by downloading the Sail_Instrument code as a zip and unzip the `Sail_Instrument`-Folder into the directory `/home/pi/avnav/data/plugins/Sail_Instrument`.
+If the directory does not exist just create it. On a standard Linux system (not raspberry pi) the directory will be `/home/(user)/avnav/plugins/Sail_Instrument`.
+
+If not already present, you have additionally to install the `numpy` and `scipy` packages with:
 
  ```
   sudo apt-get install python3-scipy python3-numpy
-
  ```
- With this procedure the internal name of the plugin will be user-Sail_Instrument. 
 
+With this procedure the internal name of the plugin will be `user-Sail_Instrument`.
 
-=======
+Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog) using the Map Widgets Button ![Map Widgets Button](Images/map-widgets.png)
 
-Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)  
-using the Map Widgets Button <img src="Images/assistant_nav.svg" width="25" height="25">
 ## Polar Data
 
 ![polar](Images/polar.png)
@@ -108,7 +100,7 @@ using the Map Widgets Button <img src="Images/assistant_nav.svg" width="25" heig
 You have to provide polar data for your boat in `avnav/user/viewer/polar.json` for calculating the laylines. If there is no such file, the plugin will copy [one](Sail_Instrument/polar.json) to this location, and you can use it as a template for your own polar data.
 
 If you do not have any polar data, you can enter tack and gybe angle in the plugin configuration and use these fixed values instead.
-  
+
 A source for polar data can be [ORC sailboat data](https://jieter.github.io/orc-data/site/) or [Seapilot.com](https://www.seapilot.com/features/download-polar-files/).
 
 ## Leeway estimation
@@ -117,22 +109,24 @@ Leeway is [estimated from heel and STW](https://opencpn-manuals.github.io/main/t
 
 LEE = LEF * HEL / STW^2
 
-With LEF being a boat specific factor from within (0,20). Heel could be measured but here it is interpolated from the heel polar in `heel.json`. As the boat speed polar it contains an interpolation table to map TWA/TWS to heel angle HEL. 
+With LEF being a boat specific factor from within (0,20). Heel could be measured but here it is interpolated from the heel polar in `heel.json`. As the boat speed polar it contains an interpolation table to map TWA/TWS to heel angle HEL.
 
 ## Laylines
 
 To understand the technical background of the laylines one has first to have an understanding of the terms VMG and VMC.
 
-- **VMG** - _Velocity Made Good against wind_ is defined as `VMG = boatspeed * cos(TWA)` boatspeed vector projected onto true wind direction
-- **VMC** - _Velocity Made good on Course_ is defined as `VMC = boatspeed * cos(BRG-HDG)` boatspeed vector projected onto direction to waypoint
+- **VMG** - _Velocity Made Good against
+  wind_ is defined as `VMG = boatspeed * cos(TWA)` boatspeed vector projected onto true wind direction
+- **VMC** - _Velocity Made good on
+  Course_ is defined as `VMC = boatspeed * cos(BRG-HDG)` boatspeed vector projected onto direction to waypoint
 
-Unfortunately there is a lot of confusion on these two terms and also most of the commercial products are mixing the two items and indicate VMG but actually showing VMC (and so does AvNav). 
+Unfortunately there is a lot of confusion on these two terms and also most of the commercial products are mixing the two items and indicate VMG but actually showing VMC (and so does AvNav).
 
-The laylines are computed from the `beat_angle` and `run_angle` vectors in the polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result the laylines show the optimal TWA to travel upwind in general, but not the optimal TWA to get towards the waypoint.  Optionally it is possible to calculate the laylines from the STW matrix.
+The laylines are computed from the `beat_angle` and `run_angle` vectors in the polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result the laylines show the optimal TWA to travel upwind in general, but not the optimal TWA to get towards the waypoint. Optionally it is possible to calculate the laylines from the STW matrix.
 
 ![VMC](Images/vmc.png)
 
-From the `STW` matrix in the polar data, which is a mapping of TWS and TWA to STW, one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. The plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
+From the `STW` matrix in the polar data, which is a mapping of TWS and TWA to STW, one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. The plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines.
 
-These calculations require numpy and scipy. Both are automatically installed using the debian-package of the plugin.
+These calculations require `numpy` and `scipy`. Both are automatically installed using the Debian-Package of the plugin.
 
