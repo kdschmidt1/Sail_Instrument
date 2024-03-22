@@ -367,7 +367,6 @@ class Plugin(object):
     data[rad + "F"] = r
 
   def min_max(self, data, key, func=lambda x: x):
-
     if not hasattr(self, "min_max_values"):
       self.min_max_values = {}
     min_max_values = self.min_max_values

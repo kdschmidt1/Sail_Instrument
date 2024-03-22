@@ -12,7 +12,7 @@ There is a good description of what you can do with it at [blauwasser.de](https:
 
 The plugin calculates true wind, ground wind and set and drift. It needs COG/SOG, HDT/STW and AWA/AWS as input data. If HDT/STW is missing it uses COG/SOG as fallback (you get ground wind instead of true wind, and the direction is wrong if HDT!=COG). If you do not have a wind sensor, you can enter ground wind in the settings for testing purposes.
 
-How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L428).
+How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L530).
 
 The values calculated by the plugin are published in AvNav as `gps.sailinstrument.*`. 
 Optionally you can enable that some of these quantities are written to their well-defined AvNav paths to make them available to widgets or other plugins.
@@ -59,19 +59,48 @@ There are the following config options.
 - `smoothing_factor` - factor within (0,1] for [exponential smoothing](https://en.wikipedia.org/wiki/Exponential_smoothing) (filtering) of wind and tide, 1 = no smoothing, filtered data as suffix `F`
 - `minmax_samples` - number of samples used for calculating min/max TWD
 - `allow_fallback` - allow fallback to use COG/SOG if HDT/STW is not available
+- `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
+- `laylines_polar` - calculate laylines from speed matrix, not from beat/run angle in polar data`
+- `show_polar` - compute and display normalized polar diagram in the widget
 - `tack_angle` - tack angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
 - `gybe_angle` - gybe angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data 
 - `write_data` - write calculated data to their well-defined AvNav paths, requires `allowKeyOverwrite=true`
+- `allowKeyOverwrite` - necessary to allow overwriting the defined AvNav paths
 - `ground_wind` - manually entered ground wind as `direction,speed`, used to calculate true and apparent wind if no other wind data is present (for simulation)
-- `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
-- `laylines_from_matrix` - calculate laylines from speed matrix, not from beat/run angle in polar data
 - `lee_factor` - leeway factor, if >0 leeway angle is estimated, see below
 - `show_polar` - compute and display normalized polar diagram in the widget
 
 ## Installation
+You can install the plugin either by using the debian package:
 
-Place the `Sail_Instrument` folder inside `avnav/data/plugins`.
+Download the package provided in the releases section [Sail_Instrument](https://github.com/kdschmidt1/Sail_Instrument/releases) or build your own package using buildPackage.sh (requires a linux machine with docker installed). Install the package using the command
 
+ ```
+sudo apt install /path/to/avnav-sailinstrument-plugin_xxxx.deb
+
+ ```
+this will include the numpy and scipy package
+
+
+OR
+
+ by downloading the Sail_Instrument code as a zip and unzip the Sail_Instrument-Folder into a directory /home/pi/avnav/data/plugins/Sail_Instrument.
+ If the directory does not exist just create it. On an normal linux system (not raspberry pi) the directory will be /home/(user)/avnav/plugins/Sail_Instrument.
+ 
+ 
+ If not already on your system, you have aditionally to install the numpy and scipy packages witH:
+
+ ```
+  sudo apt-get install python3-scipy python3-numpy
+
+ ```
+ With this procedure the internal name of the plugin will be user-Sail_Instrument. 
+
+
+=======
+
+Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog)  
+using the Map Widgets Button <img src="Images/assistant_nav.svg" width="25" height="25">
 ## Polar Data
 
 ![polar](Images/polar.png)
@@ -105,4 +134,5 @@ The laylines are computed from the `beat_angle` and `run_angle` vectors in the p
 
 From the `STW` matrix in the polar data, which is a mapping of TWS and TWA to STW, one can calculate the optimal TWA such that VMC is maximised, the optimal TWA that gets you fasted towards the waypoint. The plugin calculates this optimal TWA from the polar data and displays it as a blue line along with the laylines. 
 
-These calculations require `numpy.interp`, `scipy.interpolate` and `scipy.optimize` to be installed. 
+These calculations require numpy and scipy. Both are automatically installed using the debian-package of the plugin.
+
