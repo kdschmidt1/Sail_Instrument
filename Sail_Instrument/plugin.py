@@ -9,6 +9,7 @@ from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import numpy
 import scipy.interpolate
 import scipy.optimize
+
 from avnav_nmea import NMEAParser
 
 try:
@@ -468,7 +469,7 @@ class Plugin(object):
                 )
                 sending.add(s[:6])
 
-        self.api.setStatus("NMEA", f"{present} --> {calculated} sending {sending}{self.msg} ({data})")
+        self.api.setStatus("NMEA", f"{present} --> {calculated} sending {sending}{self.msg}")
       except Exception as x:
         self.api.setStatus("ERROR", f"{x}")
       time.sleep(self.config[PERIOD])
