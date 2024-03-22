@@ -9,7 +9,6 @@ from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import numpy
 import scipy.interpolate
 import scipy.optimize
-
 from avnav_nmea import NMEAParser
 
 try:
@@ -323,10 +322,10 @@ class Plugin(object):
   def mag_variation(self, lat, lon):
     if not self.variation_model:
       try:
-        self.variation_period = int(self.getConfigValue(WMM_PERIOD))
+        self.variation_period = self.config[WMM_PERIOD]
         assert self.variation_period > 0
         self.variation_time = 0
-        filename = self.getConfigValue(WMM_FILE)
+        filename = self.config[WMM_FILE]
         if "/" not in filename:
           filename = os.path.join(
             os.path.dirname(__file__) + "/lib", filename
@@ -357,7 +356,7 @@ class Plugin(object):
     p, r = data[phi], data[rad]
     xy = toCart((p, r))
     if k in filtered:
-      a = float(self.getConfigValue(SMOOTHING_FACTOR))
+      a = self.config[SMOOTHING_FACTOR]
       assert 0 < a <= 1
       v = filtered[k]
       filtered[k] = [v[i] + a * (xy[i] - v[i]) for i in (0, 1)]
@@ -379,7 +378,7 @@ class Plugin(object):
       min_max_values[key] = []
     values = min_max_values[key]
     values.append(func(v))
-    samples = int(self.getConfigValue(MM_SAMPLES))
+    samples = self.config[MM_SAMPLES]
     assert 0 < samples
     while len(values) > samples:
       values.pop(0)
@@ -472,6 +471,7 @@ class Plugin(object):
         self.api.setStatus("NMEA", f"{present} --> {calculated} sending {sending}{self.msg}")
       except Exception as x:
         self.api.setStatus("ERROR", f"{x}")
+
       time.sleep(self.config[PERIOD])
 
   def laylines(self, data):
@@ -486,9 +486,9 @@ class Plugin(object):
       else:
         upwind = abs(twa) < 90
 
-      tack_angle = float(self.getConfigValue(TACK_ANGLE))
+      tack_angle = self.config[TACK_ANGLE]
       assert 0 <= tack_angle < 180
-      gybe_angle = float(self.getConfigValue(GYBE_ANGLE))
+      gybe_angle = self.config[GYBE_ANGLE]
       assert 0 <= gybe_angle < 180
 
       data.VMCA, data.VMCB = -1, -1
@@ -501,9 +501,7 @@ class Plugin(object):
       if not self.polar:
         return
 
-      if self.getConfigValue(LAYLINES_FROM_MATRIX).startswith(
-          "T"
-      ) or not self.polar.has_angle(upwind):
+      if self.config[LAYLINES_FROM_MATRIX] or not self.polar.has_angle(upwind):
         data.LAY = abs(
           to180(self.polar.vmc_angle(0, tws * KNOTS, 0 if upwind else 180))
         )
@@ -516,7 +514,7 @@ class Plugin(object):
       data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
       self.msg += ", VPOL"
 
-      if self.getConfigValue(SHOW_POLAR).startswith("T"):
+      if self.config[SHOW_POLAR]:
         values = numpy.array(
           [
             self.polar.value(a, tws * KNOTS)
@@ -527,7 +525,7 @@ class Plugin(object):
         data.POLAR = ",".join([f"{v:.2f}" for v in values])
         self.msg += ", show polar"
 
-      if brg and self.getConfigValue(CALC_VMC).startswith("T"):
+      if brg and self.config[CALC_VMC]:
         data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
         if upwind and abs(to180(brg - twd)) < data.LAY:
           data.VMCB = self.polar.vmc_angle(twd, tws * KNOTS, brg, -1)
