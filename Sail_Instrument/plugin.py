@@ -391,7 +391,7 @@ class Plugin(object):
       try:
         self.msg = ""
         data = {k: self.readValue(p) for k, p in INPUT_FIELDS.items()}
-        data["HEL"] = data["HEL"] or data["HEL1"] or (degrees(data["HEL2"]) if "HEL2" in data else None)
+        data["HEL"] = data["HEL"] or data["HEL1"] or (degrees(data["HEL2"]) if data.get("HEL2") is not None else None)
         data["LEF"] = self.config[LEEWAY_FACTOR] / KNOTS ** 2
         present = {k for k in data.keys() if data[k] is not None}
 
