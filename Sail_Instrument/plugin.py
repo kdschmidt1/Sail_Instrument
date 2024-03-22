@@ -9,7 +9,6 @@ from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import numpy
 import scipy.interpolate
 import scipy.optimize
-
 from avnav_nmea import NMEAParser
 
 try:
@@ -392,7 +391,7 @@ class Plugin(object):
       try:
         self.msg = ""
         data = {k: self.readValue(p) for k, p in INPUT_FIELDS.items()}
-        data["HEL"] = data["HEL"] or data["HEL1"] or data["HEL2"]
+        data["HEL"] = data["HEL"] or data["HEL1"] or (degrees(data["HEL2"]) if "HEL2" in data else None)
         data["LEF"] = self.config[LEEWAY_FACTOR] / KNOTS ** 2
         present = {k for k in data.keys() if data[k] is not None}
 
