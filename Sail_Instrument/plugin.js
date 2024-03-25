@@ -154,7 +154,7 @@ var Sail_InstrumentWidget = {
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data) {
       //console.log(data);
-      let ctx = canvas.getContext('2d');
+      var ctx = canvas.getContext('2d');
       ctx.save();
       // Set scale factor for all values
       var crect = canvas.getBoundingClientRect();
@@ -162,7 +162,7 @@ var Sail_InstrumentWidget = {
       var h = crect.height;
       canvas.width = w;
       canvas.height = h;
-      ctx.save();
+//      ctx.save();
       var width = 300;
       var height = 300;
       var f1 = w / width;
@@ -172,7 +172,7 @@ var Sail_InstrumentWidget = {
       ctx.translate(width / 2 * f1 / f, height / 2 * f2 / f);
 
       self = this
-      ctx.save();
+//      ctx.save();
 
       if (data.Widgetposition == 'Mapcenter')
           ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
@@ -186,7 +186,7 @@ var Sail_InstrumentWidget = {
       ctx.globalAlpha *= data.Opacity;
 
      // draw triangle symbolizing the boat
-      ctx.save();
+//      ctx.save();
       //ctx.rotate(radians(angle));
       ctx.beginPath();
       var radius=100;
@@ -199,12 +199,12 @@ var Sail_InstrumentWidget = {
       ctx.strokeStyle = "black";
       ctx.fill();
       ctx.stroke();
-      ctx.restore();
+//      ctx.restore();
 
       drawWindWidget(ctx, 100, -data.HDT, data);
 
       // print AWS/TWS
-      ctx.save();
+//      ctx.save();
       ctx.fillStyle = "black";
       ctx.textAlign = "left";
       ctx.font = "bold " + 0.2*radius + "px Arial";
@@ -213,7 +213,7 @@ var Sail_InstrumentWidget = {
       ctx.textAlign = "right";
       ctx.fillText("TWS", 1.4*radius,-1.3*radius);
       ctx.fillText(knots(data.TWSF).toFixed(1), 1.4*radius,-1.1*radius);
-      ctx.restore();
+//      ctx.restore();
       ctx.restore();
     },
 };
@@ -269,8 +269,8 @@ let Sail_Instrument_Overlay = {
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data, center) {
         //console.log(data);
-            let ctx = canvas.getContext('2d')
-            ctx.save();
+        let ctx = canvas.getContext('2d')
+        ctx.save();
         
         if (data.Widgetposition == 'Mapcenter')
             ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
@@ -284,7 +284,7 @@ let Sail_Instrument_Overlay = {
         ctx.globalAlpha *= data.Opacity;
 
         drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
-                    ctx.restore();
+        ctx.restore();
     }
 
 }
@@ -377,7 +377,6 @@ let LayLines_Overlay = {
         WP: 'nav.wp.position',
         POS: 'nav.gps.position',
         LAY: 'nav.gps.sailinstrument.LAY',
-
         TWDF: 'nav.gps.sailinstrument.TWDF',
     },
     initFunction: function() {},
@@ -503,7 +502,6 @@ let calc_intersections = function(self, props) {
 }
 
 
-
 let DrawMapLaylines = function(self, ctx, intersections, props) {
     ctx.save();
     function drawLine(p1, p2, color) {
@@ -538,49 +536,6 @@ let DrawMapLaylines = function(self, ctx, intersections, props) {
 
     }
     ctx.restore()
-}
-
-let DrawMapLaylines_old=function(self,ctx, scale, intersections, props,TWD) {
-	DrawLine=function(p1,p2,color){	
-		ctx.beginPath();
-		ctx.moveTo(p1[0],p1[1]);   // Move pen to center
-		ctx.lineTo(p2[0],p2[1]);
-		ctx.closePath();
-
-
-		ctx.lineWidth = 5;//0.02*Math.min(x,y)
-		ctx.fillStyle = color
-		ctx.strokeStyle = color;// !!!
-		ctx.setLineDash([10*scale,20*scale])
-		ctx.stroke();
-	} 
-	ctx.save();
-	if(typeof(props.LaylineBoat) != 'undefined' && props.LaylineBoat==true && intersections != null)
-	{
-		// Layline vom Boot:
-		// BB
-		p1=self.lonLatToPixel(intersections.Boat.BB.P1._lon,intersections.Boat.BB.P1._lat);
-		p2=self.lonLatToPixel(intersections.Boat.BB.P2._lon,intersections.Boat.BB.P2._lat);
-		DrawLine(p1,p2,((props.LLBB-TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
-		// SB
-		p1=self.lonLatToPixel(intersections.Boat.SB.P1._lon,intersections.Boat.SB.P1._lat);
-		p2=self.lonLatToPixel(intersections.Boat.SB.P2._lon,intersections.Boat.SB.P2._lat);
-		DrawLine(p1,p2,((props.LLSB-TWD)+540)%360-180 < 0 ? "rgb(0,255,0)":"red");
-	}
-	if(typeof(props.LaylineWP) != 'undefined' && props.LaylineWP==true && intersections != null)
-	{
-		// Layline vom Wegpunkt:
-		// BB
-		p1=self.lonLatToPixel(intersections.WP.BB.P1._lon,intersections.WP.BB.P1._lat);
-		p2=self.lonLatToPixel(intersections.WP.BB.P2._lon,intersections.WP.BB.P2._lat);
-		DrawLine(p1,p2,((props.LLBB-TWD)+540)%360-180 > 0  ? "rgb(0,255,0)":"red");
-		// SB
-		p1=self.lonLatToPixel(intersections.WP.SB.P1._lon,intersections.WP.SB.P1._lat);
-		p2=self.lonLatToPixel(intersections.WP.SB.P2._lon,intersections.WP.SB.P2._lat);
-		DrawLine(p1,p2,((props.LLSB-TWD)+540)%360-180 > 0  ? "rgb(0,255,0)":"red");
-
-	}
-	ctx.restore()
 }
 
 let DrawWPIcon = function(ctx, radius, angle) {
