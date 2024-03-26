@@ -337,7 +337,8 @@ class Plugin(object):
                     )
                 self.variation_model = geomag.GeoMag(filename)
             except Exception as x:
-                self.api.log(f"WMM error {x}")
+                #self.api.log(f"WMM error {x}")
+                self.msg += f" WMM error {x}"
                 return
         if time.monotonic() - self.variation_time > self.variation_period:
             self.variation = self.variation_model.GeoMag(lat, lon).dec
@@ -477,7 +478,7 @@ class Plugin(object):
                                 sending.add(s[:6])
 
                 self.api.setStatus(
-                    "NMEA", f"{present} --> {calculated} sending {sending}{self.msg}")
+                    "NMEA", f"present:{present} --> calculated:{calculated} sending:{sending}{self.msg}")
             except Exception as x:
                 self.api.setStatus("ERROR", f"{x}")
 
