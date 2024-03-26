@@ -454,7 +454,7 @@ class Plugin(object):
         ID = self.config[TALKER_ID]
         if nmea_write:
           for f, s in NMEA_SENTENCES.items():
-            if all(k in calculated for k in f.split(",")):
+            if any(k in calculated for k in f.split(",")):
               s = eval(f"f'{s}'")
               if not nmea_filter or NMEAParser.checkFilter(s, nmea_filter):
                 # print(s, self.config[DECODE])
