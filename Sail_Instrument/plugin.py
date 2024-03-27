@@ -98,7 +98,7 @@ NMEA_SENTENCES = {
     "DBS": "${ID}DBS,,,{data.DBS:.1f},M,,",  # depth below surface
     "DBT": "${ID}DBT,,,{data.DBT:.1f},M,,",  # depth below transducer
     "DBK": "${ID}DBK,,,{data.DBK:.1f},M,,",  # depth below keel
-    #    "HDM,VAR": "${ID}HDG,{data.HDM:.1f},,,{data.VAR:.1f},E",
+    "HDM,VAR": "${ID}HDG,{data.HDM:.1f},,,{data.VAR:.1f},E",
 }
 
 CONFIG = [
@@ -479,7 +479,7 @@ class Plugin(object):
                                     )
                                     sending.add(s[:6])
                             except Exception as x:
-                                print("ERROR", f"{x}")
+                                print("ERROR ",s, " -> ", f"{x}")
 
                 self.api.setStatus(
                     "NMEA", f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
