@@ -18,28 +18,58 @@ The values calculated by the plugin are published in AvNav as `gps.sailinstrumen
 Optionally the plugin can [emit NMEA sentences](Sail_Instrument/plugin.py#88) to make the computed data available to other devices. If decoding of own NMEA sentences is enabled, these data are fed back into AvNav, get parsed and written to their standard paths in `gps.*`.
 The following values are computed or copied from their sources.
 
-| quantity | meaning                           | quantity | meaning                                  |
-|----------|-----------------------------------|----------|------------------------------------------|
-| AWA      | apparent wind angle               | STW      | speed through water                      |
-| AWAF     | apparent wind angle , filtered    | TWA      | true wind angle                          |
-| AWD      | apparent wind direction           | TWAF     | true wind angle, filtered                |
-| AWDF     | apparent wind direction, filtered | TWD      | true wind direction                      |
-| AWS      | apparent wind speed               | TWDF     | true wind direction filtered             |
-| AWSF     | apparent wind speed filtered      | TWDMAX   | max true wind direction relative to TWDF |
-| COG      | course over ground                | TWDMIN   | min true wind direction relative to TWDF |
-| DFT      | tide drift rate                   | TWS      | true wind speed                          |
-| DFTF     | tide drift rate filtered          | TWSF     | true wind speed filtered                 |
-| GWA      | ground wind angle                 | VMCA     | optimum VMC direction (course)           |
-| GWD      | ground wind direction             | VMCB     | optimum VMC direction (opposite tack)    |
-| GWS      | ground wind speed                 | VPOL     | speed from polar                         |
-| HDT      | true heading                      | VMG      | velocity made good upwind                |
-| HEL      | heel angle                        | VAR      | magnetic variation                       |
-| LEE      | leeway angle                      | DOT      | depth of transducer                      |
-| LEF      | leeway factor                     | DRT      | draught                                  |
-| LAY      | layline angle rel. to TWD         | DBT      | depth below transducer                   |
-| SET      | tide set direction                | DBS      | depth below surface                      |
-| SETF     | tide set direction filtered       | DBK      | depth below keel                         |
-| SOG      | speed over ground                 |          |                                          |
+Quantity | Meaning | AvNav-Path | NMEA-Sentence 
+|----------|------------------------------------------|-------------------------|-------------------------|  
+AWA |  apparent wind angle, measured by wind direction sensor | gps.windAngle | $MWV 
+AWAF | apparent wind angle , filtered |  |  
+AWD |  apparent wind direction, relative to true north |  |  
+AWDF | apparent wind direction, filtered |  |  
+AWS |  apparent wind speed, measured by anemometer | gps.windSpeed | $MWV 
+AWSF | apparent wind speed filtered |  |  
+COG |  course over ground, usually from GPS | gps.track |  
+CRS |  course through water |  |  
+DBK |  depth below keel |  gps.depthBelowKeel, |  
+DBS |  depth below surface | gps.depthBelowWaterline | $DBS 
+DBT |  depth below transducer | gps.depthBelowTransducer | $DBT 
+DEV |  magnetic deviation, boat specific, depends on HDG |  | $DBK 
+DFT | tide drift rate | gps.currentDrift | $VDR 
+DFTF | tide drift rate filtered |  |  
+DOT |  depth of transducer |  |  
+DRT |  draught |  |  
+GWA |  ground wind angle, relative to ground, relative to HDT | gps.groundWindAngle |  
+GWD |  ground wind direction, relative to ground, relative true north | gps.groundWindDirection |  
+GWS |  ground wind speed, relative to ground | gps.groundWindSpeed |  
+HDC |  compass heading, raw reading of the compass (also HDGc) |  |  
+HDG |  heading, unspecified which of the following |  |  
+HDM |  magnetic heading, as reported by a calibrated compass (also HDGm) | gps.headingMag | $HDM,$HDG 
+HDT |  true heading, direction bow is pointing to, relative to true north (also HDGt) | gps.headingTrue | $HDT 
+HEL |  heel angle, measured by sensor or from heel polar TWA/TWS -> HEL |  gps.heelAngle, |  
+LAT | Latitude |  gps.lat, |  
+LAY | layline angle rel. to TWD |  |  
+LEE |  leeway angle, angle between HDT and direction of water speed vector |  gps.leewayAngle, |  
+LEF | leeway factor |  |  
+LON | Longitude |  gps.lon, |  
+POLAR | Polar Speed Vector |  |  
+SET |  set, direction of tide/current, cannot be measured directly | gps.currentSet | $VDR 
+SETF | tide set direction filtered |  |  
+SOG |  speed over ground, usually from GPS | gps.speed |  
+STW |  speed through water, usually from paddle wheel, water speed vector projected onto HDT (long axis of boat) | gps.waterSpeed |  
+TWA |  true wind angle, relative to water, relative to HDT | gps.trueWindAngle | $MWV 
+TWAF | true wind angle, filtered |  |  
+TWD |  true wind direction, relative to water, relative true north | gps.trueWindDirection | $MWD 
+TWDF | true wind direction filtered |  |  
+TWDMAX | max true wind direction relative |  |  
+TWDMIN | min true wind direction relative |  |  
+TWS |  true wind speed, relative to water | gps.trueWindSpeed | $MWD 
+TWSF | true wind speed filtered |  |  
+VAR |  magnetic variation, given in chart or computed from model | gps.magVariation | $HDG 
+VMCA | optimum VMC direction (course) |  |  
+VMCB | optimum VMC direction (opposite |  |  
+VMG | velocity made good upwind |  |  
+VPOL | speed from polar |  |  
+
+
+
 
 ## Config Options
 
