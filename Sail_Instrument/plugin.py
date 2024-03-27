@@ -47,7 +47,7 @@ LAYLINES_FROM_MATRIX = "laylines_polar"
 SHOW_POLAR = "show_polar"
 PERIOD = "period"
 WMM_FILE = "wmm_file"
-WMM_PERIOD = "wmm_period"
+#WMM_PERIOD = "wmm_period"
 WRITE = "nmea_write"
 NMEA_FILTER = "nmea_filter"
 PRIORITY = "nmea_priority"
@@ -98,7 +98,7 @@ NMEA_SENTENCES = {
     "DBS": "${ID}DBS,,,{data.DBS:.1f},M,,",  # depth below surface
     "DBT": "${ID}DBT,,,{data.DBT:.1f},M,,",  # depth below transducer
     "DBK": "${ID}DBK,,,{data.DBK:.1f},M,,",  # depth below keel
-    # "HDM,VAR": "${ID}HDG,{data.HDM:.1f},,,{data.VAR:.1f},E",
+    #    "HDM,VAR": "${ID}HDG,{data.HDM:.1f},,,{data.VAR:.1f},E",
 }
 
 CONFIG = [
@@ -173,12 +173,12 @@ CONFIG = [
         "description": "file with WMM-coefficents for magnetic deviation",
         "default": "WMM2020.COF",
     },
-    {
-        "name": WMM_PERIOD,
-        "description": "period (s) to recompute magnetic variation",
-        "type": "NUMBER",
-        "default": 600,
-    },
+    #    {
+    #        "name": WMM_PERIOD,
+    #        "description": "period (s) to recompute magnetic variation",
+    #        "type": "NUMBER",
+    #        "default": 600,
+    #    },
     {
         "name": DEPTH_OF_TRANSDUCER,
         "description": "depth of transducer (m) (negative=disabled)",
@@ -328,9 +328,9 @@ class Plugin(object):
     def mag_variation(self, lat, lon):
         if not self.variation_model:
             try:
-                self.variation_period = self.config[WMM_PERIOD]
-                assert self.variation_period > 0
-                self.variation_time = 0
+                #self.variation_period = self.config[WMM_PERIOD]
+                #assert self.variation_period > 0
+                #self.variation_time = 0
                 filename = self.config[WMM_FILE]
                 if "/" not in filename:
                     filename = os.path.join(
@@ -341,9 +341,9 @@ class Plugin(object):
                 #self.api.log(f"WMM error {x}")
                 self.msg += f" WMM error {x}"
                 return
-        if time.monotonic() - self.variation_time > self.variation_period:
-            self.variation = self.variation_model.GeoMag(lat, lon).dec
-            self.variation_time = time.monotonic()
+        # if time.monotonic() - self.variation_time > self.variation_period:
+        self.variation = self.variation_model.GeoMag(lat, lon).dec
+        #    self.variation_time = time.monotonic()
         return self.variation
 
     def manual_wind(self):
@@ -482,7 +482,7 @@ class Plugin(object):
                                 print("ERROR", f"{x}")
 
                 self.api.setStatus(
-                    "NMEA", f"present:{present} --> calculated:{calculated} sending:{sending}{self.msg}")
+                    "NMEA", f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
             except Exception as x:
                 self.api.setStatus("ERROR", f"{x}")
 
