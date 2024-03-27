@@ -18,6 +18,8 @@ The values calculated by the plugin are published in AvNav as `gps.sailinstrumen
 Optionally the plugin can [emit NMEA sentences](Sail_Instrument/plugin.py#88) to make the computed data available to other devices. If decoding of own NMEA sentences is enabled, these data are fed back into AvNav, get parsed and written to their standard paths in `gps.*`.
 The following values are computed or copied from their sources.
 
+x1
+
 Quantity | Meaning | AvNav-Path | NMEA-Sentence 
 |----------|------------------------------------------|-------------------------|-------------------------|  
 AWA |  apparent wind angle, measured by wind direction sensor | gps.windAngle | $MWV 
