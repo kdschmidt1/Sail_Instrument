@@ -475,20 +475,17 @@ class Plugin(object):
         if nmea_write:
           for f, s in NMEA_SENTENCES.items():
             if any(k in calculated for k in f.split(",")) and data.has(*f.split(",")):
-              try:
-                s = eval(f"f\"{s}\"")
-                if not nmea_filter or NMEAParser.checkFilter(s, nmea_filter):
-                  # print(">", s)
-                  self.api.addNMEA(
-                    s,
-                    source=SOURCE,
-                    addCheckSum=True,
-                    omitDecode=not self.config[DECODE],
-                    sourcePriority=nmea_priority,
-                  )
-                  sending.add(s[:6])
-              except Exception as x:
-                print("ERROR", f"{x}")
+              s = eval(f"f\"{s}\"")
+              if not nmea_filter or NMEAParser.checkFilter(s, nmea_filter):
+                # print(">", s)
+                self.api.addNMEA(
+                  s,
+                  source=SOURCE,
+                  addCheckSum=True,
+                  omitDecode=not self.config[DECODE],
+                  sourcePriority=nmea_priority,
+                )
+                sending.add(s[:6])
 
         self.api.setStatus(
           "NMEA", f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
