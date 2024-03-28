@@ -93,6 +93,7 @@ NMEA_SENTENCES = {
   "HDM": "${ID}HDM,{data.HDM:.1f},M",  # magnetic heading
   "HDT": "${ID}HDT,{data.HDT:.1f},T",  # true heading
   "HDC,DEV,VAR": "${ID}HDG,{data.HDC:.1f},{abs(data.DEV):.1f},{'E' if data.DEV>=0 else 'W'},{abs(data.VAR):.1f},{'E' if data.VAR>=0 else 'W'}",
+  "HDT,HDM,STW": "${ID}VHW,{data.HDT:.1f},T,{data.HDM:.1f},M,{data.STW:.1f},N,,",
   # true wind direction and speed
   "TWD,TWS": "${ID}MWD,{to360(data.TWD):.1f},T,,,{data.TWS*KNOTS:.1f},N,,",
   # true wind angle and speed
@@ -209,7 +210,7 @@ CONFIG = [
     "name": PRIORITY,
     "description": "NMEA source priority",
     "type": "NUMBER",
-    "default": 50,
+    "default": 10,
   },
   {
     "name": TALKER_ID,
@@ -317,6 +318,7 @@ class Plugin(object):
   def readValue(self, path):
     "prevents reading values that we self have calculated"
     a = self.api.getSingleValue(path, includeInfo=True)
+    # if a: print(path, a.value, a.source, a.priority / 10)
     if a is not None and SOURCE not in a.source:
       return a.value
 
@@ -403,8 +405,9 @@ class Plugin(object):
         data = {k: self.readValue(p) for k, p in INPUT_FIELDS.items()}
         data["HEL"] = data["HEL"] or data["HEL1"] or (
           degrees(data["HEL2"]) if data.get("HEL2") is not None else None)
-        data["LEF"] = self.config[LEEWAY_FACTOR] / KNOTS ** 2
         present = {k for k in data.keys() if data[k] is not None}
+
+        data["LEF"] = self.config[LEEWAY_FACTOR] / KNOTS ** 2
 
         if all(data.get(k) is None for k in ("AWA", "AWS", "TWA", "TWS", "TWD")):
           gwd, gws = self.manual_wind() or (None, None)
@@ -475,7 +478,7 @@ class Plugin(object):
               try:
                 s = eval(f"f\"{s}\"")
                 if not nmea_filter or NMEAParser.checkFilter(s, nmea_filter):
-                  # print(s)
+                  # print(">", s)
                   self.api.addNMEA(
                     s,
                     source=SOURCE,
@@ -488,7 +491,7 @@ class Plugin(object):
                 print("ERROR", f"{x}")
 
         self.api.setStatus(
-          "NMEA", f"present:{present} --> calculated:{calculated} sending:{sending}{self.msg}")
+          "NMEA", f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
       except Exception as x:
         self.api.setStatus("ERROR", f"{x}")
 
