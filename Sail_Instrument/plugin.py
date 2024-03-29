@@ -466,10 +466,6 @@ class Plugin(object):
                 if nmea_write:
                     for f, s in NMEA_SENTENCES.items():
                         if any(k in calculated for k in f.split(",")):
-                            if not data.has(*f.split(",")):
-                                for j in f.split(","):
-                                    if not data[j]:
-                                        print(" Send $",s[5:8]," Error, Param.: ",f," Missing: ",k)
                             try:
                                 s = eval(f"f'{s}'")
                                 if not nmea_filter or NMEAParser.checkFilter(s, nmea_filter):
