@@ -466,6 +466,11 @@ class Plugin(object):
                 if nmea_write:
                     for f, s in NMEA_SENTENCES.items():
                         if any(k in calculated for k in f.split(",")):
+                            if not data.has(*f.split(",")):
+                                missing_fields = {j for j in f.split(",") if data[j] is None}
+                                print(
+                                    " Send $", s[5:8], " Error NMEA_SENTENCES, Param.: ", f, " Missing: ", missing_fields)
+                                continue
                             try:
                                 s = eval(f"f'{s}'")
                                 if not nmea_filter or NMEAParser.checkFilter(s, nmea_filter):
@@ -479,7 +484,7 @@ class Plugin(object):
                                     )
                                     sending.add(s[:6])
                             except Exception as x:
-                                print("ERROR ",s, " -> ", f"{x}")
+                                print("ERROR ", s, " -> ", f"{x}")
 
                 self.api.setStatus(
                     "NMEA", f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
