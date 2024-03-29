@@ -468,9 +468,9 @@ class Plugin(object):
                         if any(k in calculated for k in f.split(",")):
                             if not data.has(*f.split(",")):
                                 missing_fields = {j for j in f.split(",") if data[j] is None}
-                                print(
-                                    " Send $", s[5:8], " Error NMEA_SENTENCES, Param.: ", f, " Missing: ", missing_fields)
+                                print(" Send NMEA_SENTENCES Error: $", s[5:8], " Parameter: ", f, " Missing: ", missing_fields)
                                 continue
+                            
                             try:
                                 s = eval(f"f'{s}'")
                                 if not nmea_filter or NMEAParser.checkFilter(s, nmea_filter):
