@@ -76,7 +76,7 @@ VPOL | speed from polar |  |
 
 
 
-There are the following configuration options on the status-page ${\color \Large {red}Missing Link}$
+There are the following configuration options on the status-page ${\color{red}Missing Link}$
 
 - `period` - computation interval (s)
 - `smoothing_factor` - factor within (0,1] for [exponential smoothing](https://en.wikipedia.org/wiki/Exponential_smoothing) (filtering) of wind and tide, 1 = no smoothing, filtered data as suffix `F`
