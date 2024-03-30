@@ -2,7 +2,7 @@
 #
 # check https://nfpm.goreleaser.com/configuration for detailed usage
 #
-name: "avnav-sailinstrument-plugin"
+name: "avnav-sail_instrument-plugin"
 arch: "all"
 platform: "linux"
 version: "202402"
@@ -16,10 +16,12 @@ depends:
   - python3-numpy
 maintainer: "Klaus D. Schmidt <kdschmidt@bluewin.ch>"
 description: |
-  AvNav plugin supplying a SailSteer widget and overlay
+  AvNav plugin supplying Sail_Instrument widgets and overlay
   showing true and apparent wind, tide, laylines
   and optionally optimal VMC course
 homepage: "https://github.com/kdschmidt1/Sail_Instrument"
 contents:
   - src: ./Sail_Instrument/*
     dst: /usr/lib/avnav/plugins/Sail_Instrument/
+  - src: ./Sail_Instrument/*.json
+    dst: /usr/lib/avnav/user/viewer/   
