@@ -74,7 +74,7 @@ VPOL | speed from polar |  |
 
 ## Config Options
 
-$${\color{red}**Missing Link** \space \color{lightblue}To \space \color{orange}Stackoverflow}$$
+$${\color{red}Missing Link}$$
 
 There are the following configuration options on the status-page $${\color{red}**Missing Link**}$$
 
