@@ -34,7 +34,7 @@ KNOTS = 1.94384  # knots per m/s
 MPS = 1 / KNOTS
 POLAR_FILE = "polar.json"
 HEEL_FILE = "heel.json"
-PATH_PREFIX = "gps.sailinstrument."
+PATH_PREFIX = "gps.sail_instrument."
 SMOOTHING_FACTOR = "smoothing_factor"
 MM_SAMPLES = "minmax_samples"
 GROUND_WIND = "ground_wind"
@@ -432,7 +432,7 @@ class Plugin(object):
                 if data["HEL"] is None and self.heels and all(d.has(k) for k in ("TWAF", "TWSF")):
                     data["HEL"] = self.heels.value(
                         d["TWAF"], d["TWSF"] * KNOTS)
-                    self.msg += ", heel from polar"
+                    all(data.get(k) is not None for k in ("LAT", "LON"))
 
                 if data["HEL"] is not None:
                     self.msg += ", leeway estimation"
