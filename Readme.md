@@ -74,6 +74,8 @@ VPOL | speed from polar |  |
 
 ## Config Options
 
+$${\color{red}Welcome \space \color{lightblue}To \space \color{orange}Stackoverflow}$$
+
 There are the following configuration options on the status-page $${\color{red}**Missing Link**}$$
 
 - `period` - computation interval (s)
