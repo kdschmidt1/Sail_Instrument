@@ -14,8 +14,8 @@ The plugin calculates true wind, ground wind and set and drift. It needs COG/SOG
 
 How the calculation is done and the formulas used as well definitions of the several quantities, all of this is [documented in the code](Sail_Instrument/plugin.py#L530).
 
-The values calculated by the plugin are published in AvNav as `gps.sailinstrument.*`.
-Optionally the plugin can [emit NMEA sentences](Sail_Instrument/plugin.py#88) to make the computed data available to other devices. If decoding of own NMEA sentences is enabled, these data are fed back into AvNav, get parsed and written to their standard paths in `gps.*`.
+The values calculated by the plugin are published in AvNav as `gps.sail_instrument.*`.
+Optionally the plugin can [emit NMEA sentences](Sail_Instrument/plugin.py#89) to make the computed data available to other devices. If decoding of own NMEA sentences is enabled, these data are fed back into AvNav, get parsed and written to their standard paths in `gps.*`.
 The following values are computed or copied from their sources.
 
 x1
@@ -34,25 +34,25 @@ DBK |  depth below keel |  gps.depthBelowKeel, |
 DBS |  depth below surface | gps.depthBelowWaterline | $DBS 
 DBT |  depth below transducer | gps.depthBelowTransducer | $DBT 
 DEV |  magnetic deviation, boat specific, depends on HDG |  | $DBK 
-DFT | tide drift rate | gps.currentDrift | $VDR 
+DFT | tide drift rate | (gps.currentDrift) | $VDR 
 DFTF | tide drift rate filtered |  |  
 DOT |  depth of transducer |  |  
 DRT |  draught |  |  
-GWA |  ground wind angle, relative to ground, relative to HDT | gps.groundWindAngle |  
-GWD |  ground wind direction, relative to ground, relative true north | gps.groundWindDirection |  
-GWS |  ground wind speed, relative to ground | gps.groundWindSpeed |  
+GWA |  ground wind angle, relative to ground, relative to HDT |  |  
+GWD |  ground wind direction, relative to ground, relative true north |  |  
+GWS |  ground wind speed, relative to ground |  |  
 HDC |  compass heading, raw reading of the compass (also HDGc) |  |  
 HDG |  heading, unspecified which of the following |  |  
 HDM |  magnetic heading, as reported by a calibrated compass (also HDGm) | gps.headingMag | $HDM,$HDG 
 HDT |  true heading, direction bow is pointing to, relative to true north (also HDGt) | gps.headingTrue | $HDT 
-HEL |  heel angle, measured by sensor or from heel polar TWA/TWS -> HEL |  gps.heelAngle, |  
+HEL |  heel angle, measured by sensor or from heel polar TWA/TWS -> HEL |   |  
 LAT | Latitude |  gps.lat, |  
 LAY | layline angle rel. to TWD |  |  
-LEE |  leeway angle, angle between HDT and direction of water speed vector |  gps.leewayAngle, |  
+LEE |  leeway angle, angle between HDT and direction of water speed vector |   |  
 LEF | leeway factor |  |  
 LON | Longitude |  gps.lon, |  
 POLAR | Polar Speed Vector |  |  
-SET |  set, direction of tide/current, cannot be measured directly | gps.currentSet | $VDR 
+SET |  set, direction of tide/current, cannot be measured directly |  | $VDR 
 SETF | tide set direction filtered |  |  
 SOG |  speed over ground, usually from GPS | gps.speed |  
 STW |  speed through water, usually from paddle wheel, water speed vector projected onto HDT (long axis of boat) | gps.waterSpeed |  
@@ -107,10 +107,9 @@ Download the package provided in the releases section [Sail_Instrument](https://
  ```
 sudo apt install /path/to/avnav-sailinstrument-plugin_xxxx.deb
  ```
-
 this will include the `numpy` and `scipy` package
 
-OR
+OR manually
 
 by downloading the Sail_Instrument code as a zip and unzip the `Sail_Instrument`-Folder into the directory `/home/pi/avnav/data/plugins/Sail_Instrument`.
 If the directory does not exist just create it. On a standard Linux system (not raspberry pi) the directory will be `/home/(user)/avnav/plugins/Sail_Instrument`.
@@ -121,6 +120,7 @@ If not already present, you have additionally to install the `numpy` and `scipy`
   sudo apt-get install python3-scipy python3-numpy
  ```
 
+Finally you have to move (or copy) the files `polar.json` and `heel.json` to your data-directory (normally `/home/pi/avnav/user/viewer/`). 
 With this procedure the internal name of the plugin will be `user-Sail_Instrument`.
 
 Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog) using the Map Widgets Button ![Map Widgets Button](Images/map-widgets.png)
@@ -141,7 +141,7 @@ Leeway is [estimated from heel and STW](https://opencpn-manuals.github.io/main/t
 
 LEE = LEF * HEL / STW^2
 
-With LEF being a boat specific factor from within (0,20). Heel could be measured but here it is interpolated from the heel polar in `heel.json`. As the boat speed polar it contains an interpolation table to map TWA/TWS to heel angle HEL.
+With LEF being a boat specific factor from within (0,20). Heel could be a measured value (either from signalk.navigation.attitude.roll or a specific transducer in gps.transducers.ROLL). If data is not available it is interpolated from the heel polar in [`avnav/user/viewer/heel.json`](Sail_Instrument/heel.json). As the [`avnav/user/viewer/polar.json`](Sail_Instrument/polar.json) it contains an interpolation table to map TWA/TWS to heel angle HEL.
 
 ## Laylines
 
