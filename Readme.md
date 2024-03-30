@@ -18,7 +18,6 @@ The values calculated by the plugin are published in AvNav as `gps.sail_instrume
 Optionally the plugin can [emit NMEA sentences](Sail_Instrument/plugin.py#89) to make the computed data available to other devices. If decoding of own NMEA sentences is enabled, these data are fed back into AvNav, get parsed and written to their standard paths in `gps.*`.
 The following values are computed or copied from their sources.
 
-x1
 
 Quantity | Meaning | AvNav-Path | NMEA-Sentence 
 |----------|------------------------------------------|-------------------------|-------------------------|  
@@ -75,7 +74,7 @@ VPOL | speed from polar |  |
 
 ## Config Options
 
-There are the following config options.
+There are the following configuration options on the status-page <span style="color:red">**Missing Link** text</span>:
 
 - `period` - computation interval (s)
 - `smoothing_factor` - factor within (0,1] for [exponential smoothing](https://en.wikipedia.org/wiki/Exponential_smoothing) (filtering) of wind and tide, 1 = no smoothing, filtered data as suffix `F`
@@ -120,7 +119,7 @@ If not already present, you have additionally to install the `numpy` and `scipy`
   sudo apt-get install python3-scipy python3-numpy
  ```
 
-Finally you have to move (or copy) the files `polar.json` and `heel.json` to your data-directory (normally `/home/pi/avnav/user/viewer/`). 
+Finally you have to move (or copy) the files `polar.json` and `heel.json` to the viewer-section of your data-directory (normally `/home/pi/avnav/user/viewer/`). 
 With this procedure the internal name of the plugin will be `user-Sail_Instrument`.
 
 Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog) using the Map Widgets Button ![Map Widgets Button](Images/map-widgets.png)
