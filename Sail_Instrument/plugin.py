@@ -416,6 +416,7 @@ class Plugin(object):
 
                 if data["VAR"] is None and all(data.get(k) is not None for k in ("LAT", "LON")):
                     data["VAR"] = self.mag_variation(data["LAT"], data["LON"])
+                    self.msg += ", variation from WMM-File"
 
                 if self.config[FALLBACK]:
                     if data["HDT"] is None and any(data.get(k) is None for k in ("HDM", "VAR")):
