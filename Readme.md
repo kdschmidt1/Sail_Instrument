@@ -32,15 +32,15 @@ CRS |  course through water |  |
 DBK |  depth below keel |  gps.depthBelowKeel, |  
 DBS |  depth below surface | gps.depthBelowWaterline | $DBS 
 DBT |  depth below transducer | gps.depthBelowTransducer | $DBT 
-DEV |  magnetic deviation, boat specific, depends on HDG |  | $DBK 
-DFT | tide drift rate |  | $VDR 
+DEV |  magnetic deviation, boat specific, depends on HDG | gps.magDeviation | $DBK 
+DFT | tide drift rate | gps.currentDrift | $VDR 
 DFTF | tide drift rate filtered |  |  
 DOT |  depth of transducer |  |  
 DRT |  draught |  |  
 GWA |  ground wind angle, relative to ground, relative to HDT |  |  
 GWD |  ground wind direction, relative to ground, relative true north |  |  
 GWS |  ground wind speed, relative to ground |  |  
-HDC |  compass heading, raw reading of the compass (also HDGc) |  |  
+HDC |  compass heading, raw reading of the compass (also HDGc) | gps.headingCompass |  
 HDG |  heading, unspecified which of the following |  |  
 HDM |  magnetic heading, as reported by a calibrated compass (also HDGm) | gps.headingMag | $HDM,$HDG 
 HDT |  true heading, direction bow is pointing to, relative to true north (also HDGt) | gps.headingTrue | $HDT 
@@ -51,7 +51,7 @@ LEE |  leeway angle, angle between HDT and direction of water speed vector |   |
 LEF | leeway factor |  |  
 LON | Longitude |  gps.lon, |  
 POLAR | Polar Speed Vector |  |  
-SET |  set, direction of tide/current, cannot be measured directly |  | $VDR 
+SET |  set, direction of tide/current, cannot be measured directly | gps.currentSet | $VDR 
 SETF | tide set direction filtered |  |  
 SOG |  speed over ground, usually from GPS | gps.speed |  
 STW |  speed through water, usually from paddle wheel, water speed vector projected onto HDT (long axis of boat) | gps.waterSpeed |  
