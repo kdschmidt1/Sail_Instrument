@@ -32,7 +32,7 @@ CRS |  course through water |  |
 DBK |  depth below keel |  gps.depthBelowKeel, |  
 DBS |  depth below surface | gps.depthBelowWaterline | $DBS 
 DBT |  depth below transducer | gps.depthBelowTransducer | $DBT 
-DEV |  magnetic deviation, boat specific, depends on HDG | gps.magDeviation | $DBK 
+DEV |  magnetic deviation, boat specific, depends on HDG | gps.magDeviation | $HDG 
 DFT | tide drift rate | gps.currentDrift | $VDR 
 DFTF | tide drift rate filtered |  |  
 DOT |  depth of transducer |  |  
@@ -40,9 +40,9 @@ DRT |  draught |  |
 GWA |  ground wind angle, relative to ground, relative to HDT |  |  
 GWD |  ground wind direction, relative to ground, relative true north |  |  
 GWS |  ground wind speed, relative to ground |  |  
-HDC |  compass heading, raw reading of the compass (also HDGc) | gps.headingCompass |  
+HDC |  compass heading, raw reading of the compass (also HDGc) | gps.headingCompass |  $HDG
 HDG |  heading, unspecified which of the following |  |  
-HDM |  magnetic heading, as reported by a calibrated compass (also HDGm) | gps.headingMag | $HDM,$HDG 
+HDM |  magnetic heading, as reported by a calibrated compass (also HDGm) | gps.headingMag | $HDM
 HDT |  true heading, direction bow is pointing to, relative to true north (also HDGt) | gps.headingTrue | $HDT 
 HEL |  heel angle, measured by sensor or from heel polar TWA/TWS -> HEL |   |  
 LAT | Latitude |  gps.lat, |  
@@ -121,7 +121,8 @@ If not already present, you have additionally to install the `numpy` and `scipy`
   sudo apt-get install python3-scipy python3-numpy
  ```
 
-Finally you have to move (or copy) the files `polar.json` and `heel.json` to the viewer-section of your data-directory (normally `/home/pi/avnav/user/viewer/`). 
+The plugin is copying the files `polar.json` and `heel.json` to the viewer-section of your data-directory (normally `/home/pi/avnav/user/viewer/`) where you can view or edit the files. 
+
 With this procedure the internal name of the plugin will be `user-Sail_Instrument`.
 
 Add the LayLines_Overlay to your map in the [WidgetDialog](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html#h2:WidgetDialog) using the Map Widgets Button ![Map Widgets Button](Images/map-widgets.png)
