@@ -333,9 +333,9 @@ class Plugin(object):
   def mag_variation(self, lat, lon):
     if not self.variation_model:
       try:
-        self.variation_period = self.config[WMM_PERIOD]
-        assert self.variation_period > 0
+        self.variation = None
         self.variation_time = 0
+        assert self.config[WMM_PERIOD] > 0
         filename = self.config[WMM_FILE]
         if "/" not in filename:
           filename = os.path.join(
@@ -346,7 +346,7 @@ class Plugin(object):
         # self.api.log(f"WMM error {x}")
         self.msg += f" WMM error {x}"
         return
-    if time.monotonic() - self.variation_time > self.variation_period:
+    if time.monotonic() - self.variation_time > self.config[WMM_PERIOD]:
       self.variation = self.variation_model.GeoMag(lat, lon).dec
       self.variation_time = time.monotonic()
     return self.variation
