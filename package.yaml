@@ -5,7 +5,7 @@
 name: "avnav-sail_instrument-plugin"
 arch: "all"
 platform: "linux"
-version: "202402"
+version: "20240404"
 license: "MIT"
 keep_version: true
 section: "default"
@@ -23,5 +23,3 @@ homepage: "https://github.com/kdschmidt1/Sail_Instrument"
 contents:
   - src: ./Sail_Instrument/*
     dst: /usr/lib/avnav/plugins/Sail_Instrument/
-  - src: ./Sail_Instrument/*.json
-    dst: /usr/lib/avnav/user/viewer/   
