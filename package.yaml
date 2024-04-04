@@ -5,7 +5,7 @@
 name: "avnav-sail_instrument-plugin"
 arch: "all"
 platform: "linux"
-version: "20240404"
+version: "202404"
 license: "MIT"
 keep_version: true
 section: "default"
