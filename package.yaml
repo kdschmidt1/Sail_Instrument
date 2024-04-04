@@ -2,7 +2,7 @@
 #
 # check https://nfpm.goreleaser.com/configuration for detailed usage
 #
-name: "avnav-sail_instrument-plugin"
+name: "avnav-sailinstrument-plugin"
 arch: "all"
 platform: "linux"
 version: "202404"
