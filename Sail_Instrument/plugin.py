@@ -93,7 +93,7 @@ NMEA_SENTENCES = {
   "HDM": "${ID}HDM,{data.HDM:.1f},M",  # magnetic heading
   "HDT": "${ID}HDT,{data.HDT:.1f},T",  # true heading
   "HDC,DEV,VAR": "${ID}HDG,{data.HDC:.1f},{abs(data.DEV):.1f},{'E' if data.DEV>=0 else 'W'},{abs(data.VAR):.1f},{'E' if data.VAR>=0 else 'W'}",
-  "HDT,HDM,STW": "${ID}VHW,{data.HDT:.1f},T,{data.HDM:.1f},M,{data.STW:.1f},N,,",
+  "HDT,HDM,STW": "${ID}VHW,{data.HDT:.1f},T,{data.HDM:.1f},M,{data.STW*KNOTS:.1f},N,,",
   # true wind direction and speed
   "TWD,TWS": "${ID}MWD,{to360(data.TWD):.1f},T,,,{data.TWS*KNOTS:.1f},N,,",
   # true wind angle and speed
