@@ -5,7 +5,7 @@
 name: "avnav-sailinstrument-plugin"
 arch: "all"
 platform: "linux"
-version: "202404"
+version: "20240207"
 license: "MIT"
 keep_version: true
 section: "default"
@@ -14,6 +14,9 @@ depends:
   - avnav (>=20220426)
   - python3-scipy
   - python3-numpy
+replaces: 
+  - avnav-more-nmea-plugin ( <=20240401)
+
 maintainer: "Klaus D. Schmidt <kdschmidt@bluewin.ch>"
 description: |
   AvNav plugin supplying Sail_Instrument widgets and overlay
