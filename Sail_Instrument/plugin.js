@@ -138,6 +138,7 @@ var Sail_InstrumentWidget = {
         LAY: 'nav.gps.sailinstrument.LAY',
         HDT: 'nav.gps.sailinstrument.HDT',
         COG: 'nav.gps.sailinstrument.COG',
+        SOG: 'nav.gps.sailinstrument.SOG',
         TWDF: 'nav.gps.sailinstrument.TWDF',
         TWSF: 'nav.gps.sailinstrument.TWSF',
         AWDF: 'nav.gps.sailinstrument.AWDF',
@@ -253,6 +254,7 @@ let Sail_Instrument_Overlay = {
         LAY: 'nav.gps.sailinstrument.LAY',
         HDT: 'nav.gps.sailinstrument.HDT',
         COG: 'nav.gps.sailinstrument.COG',
+        SOG: 'nav.gps.sailinstrument.SOG',
         TWDF: 'nav.gps.sailinstrument.TWDF',
         TWSF: 'nav.gps.sailinstrument.TWSF',
         AWDF: 'nav.gps.sailinstrument.AWDF',
@@ -293,6 +295,8 @@ function knots(v){
   return 1.94384*v;
 }
 
+var vmin=0.25;
+
 var red = "red";
 var green = "rgb(0,255,0)";
 var blue = "blue";
@@ -300,10 +304,10 @@ var black = "black";
 var orange = "orange";
 
 function drawWindWidget(ctx,size, maprotation, data){
-        //console.log("draw widget");
+//        console.log("draw widget",data);
         DrawOuterRing(ctx, size, maprotation + data.HDT);
         DrawKompassring(ctx, size, maprotation);
-        if (knots(data.DFTF)>=0.3) {
+        if (knots(data.DFTF)>=vmin) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
         if (knots(data.TWSF)>=1) {
@@ -329,7 +333,9 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (typeof(data.BRG) != 'undefined') {
             DrawWPIcon(ctx, size, maprotation + data.BRG);
         }
-        DrawEierUhr(ctx, size, maprotation + data.COG, orange, 'T');
+        if (knots(data.SOG)>=vmin) {
+            DrawEierUhr(ctx, size, maprotation + data.COG, orange, 'T');
+        }
         DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
 }
 

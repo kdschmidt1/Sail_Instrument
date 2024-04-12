@@ -9,6 +9,7 @@ from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import numpy
 import scipy.interpolate
 import scipy.optimize
+
 from avnav_nmea import NMEAParser
 
 try:
@@ -500,7 +501,8 @@ class Plugin(object):
       if any(v is None for v in (twa, tws, twd)):
         return
 
-      brg = bearing_to_waypoint()
+      brg, vmc = waypoint_data()
+      data.VMC = vmc
       if brg:
         upwind = abs(to180(brg - twd)) < 90
       else:
@@ -558,7 +560,7 @@ class Plugin(object):
       self.msg += f", laylines error {x}"
 
 
-def bearing_to_waypoint():
+def waypoint_data():
   try:
     router = AVNWorker.findHandlerByName(AVNRouter.getConfigName())
     if router is None:
@@ -568,7 +570,7 @@ def bearing_to_waypoint():
       return
     if not wpData.validData:
       return
-    return wpData.dstBearing
+    return wpData.dstBearing, wpData.vmg
   except:
     return
 
