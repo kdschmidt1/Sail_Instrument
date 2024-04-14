@@ -7,6 +7,9 @@ on:
       - docs/** # This includes all sub folders
     branches:
       - main # This can be changed to any branch of your preference
+      
+  workflow_dispatch:
+      
 
 env:
   USER_TOKEN: ${{ secrets.WIKI_ACTION_TOKEN }} # This is the repository secret
