@@ -9,7 +9,6 @@ from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 import numpy
 import scipy.interpolate
 import scipy.optimize
-
 from avnav_nmea import NMEAParser
 
 try:
@@ -501,8 +500,7 @@ class Plugin(object):
       if any(v is None for v in (twa, tws, twd)):
         return
 
-      brg, vmc = waypoint_data()
-      data.VMC = vmc
+      brg = bearing_to_waypoint()
       if brg:
         upwind = abs(to180(brg - twd)) < 90
       else:
@@ -560,7 +558,7 @@ class Plugin(object):
       self.msg += f", laylines error {x}"
 
 
-def waypoint_data():
+def bearing_to_waypoint():
   try:
     router = AVNWorker.findHandlerByName(AVNRouter.getConfigName())
     if router is None:
@@ -570,7 +568,7 @@ def waypoint_data():
       return
     if not wpData.validData:
       return
-    return wpData.dstBearing, wpData.vmg
+    return wpData.dstBearing
   except:
     return
 
@@ -712,8 +710,8 @@ class CourseData:
   ## How to use it
 
   Create CourseData() with the known quantities supplied in the constructor. Then access the calculated
-  quantities as d.TWA or d.["TWA"]. Ask with "TWD" in d if they exist. Just print(d) to see what's inside.
-  See test() for examples.
+  quantities as `d.TWA` or `d.["TWA"]`. Ask with `"TWD" in d` if they exist. Just `print(d)` to see what's inside.
+  See test.py for examples.
   """
 
   def __init__(self, **kwargs):
@@ -734,9 +732,6 @@ class CourseData:
     if self.misses("HDC") and self.has("HDM", "DEV"):
       self.HDC = to360(self.HDM - self.DEV)
 
-    if self.misses("LEF") and self.has("HEL", "STW"):
-      self.LEF = 10
-
     if self.misses("LEE") and self.has("HEL", "STW", "LEF"):
       self.LEE = (
         max(-30, min(30, self.LEF * self.HEL / self.STW ** 2))
@@ -751,21 +746,17 @@ class CourseData:
       self.CRS = self.HDT + self.LEE
 
     if self.misses("SET", "DFT") and self.has("COG", "SOG", "CRS", "STW"):
-      self.SET, self.DFT = add_polar(
-        (self.COG, self.SOG), (self.CRS, -self.STW))
+      self.SET, self.DFT = add_polar((self.COG, self.SOG), (self.CRS, -self.STW))
 
     if self.misses("COG", "SOG") and self.has("SET", "DFT", "CRS", "STW"):
-      self.COG, self.SOG = add_polar(
-        (self.SET, self.DFT), (self.CRS, self.STW))
+      self.COG, self.SOG = add_polar((self.SET, self.DFT), (self.CRS, self.STW))
 
     if self.misses("TWA", "TWS") and self.has("AWA", "AWS", "STW", "LEE"):
-      self.TWA, self.TWS = add_polar(
-        (self.AWA, self.AWS), (self.LEE, -self.STW))
+      self.TWA, self.TWS = add_polar((self.AWA, self.AWS), (self.LEE, -self.STW))
       self.TWA = self.angle(self.TWA)
 
     if self.misses("TWD", "TWS") and self.has("GWD", "GWS", "SET", "DFT"):
-      self.TWD, self.TWS = add_polar(
-        (self.GWD, self.GWS), (self.SET, self.DFT))
+      self.TWD, self.TWS = add_polar((self.GWD, self.GWS), (self.SET, self.DFT))
 
     if self.misses("AWD") and self.has("AWA", "HDT"):
       self.AWD = to360(self.AWA + self.HDT)
@@ -777,15 +768,13 @@ class CourseData:
       self.TWA = self.angle(self.TWD - self.HDT)
 
     if self.misses("GWD", "GWS") and self.has("AWD", "AWS", "COG", "SOG"):
-      self.GWD, self.GWS = add_polar(
-        (self.AWD, self.AWS), (self.COG, -self.SOG))
+      self.GWD, self.GWS = add_polar((self.AWD, self.AWS), (self.COG, -self.SOG))
 
     if self.misses("GWA") and self.has("GWD", "HDT"):
       self.GWA = self.angle(self.GWD - self.HDT)
 
     if self.misses("AWA", "AWS") and self.has("TWA", "TWS", "LEE", "STW"):
-      self.AWA, self.AWS = add_polar(
-        (self.TWA, self.TWS), (self.LEE, self.STW))
+      self.AWA, self.AWS = add_polar((self.TWA, self.TWS), (self.LEE, self.STW))
       self.AWA = self.angle(self.AWA)
 
     if self.misses("VMG") and self.has("TWD", "CRS", "STW"):
