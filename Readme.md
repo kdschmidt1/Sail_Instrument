@@ -6,4 +6,4 @@ The project is inspired by the B&G's sailsteer display.
  The core of the documentation is available in the [WIKI-Page](https://github.com/kdschmidt1/Sail_Instrument/wiki).
 
 
-<img src="https://github.com/kdschmidt1/Sail_Instrument/blob/master/Images/nav-both.png" width="75%" height="75%">
+<img src="https://github.com/kdschmidt1/Sail_Instrument/wiki/Images/nav-both.png" width="75%" height="75%">
