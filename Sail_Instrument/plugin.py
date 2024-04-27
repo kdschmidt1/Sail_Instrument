@@ -377,6 +377,11 @@ class Plugin(object):
         if time.monotonic() - self.variation_time > self.variation_period:
             self.variation = self.variation_model.GeoMag(lat, lon).dec
             self.variation_time = time.monotonic()
+        try:
+          self.variation
+        except Exception as x:
+          self.variation=0
+        
         return self.variation
 
     def manual_wind(self):
