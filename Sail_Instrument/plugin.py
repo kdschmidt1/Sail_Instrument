@@ -380,7 +380,8 @@ class Plugin(object):
         try:
           self.variation
         except Exception as x:
-          self.variation=0
+          self.variation = self.variation_model.GeoMag(lat, lon).dec
+          self.variation_time = time.monotonic()
         
         return self.variation
 
