@@ -23,8 +23,6 @@
 #
 #  parts from this software (geomag) are taken from https://github.com/cmweiss/geomag
 ###############################################################################
-
-
 import json
 import os
 import re
