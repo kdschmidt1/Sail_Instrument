@@ -55,7 +55,7 @@ try:
 except:
     pass
 
-PLUGIN_VERSION = 20240404
+PLUGIN_VERSION = 20240503
 SOURCE = "Sail_Instrument"
 MIN_AVNAV_VERSION = 20230705
 KNOTS = 1.94384  # knots per m/s
