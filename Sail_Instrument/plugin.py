@@ -1,15 +1,14 @@
 import json
+import numpy
 import os
 import re
+import scipy.interpolate
+import scipy.optimize
 import shutil
 import sys
 import time
-from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
-
-import numpy
-import scipy.interpolate
-import scipy.optimize
 from avnav_nmea import NMEAParser
+from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 
 try:
   from avnrouter import AVNRouter, WpData
@@ -346,7 +345,7 @@ class Plugin(object):
         # self.api.log(f"WMM error {x}")
         self.msg += f" WMM error {x}"
         return
-    if time.monotonic() - self.variation_time > self.config[WMM_PERIOD]:
+    if self.variation is None or time.monotonic() - self.variation_time > self.config[WMM_PERIOD]:
       self.variation = self.variation_model.GeoMag(lat, lon).dec
       self.variation_time = time.monotonic()
     return self.variation
@@ -429,8 +428,7 @@ class Plugin(object):
           data["DEV"] = 0
 
         if data["HEL"] is None and self.heels and all(d.has(k) for k in ("TWAF", "TWSF")):
-          data["HEL"] = self.heels.value(
-            d["TWAF"], d["TWSF"] * KNOTS)
+          data["HEL"] = self.heels.value(d["TWAF"], d["TWSF"] * KNOTS)
           self.msg += ", heel from polar"
 
         if data["HEL"] is not None:
