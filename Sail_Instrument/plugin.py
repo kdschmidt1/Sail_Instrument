@@ -1,14 +1,41 @@
+# -*- coding: utf-8 -*-
+# vim: ts=2 sw=2 et ai
+###############################################################################
+# Copyright (c) 2024 KD Schmidt kdschmidt@bluewin.ch
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a
+#  copy of this software and associated documentation files (the "Software"),
+#  to deal in the Software without restriction, including without limitation
+#  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+#  and/or sell copies of the Software, and to permit persons to whom the
+#  Software is furnished to do so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included
+#  in all copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+#  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+#  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+#  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+#  DEALINGS IN THE SOFTWARE.
+#
+#  parts from this software (geomag) are taken from https://github.com/cmweiss/geomag
+###############################################################################
 import json
-import numpy
 import os
 import re
-import scipy.interpolate
-import scipy.optimize
 import shutil
 import sys
+import traceback
 import time
-from avnav_nmea import NMEAParser
 from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
+
+import numpy
+import scipy.interpolate
+import scipy.optimize
+from avnav_nmea import NMEAParser
 
 try:
     from avnrouter import AVNRouter, WpData
@@ -26,14 +53,14 @@ try:
 except:
     pass
 
-PLUGIN_VERSION = 20240320
+PLUGIN_VERSION = 20240503
 SOURCE = "Sail_Instrument"
 MIN_AVNAV_VERSION = 20230705
 KNOTS = 1.94384  # knots per m/s
 MPS = 1 / KNOTS
 POLAR_FILE = "polar.json"
 HEEL_FILE = "heel.json"
-PATH_PREFIX = "gps.sailinstrument."
+PATH_PREFIX = "gps.sail_instrument."
 SMOOTHING_FACTOR = "smoothing_factor"
 MM_SAMPLES = "minmax_samples"
 GROUND_WIND = "ground_wind"
@@ -415,6 +442,7 @@ class Plugin(object):
 
                 if data["VAR"] is None and all(data.get(k) is not None for k in ("LAT", "LON")):
                     data["VAR"] = self.mag_variation(data["LAT"], data["LON"])
+                    self.msg += ", variation from WMM"
 
                 if self.config[FALLBACK]:
                     if data["HDT"] is None and any(data.get(k) is None for k in ("HDM", "VAR")):
