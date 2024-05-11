@@ -24,15 +24,15 @@
      inkscape:deskcolor="#505050"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="1.6454054"
-     inkscape:cx="396.5588"
-     inkscape:cy="561.25984"
-     inkscape:window-width="2267"
+     inkscape:zoom="26.326487"
+     inkscape:cx="535.86717"
+     inkscape:cy="686.96974"
+     inkscape:window-width="2121"
      inkscape:window-height="2091"
-     inkscape:window-x="390"
+     inkscape:window-x="1671"
      inkscape:window-y="32"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g31705"
+     inkscape:current-layer="layer1"
      showguides="true" />
   <defs
      id="defs2">
@@ -4792,8 +4792,15 @@
          x="210.96658"
          y="60.039082">SET</tspan></text>
     <path
+       style="fill:none;fill-rule:evenodd;stroke:#808080;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="m 139.54814,175.69187 6.57736,9.3885"
+       id="path1490"
+       sodipodi:nodetypes="cc"
+       inkscape:transform-center-x="-21.613063"
+       inkscape:transform-center-y="29.634748" />
+    <path
        style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow2)"
-       d="m 105,200.93205 34.99597,-25.5179"
+       d="M 105,200.93205 138.74871,176.2768"
        id="path30085"
        sodipodi:nodetypes="cc"
        inkscape:transform-center-x="-29.634748"
@@ -5124,5 +5131,24 @@
        sodipodi:nodetypes="cc"
        inkscape:transform-center-x="-12.5378"
        inkscape:transform-center-y="1.9678648" />
+    <path
+       style="fill:none;stroke:#808080;stroke-width:0.264999;stroke-linecap:round;stroke-dasharray:none;paint-order:stroke fill markers"
+       id="path2216"
+       sodipodi:type="arc"
+       sodipodi:cx="139.56693"
+       sodipodi:cy="175.69411"
+       sodipodi:rx="3.279916"
+       sodipodi:ry="3.279916"
+       sodipodi:start="5.6650006"
+       sodipodi:end="0.95668869"
+       sodipodi:arc-type="arc"
+       d="m 142.23983,173.79321 a 3.279916,3.279916 0 0 1 0.56014,2.45338 3.279916,3.279916 0 0 1 -1.34306,2.12815"
+       sodipodi:open="true" />
+    <circle
+       style="fill:#808080;stroke:none;stroke-width:0.264999;stroke-linecap:round;stroke-dasharray:none;paint-order:stroke fill markers"
+       id="path2374"
+       cx="141.38208"
+       cy="175.96532"
+       r="0.27324086" />
   </g>
 </svg>
