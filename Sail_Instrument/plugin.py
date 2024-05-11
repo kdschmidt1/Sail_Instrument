@@ -28,7 +28,6 @@ import os
 import re
 import shutil
 import sys
-import traceback
 import time
 from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 
