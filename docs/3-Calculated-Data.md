@@ -73,45 +73,95 @@ The plugin is able to calculate the [magnetic variation](https://en.wikipedia.or
 It is using the [World Magnetic Model](https://www.ncei.noaa.gov/products/world-magnetic-model).
 The WMM2020 Coefficient file ([wmm2020.cof](../Sail_Instrument/lib/WMM2020.COF)) valid for 2020 - 2025 is included in the software package. The calculation is done with the [geomag-library](https://github.com/cmweiss/geomag). The coefficient file and the library are located in the [`lib` subdirectory](../Sail_Instrument/lib).
 
+## Polar Speed
+
+![polar charts](Images/polar.png)
+
+You have to provide polar data for your boat in `avnav/user/viewer/polar.json` for the calculation of the laylines, polar speed and optimum VMC course. If there is no such file, the plugin will copy [an example file](../Sail_Instrument/polar.json) to this location, and you can use it as a template for your own polar data.
+
+If you do not have any polar data, you can enter tack and gybe angle in the plugin configuration and use these fixed values instead.
+
+A source for polar data can be [ORC sailboat data](https://jieter.github.io/orc-data/site/) or [Seapilot.com](https://www.seapilot.com/features/download-polar-files/).
+
+## Laylines
+
+To understand the technical background of the [laylines](https://en.wikipedia.org/wiki/Layline) one has first to have an understanding of the terms VMG and VMC.
+
+- **VMG** - _Velocity Made Good against
+  wind_ is defined as `VMG = boatspeed * cos(TWA)` boatspeed vector projected onto true wind direction
+- **VMC** - _Velocity Made good on
+  Course_ is defined as `VMC = boatspeed * cos(BRG-HDG)` boatspeed vector projected onto direction to waypoint
+
+Unfortunately there is a lot of confusion on these two terms and also most of the commercial products are mixing the two items and indicate VMG but actually showing VMC (and so does AvNav).
+
+The laylines are computed from the `beat_angle` and `run_angle` vectors in the polar file, which contain a mapping of TWS to TWA for maximum VMG. As a result the laylines show the optimal TWA to travel upwind in general, but not the optimal TWA to get towards the waypoint.
+Optionally it is also possible to calculate the laylines from the STW matrix.
+
+![VMC polar diagram](Images/vmc.png)
+
+From the `STW` matrix in the polar data, which is a mapping of TWS and TWA to STW, one can calculate the _optimal
+TWA_ (red) such that _VMC is maximised_ (purple).
+
+## Leeway estimation
+
+Leeway is [estimated from heel and STW](https://opencpn-manuals.github.io/main/tactics/index.html#_2_2_calculate_leeway) as
+
+$$ LEE = LEF \cdot HEL / STW^2 $$
+
+With LEF being a boat specific factor from within (0,20). Heel could be a measured value (either from `signalk.navigation.attitude.roll` or a specific transducer in `gps.transducers.ROLL`). If this data is not available it is interpolated from the heel polar in [`avnav/user/viewer/heel.json`](../Sail_Instrument/heel.json). As the `polar.json` it contains an interpolation table to map TWA/TWS to heel angle HEL.
+
 ## Equations
 
 ![course data vectors](Images/vectors.svg)
 
 ### Depth Data
 
-The computation of depth data is very straight forward, you enter `draught` and `depth_transducer` in the plugin configuration and depth below surface (DBS) and depth below keel (DBK) are computed.
+The computation of depth is very straight forward, you enter `draught` and `depth_transducer` in the plugin configuration and depth below surface (DBS) and depth below keel (DBK) are computed.
 
-- DBS = DBT + DOT
-- DBK = DBS - DRT
+$$ DBS = DBT + DOT $$
+
+$$ DBK = DBS - DRT $$
 
 ### Heading
 
-$$ HDT = HDM + VAR $$
+True heading is computed from magnetic heading and magnetic variation. To get magnetic heading from a compass, you have to correct for compass deviation (DEV) as well. The values of DEV depends on the heading. A self calibrating electronic compass usually gives you magnetic or even true heading directly.
 
-### Leeway and Course
+$$ HDT = HDM + VAR = HDC + DEV + VAR $$
 
-$$ LEE = LEF \cdot HEL / STW^2 $$
+### Course
+
+Course through water is heading plus leeway. Leeway is estimated as described above.
 
 $$ CRS = HDT + LEE $$
 
-With leeway factor \$LEF = 0..20\$, boat specific
-
 ### Speeds
 
-The computation of speeds is somewhat more complex since it involves vector addition of vectors in polar representation.
+The computation of speed vectors is somewhat more complex since it involves the addition of vectors in polar representation.
 
 The \$\oplus\$ operator denotes the [addition of polar vectors](https://math.stackexchange.com/questions/1365622/adding-two-polar-vectors).
 
 #### Tide
 
+The tide or current vector can be estimated as the difference of COG and SOG obtained from GPS and heading from compass + estimated leeway and water speed from the paddle wheel log.
+
 $$ [SET,DFT] = [COG,SOG] \oplus [CRS,-STW] $$
+
+This equation corresponds to the triangle/parallelogram on the right side of the boat in the sketch above.
 
 #### Wind
 
-angles and directions are always converted like
+In general, angles (xxA, relative to heading) and directions (xxD rel. to true north) are always converted by adding/subtracting true heading HDT.
+
+True wind, which is the wind vector relative to water, can be obtained from apparent wind measured by the wind meter (direction and speed) and water speed. To get the angle right, leeway also enters the equation.
 
 $$ [TWA,TWS] = [AWA,AWS] \oplus [LEE,-STW] $$
 
+The get the true wind direction from the angle, just add true heading.
+
 $$ TWD = TWA + HDT $$
 
+To calculate ground wind (wind vector relative to ground), we use course and speed over ground instead. To convert apparent wind angle to a direction, again, just add true heading.
+
 $$ [GWD,GWS] = [AWA+HDT,AWS] \oplus [COG,-SOG] $$
+
+These equation correspond to the left triangle in the sketch above.
