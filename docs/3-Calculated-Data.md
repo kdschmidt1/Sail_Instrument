@@ -156,7 +156,7 @@ True wind, which is the wind vector relative to water, can be obtained from appa
 
 $$ [TWA,TWS] = [AWA,AWS] \oplus [LEE,-STW] $$
 
-The get the true wind direction from the angle, just add true heading.
+To get the true wind direction from the angle, just add true heading.
 
 $$ TWD = TWA + HDT $$
 
