@@ -164,4 +164,4 @@ To calculate ground wind (wind vector relative to ground), we use course and spe
 
 $$ [GWD,GWS] = [AWA+HDT,AWS] \oplus [COG,-SOG] $$
 
-These equation correspond to the left triangle in the sketch above.
+These equations correspond to the left triangle (actually the same triangle) in the sketch above connecting the wind speed vectors.
