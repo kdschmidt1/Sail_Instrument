@@ -312,7 +312,7 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (data.HDT>=0) {
             DrawOuterRing(ctx, size, maprotation + data.HDT);
         }
-        if (knots(data.DFTF)>=vmin) {
+        if (knots(data.DFTF)>=vmin && data.SETF>=0) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
         if (knots(data.TWSF)>=1) {
