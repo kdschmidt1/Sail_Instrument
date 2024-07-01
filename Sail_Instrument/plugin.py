@@ -106,7 +106,7 @@ INPUT_FIELDS = {
     "HEL": "gps.heelAngle",
     "HEL1": "gps.transducers.ROLL",
     "HEL2": "gps.signalk.navigation.attitude.roll",
-    "DBS": "gps.depthBelowSurface",
+    "DBS": "gps.depthBelowWaterline",
     "DBT": "gps.depthBelowTransducer",
     "DBK": "gps.depthBelowKeel",
 }
@@ -128,6 +128,7 @@ NMEA_SENTENCES = {
     "DBS": "${ID}DBS,,,{data.DBS:.1f},M,,",  # depth below surface
     "DBT": "${ID}DBT,,,{data.DBT:.1f},M,,",  # depth below transducer
     "DBK": "${ID}DBK,,,{data.DBK:.1f},M,,",  # depth below keel
+    "DBT,DOT": "${ID}DPT,{data.DBK:.1f},{data.DOT:.1f},,",  # depth of transducer and offset
 }
 
 CONFIG = [
