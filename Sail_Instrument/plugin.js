@@ -17,10 +17,7 @@ var Sail_InstrumentInfoParameters = {
     },
 };
 
-
-
-
-var intersections
+var intersections;
 
 const formatLL = function(dist, speed, opt_unit) {
     let ret = ["", ""]
@@ -73,7 +70,7 @@ var Sail_InstrumentInfoWidget = {
 
         //var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
         if (typeof(intersections) != 'undefined' && intersections) {
-            if (gpsdata.Displaytype != undefined)
+            if (typeof(gpsdata.Displaytype) != 'undefined')
                 fmtParam = gpsdata.Displaytype
             else
                 fmtParam = ['dist']; //((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
@@ -131,14 +128,17 @@ avnav.api.registerWidget(Sail_InstrumentInfoWidget, Sail_InstrumentInfoParameter
 
 var Sail_InstrumentWidget = {
     name: "Sail_InstrumentWidget",
-    caption: "sail_instrument",
+    caption: "SailInstrument",
     unit: "",
     storeKeys: {
         BRG: 'nav.wp.course',
         POS: 'nav.gps.position',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
-        COG: 'nav.gps.sail_instrument.COG',
+//        COG: 'nav.gps.sail_instrument.COG',
+//        SOG: 'nav.gps.sail_instrument.SOG',
+        COG: 'nav.gps.course',
+        SOG: 'nav.gps.speed',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
         AWDF: 'nav.gps.sail_instrument.AWDF',
@@ -253,7 +253,10 @@ let Sail_Instrument_Overlay = {
         POS: 'nav.gps.position',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
-        COG: 'nav.gps.sail_instrument.COG',
+//        COG: 'nav.gps.sail_instrument.COG',
+//        SOG: 'nav.gps.sail_instrument.SOG',
+        COG: 'nav.gps.course',
+        SOG: 'nav.gps.speed',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
         AWDF: 'nav.gps.sail_instrument.AWDF',
@@ -269,10 +272,10 @@ let Sail_Instrument_Overlay = {
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data, center) {
-        //console.log(data);
+//        console.log(data);
         let ctx = canvas.getContext('2d')
         ctx.save();
-        
+
         if (data.Widgetposition == 'Mapcenter')
             ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
         else if (data.Widgetposition == 'Boatposition') {
@@ -294,6 +297,8 @@ function knots(v){
   return 1.94384*v;
 }
 
+var vmin=0.25;
+
 var red = "red";
 var green = "rgb(0,255,0)";
 var blue = "blue";
@@ -301,10 +306,13 @@ var black = "black";
 var orange = "orange";
 
 function drawWindWidget(ctx,size, maprotation, data){
-        //console.log("draw widget");
-        DrawOuterRing(ctx, size, maprotation + data.HDT);
+//        console.log("draw widget",data);
+        if (typeof(maprotation) == 'undefined') { return; }
         DrawKompassring(ctx, size, maprotation);
-        if (knots(data.DFTF)>=0.3) {
+        if (data.HDT>=0) {
+            DrawOuterRing(ctx, size, maprotation + data.HDT);
+        }
+        if (knots(data.DFTF)>=vmin && data.SETF>=0) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
         if (knots(data.TWSF)>=1) {
@@ -327,11 +335,15 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (knots(data.TWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, blue, data.HDT==data.COG ? 'G' : 'T');
         }
-        if (typeof(data.BRG) != 'undefined') {
+        if (data.BRG>=0) {
             DrawWPIcon(ctx, size, maprotation + data.BRG);
         }
-        DrawEierUhr(ctx, size, maprotation + data.COG, orange, 'T');
-        DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+        if (knots(data.SOG)>=vmin && data.COG>=0) {
+            DrawEierUhr(ctx, size, maprotation + data.COG, orange);
+        }
+        if (data.HDT>=0) {
+            DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+        }
 }
 
 avnav.api.registerWidget(Sail_Instrument_Overlay, Sail_Instrument_OverlayParameter);
@@ -626,7 +638,7 @@ let DrawCourseBox = function(ctx, radius, angle, color, Text) {
 
 }
 
-let DrawEierUhr = function(ctx, radius, angle, color, Text) {
+let DrawEierUhr = function(ctx, radius, angle, color) {
     ctx.save();
 
     var radius_kompassring = radius //0.525*Math.min(x,y);

@@ -28,7 +28,6 @@ import os
 import re
 import shutil
 import sys
-import traceback
 import time
 from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 
@@ -107,7 +106,7 @@ INPUT_FIELDS = {
     "HEL": "gps.heelAngle",
     "HEL1": "gps.transducers.ROLL",
     "HEL2": "gps.signalk.navigation.attitude.roll",
-    "DBS": "gps.depthBelowSurface",
+    "DBS": "gps.depthBelowWaterline",
     "DBT": "gps.depthBelowTransducer",
     "DBK": "gps.depthBelowKeel",
 }
@@ -119,7 +118,7 @@ NMEA_SENTENCES = {
     "HDM": "${ID}HDM,{data.HDM:.1f},M",  # magnetic heading
     "HDT": "${ID}HDT,{data.HDT:.1f},T",  # true heading
     "HDC,DEV,VAR": "${ID}HDG,{data.HDC:.1f},{abs(data.DEV):.1f},{'E' if data.DEV>=0 else 'W'},{abs(data.VAR):.1f},{'E' if data.VAR>=0 else 'W'}",
-    "HDT,HDM,STW": "${ID}VHW,{data.HDT:.1f},T,{data.HDM:.1f},M,{data.STW:.1f},N,,",
+    "HDT,HDM,STW": "${ID}VHW,{data.HDT:.1f},T,{data.HDM:.1f},M,{data.STW*KNOTS:.1f},N,,",
     # true wind direction and speed
     "TWD,TWS": "${ID}MWD,{to360(data.TWD):.1f},T,,,{data.TWS*KNOTS:.1f},N,,",
     # true wind angle and speed
@@ -129,6 +128,7 @@ NMEA_SENTENCES = {
     "DBS": "${ID}DBS,,,{data.DBS:.1f},M,,",  # depth below surface
     "DBT": "${ID}DBT,,,{data.DBT:.1f},M,,",  # depth below transducer
     "DBK": "${ID}DBK,,,{data.DBK:.1f},M,,",  # depth below keel
+    "DBT,DOT": "${ID}DPT,{data.DBK:.1f},{data.DOT:.1f},,",  # depth of transducer and offset
 }
 
 CONFIG = [
@@ -359,9 +359,9 @@ class Plugin(object):
     def mag_variation(self, lat, lon):
         if not self.variation_model:
             try:
-                self.variation_period = self.config[WMM_PERIOD]
-                assert self.variation_period > 0
+                self.variation = None
                 self.variation_time = 0
+                assert self.config[WMM_PERIOD] > 0
                 filename = self.config[WMM_FILE]
                 if "/" not in filename:
                     filename = os.path.join(
@@ -372,15 +372,9 @@ class Plugin(object):
                 # self.api.log(f"WMM error {x}")
                 self.msg += f" WMM error {x}"
                 return
-        if time.monotonic() - self.variation_time > self.variation_period:
+        if self.variation is None or time.monotonic() - self.variation_time > self.config[WMM_PERIOD]:
             self.variation = self.variation_model.GeoMag(lat, lon).dec
             self.variation_time = time.monotonic()
-        try:  # issue #22
-            self.variation
-        except Exception as x:
-            self.variation = self.variation_model.GeoMag(lat, lon).dec
-            self.variation_time = time.monotonic()
-
         return self.variation
 
     def manual_wind(self):
@@ -448,7 +442,7 @@ class Plugin(object):
 
                 if data["VAR"] is None and all(data.get(k) is not None for k in ("LAT", "LON")):
                     data["VAR"] = self.mag_variation(data["LAT"], data["LON"])
-                    self.msg += ", variation from WMM-File"
+                    self.msg += ", variation from WMM"
 
                 if self.config[FALLBACK]:
                     if data["HDT"] is None and any(data.get(k) is None for k in ("HDM", "VAR")):
@@ -462,9 +456,8 @@ class Plugin(object):
                     data["DEV"] = 0
 
                 if data["HEL"] is None and self.heels and all(d.has(k) for k in ("TWAF", "TWSF")):
-                    data["HEL"] = self.heels.value(
-                        d["TWAF"], d["TWSF"] * KNOTS)
-                    all(data.get(k) is not None for k in ("LAT", "LON"))
+                    data["HEL"] = self.heels.value(d["TWAF"], d["TWSF"] * KNOTS)
+                    self.msg += ", heel from polar"
 
                 if data["HEL"] is not None:
                     self.msg += ", leeway estimation"
@@ -507,11 +500,6 @@ class Plugin(object):
                 ID = self.config[TALKER_ID]
                 if nmea_write:
                     for f, s in NMEA_SENTENCES.items():
-                        if not data.has(*f.split(",")):
-                            missing_fields = {
-                                j for j in f.split(",") if data[j] is None}
-                            self.api.debug(
-                                " Error sending NMEA_SENTENCES $%s, Param.: %s -> Missing: %s", s[5:8], f, missing_fields)
                         if any(k in calculated for k in f.split(",")) and data.has(*f.split(",")):
                             s = eval(f"f\"{s}\"")
                             if not nmea_filter or NMEAParser.checkFilter(s, nmea_filter):
@@ -526,7 +514,8 @@ class Plugin(object):
                                 sending.add(s[:6])
 
                 self.api.setStatus(
-                    "NMEA", f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
+                    "NMEA",
+                    f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
             except Exception as x:
                 self.api.setStatus("ERROR", f"{x}")
 
@@ -550,6 +539,7 @@ class Plugin(object):
             assert 0 <= gybe_angle < 180
 
             data.VMCA, data.VMCB = -1, -1
+            data.VPOL, data.POLAR = 0, 0
 
             if upwind and tack_angle or not upwind and gybe_angle:
                 data.LAY = (
@@ -748,8 +738,8 @@ class CourseData:
     ## How to use it
 
     Create CourseData() with the known quantities supplied in the constructor. Then access the calculated
-    quantities as d.TWA or d.["TWA"]. Ask with "TWD" in d if they exist. Just print(d) to see what's inside.
-    See test() for examples.
+    quantities as `d.TWA` or `d.["TWA"]`. Ask with `"TWD" in d` if they exist. Just `print(d)` to see what's inside.
+    See test.py for examples.
     """
 
     def __init__(self, **kwargs):
@@ -770,9 +760,6 @@ class CourseData:
         if self.misses("HDC") and self.has("HDM", "DEV"):
             self.HDC = to360(self.HDM - self.DEV)
 
-        if self.misses("LEF") and self.has("HEL", "STW"):
-            self.LEF = 10
-
         if self.misses("LEE") and self.has("HEL", "STW", "LEF"):
             self.LEE = (
                 max(-30, min(30, self.LEF * self.HEL / self.STW ** 2))
@@ -787,21 +774,17 @@ class CourseData:
             self.CRS = self.HDT + self.LEE
 
         if self.misses("SET", "DFT") and self.has("COG", "SOG", "CRS", "STW"):
-            self.SET, self.DFT = add_polar(
-                (self.COG, self.SOG), (self.CRS, -self.STW))
+            self.SET, self.DFT = add_polar((self.COG, self.SOG), (self.CRS, -self.STW))
 
         if self.misses("COG", "SOG") and self.has("SET", "DFT", "CRS", "STW"):
-            self.COG, self.SOG = add_polar(
-                (self.SET, self.DFT), (self.CRS, self.STW))
+            self.COG, self.SOG = add_polar((self.SET, self.DFT), (self.CRS, self.STW))
 
         if self.misses("TWA", "TWS") and self.has("AWA", "AWS", "STW", "LEE"):
-            self.TWA, self.TWS = add_polar(
-                (self.AWA, self.AWS), (self.LEE, -self.STW))
+            self.TWA, self.TWS = add_polar((self.AWA, self.AWS), (self.LEE, -self.STW))
             self.TWA = self.angle(self.TWA)
 
         if self.misses("TWD", "TWS") and self.has("GWD", "GWS", "SET", "DFT"):
-            self.TWD, self.TWS = add_polar(
-                (self.GWD, self.GWS), (self.SET, self.DFT))
+            self.TWD, self.TWS = add_polar((self.GWD, self.GWS), (self.SET, self.DFT))
 
         if self.misses("AWD") and self.has("AWA", "HDT"):
             self.AWD = to360(self.AWA + self.HDT)
@@ -813,15 +796,13 @@ class CourseData:
             self.TWA = self.angle(self.TWD - self.HDT)
 
         if self.misses("GWD", "GWS") and self.has("AWD", "AWS", "COG", "SOG"):
-            self.GWD, self.GWS = add_polar(
-                (self.AWD, self.AWS), (self.COG, -self.SOG))
+            self.GWD, self.GWS = add_polar((self.AWD, self.AWS), (self.COG, -self.SOG))
 
         if self.misses("GWA") and self.has("GWD", "HDT"):
             self.GWA = self.angle(self.GWD - self.HDT)
 
         if self.misses("AWA", "AWS") and self.has("TWA", "TWS", "LEE", "STW"):
-            self.AWA, self.AWS = add_polar(
-                (self.TWA, self.TWS), (self.LEE, self.STW))
+            self.AWA, self.AWS = add_polar((self.TWA, self.TWS), (self.LEE, self.STW))
             self.AWA = self.angle(self.AWA)
 
         if self.misses("VMG") and self.has("TWD", "CRS", "STW"):
