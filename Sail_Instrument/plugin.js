@@ -17,10 +17,7 @@ var Sail_InstrumentInfoParameters = {
     },
 };
 
-
-
-
-var intersections
+var intersections;
 
 const formatLL = function(dist, speed, opt_unit) {
     let ret = ["", ""]
@@ -73,7 +70,7 @@ var Sail_InstrumentInfoWidget = {
 
         //var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
         if (typeof(intersections) != 'undefined' && intersections) {
-            if (gpsdata.Displaytype != undefined)
+            if (typeof(gpsdata.Displaytype) != 'undefined')
                 fmtParam = gpsdata.Displaytype
             else
                 fmtParam = ['dist']; //((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
@@ -138,8 +135,10 @@ var Sail_InstrumentWidget = {
         POS: 'nav.gps.position',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
-        COG: 'nav.gps.sail_instrument.COG',
-        SOG: 'nav.gps.sail_instrument.SOG',
+//        COG: 'nav.gps.sail_instrument.COG',
+//        SOG: 'nav.gps.sail_instrument.SOG',
+        COG: 'nav.gps.course',
+        SOG: 'nav.gps.speed',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
         AWDF: 'nav.gps.sail_instrument.AWDF',
@@ -254,8 +253,10 @@ let Sail_Instrument_Overlay = {
         POS: 'nav.gps.position',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
-        COG: 'nav.gps.sail_instrument.COG',
-        SOG: 'nav.gps.sail_instrument.SOG',
+//        COG: 'nav.gps.sail_instrument.COG',
+//        SOG: 'nav.gps.sail_instrument.SOG',
+        COG: 'nav.gps.course',
+        SOG: 'nav.gps.speed',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
         AWDF: 'nav.gps.sail_instrument.AWDF',
@@ -271,10 +272,10 @@ let Sail_Instrument_Overlay = {
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data, center) {
-        //console.log(data);
+        console.log(data.COG,data.COG0);
         let ctx = canvas.getContext('2d')
         ctx.save();
-        
+
         if (data.Widgetposition == 'Mapcenter')
             ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
         else if (data.Widgetposition == 'Boatposition') {
@@ -331,11 +332,11 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (knots(data.TWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, blue, data.HDT==data.COG ? 'G' : 'T');
         }
-        if (typeof(data.BRG) != 'undefined') {
+        if (data.BRG>=0) {
             DrawWPIcon(ctx, size, maprotation + data.BRG);
         }
-        if (knots(data.SOG)>=vmin) {
-            DrawEierUhr(ctx, size, maprotation + data.COG, orange, 'T');
+        if (knots(data.SOG)>=vmin && data.COG>=0) {
+            DrawEierUhr(ctx, size, maprotation + data.COG, orange);
         }
         DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
 }
@@ -632,7 +633,7 @@ let DrawCourseBox = function(ctx, radius, angle, color, Text) {
 
 }
 
-let DrawEierUhr = function(ctx, radius, angle, color, Text) {
+let DrawEierUhr = function(ctx, radius, angle, color) {
     ctx.save();
 
     var radius_kompassring = radius //0.525*Math.min(x,y);

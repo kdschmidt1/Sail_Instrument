@@ -538,6 +538,7 @@ class Plugin(object):
             assert 0 <= gybe_angle < 180
 
             data.VMCA, data.VMCB = -1, -1
+            data.VPOL, data.POLAR = 0, 0
 
             if upwind and tack_angle or not upwind and gybe_angle:
                 data.LAY = (
