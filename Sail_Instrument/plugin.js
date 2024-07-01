@@ -272,7 +272,7 @@ let Sail_Instrument_Overlay = {
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data, center) {
-        console.log(data.COG,data.COG0);
+//        console.log(data);
         let ctx = canvas.getContext('2d')
         ctx.save();
 
@@ -307,8 +307,11 @@ var orange = "orange";
 
 function drawWindWidget(ctx,size, maprotation, data){
 //        console.log("draw widget",data);
-        DrawOuterRing(ctx, size, maprotation + data.HDT);
+        if (typeof(maprotation) == 'undefined') { return; }
         DrawKompassring(ctx, size, maprotation);
+        if (data.HDT>=0) {
+            DrawOuterRing(ctx, size, maprotation + data.HDT);
+        }
         if (knots(data.DFTF)>=vmin) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
@@ -338,7 +341,9 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (knots(data.SOG)>=vmin && data.COG>=0) {
             DrawEierUhr(ctx, size, maprotation + data.COG, orange);
         }
-        DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+        if (data.HDT>=0) {
+            DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+        }
 }
 
 avnav.api.registerWidget(Sail_Instrument_Overlay, Sail_Instrument_OverlayParameter);
