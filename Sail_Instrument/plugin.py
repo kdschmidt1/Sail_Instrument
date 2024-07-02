@@ -29,7 +29,7 @@ import re
 import shutil
 import sys
 import time
-from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
+from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign, nan
 
 import numpy
 import scipy.interpolate
@@ -497,9 +497,11 @@ class Plugin(object):
                 calculated -= present
 
                 data.VMIN = self.config[VMIN]
+                if data.misses("COG"): data.COG=-1
+                if data.misses("SOG"): data.SOG=-1
 
                 for k in data.keys():
-                    # print(f"{PATH_PREFIX + k}={data[k]}")
+                    print(f"{PATH_PREFIX + k}={data[k]}")
                     self.writeValue(data, k, PATH_PREFIX + k)
 
                 sending = set()
@@ -845,7 +847,7 @@ class CourseData:
 
     def __contains__(self, item):
         v = self[item]
-        return v is not None and (type(v) != float or isfinite(v))
+        return v is not None #and (type(v) != float or isfinite(v))
 
     def __str__(self):
         return "\n".join(f"{k}={self[k]}" for k in self.keys())

@@ -135,10 +135,8 @@ var Sail_InstrumentWidget = {
         POS: 'nav.gps.position',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
-//        COG: 'nav.gps.sail_instrument.COG',
-//        SOG: 'nav.gps.sail_instrument.SOG',
-        COG: 'nav.gps.course',
-        SOG: 'nav.gps.speed',
+        COG: 'nav.gps.sail_instrument.COG',
+        SOG: 'nav.gps.sail_instrument.SOG',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
         AWDF: 'nav.gps.sail_instrument.AWDF',
@@ -254,10 +252,8 @@ let Sail_Instrument_Overlay = {
         POS: 'nav.gps.position',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
-//        COG: 'nav.gps.sail_instrument.COG',
-//        SOG: 'nav.gps.sail_instrument.SOG',
-        COG: 'nav.gps.course',
-        SOG: 'nav.gps.speed',
+        COG: 'nav.gps.sail_instrument.COG',
+        SOG: 'nav.gps.sail_instrument.SOG',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
         AWDF: 'nav.gps.sail_instrument.AWDF',
@@ -306,7 +302,7 @@ var black = "black";
 var orange = "orange";
 
 function drawWindWidget(ctx,size, maprotation, data){
-        console.log("draw widget",data);
+//        console.log("wind widget",data);
         if (typeof(maprotation) == 'undefined') { return; }
         var vmin = typeof(data.VMIN) == 'undefined' ? 0 : data.VMIN;
         DrawKompassring(ctx, size, maprotation);
