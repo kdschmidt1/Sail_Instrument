@@ -501,7 +501,7 @@ class Plugin(object):
                 if data.misses("SOG"): data.SOG=-1
 
                 for k in data.keys():
-                    print(f"{PATH_PREFIX + k}={data[k]}")
+                    # print(f"{PATH_PREFIX + k}={data[k]}")
                     self.writeValue(data, k, PATH_PREFIX + k)
 
                 sending = set()
@@ -846,7 +846,7 @@ class CourseData:
 
     def __contains__(self, item):
         v = self[item]
-        return v is not None #and (type(v) != float or isfinite(v))
+        return v is not None and (type(v) != float or isfinite(v))
 
     def __str__(self):
         return "\n".join(f"{k}={self[k]}" for k in self.keys())
