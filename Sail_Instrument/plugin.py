@@ -571,7 +571,6 @@ class Plugin(object):
                 data.LAY = self.polar.angle(tws * KNOTS, upwind)
                 self.msg += ", laylines from table"
 
-            data.VPOL, data.POLAR = 0, 0
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
             self.msg += ", VPOL"
 
