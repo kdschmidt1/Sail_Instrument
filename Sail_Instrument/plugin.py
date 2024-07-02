@@ -80,6 +80,7 @@ TALKER_ID = "nmea_id"
 DECODE = "nmea_decode"
 DEPTH_OF_TRANSDUCER = "depth_transducer"
 DRAUGHT = "draught"
+VMIN = "vmin"
 
 INPUT_FIELDS = {
     "LAT": "gps.lat",
@@ -249,6 +250,12 @@ CONFIG = [
         "description": "decode own NMEA sentences",
         "type": "BOOLEAN",
         "default": "True",
+    },
+    {
+        "name": VMIN,
+        "description": "minimal speed (knots) needed to show tide vector or COG marker",
+        "type": "FLOAT",
+        "default": 0.2,
     },
 ]
 
@@ -488,6 +495,8 @@ class Plugin(object):
 
                 calculated = {k for k in data.keys() if data[k] is not None}
                 calculated -= present
+
+                data.VMIN = self.config[VMIN]
 
                 for k in data.keys():
                     # print(f"{PATH_PREFIX + k}={data[k]}")

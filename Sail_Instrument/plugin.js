@@ -150,6 +150,7 @@ var Sail_InstrumentWidget = {
         VMCA: 'nav.gps.sail_instrument.VMCA',
         VMCB: 'nav.gps.sail_instrument.VMCB',
         POLAR: 'nav.gps.sail_instrument.POLAR',
+        VMIN: 'nav.gps.sail_instrument.VMIN',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -268,6 +269,7 @@ let Sail_Instrument_Overlay = {
         VMCA: 'nav.gps.sail_instrument.VMCA',
         VMCB: 'nav.gps.sail_instrument.VMCB',
         POLAR: 'nav.gps.sail_instrument.POLAR',
+        VMIN: 'nav.gps.sail_instrument.VMIN',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -297,8 +299,6 @@ function knots(v){
   return 1.94384*v;
 }
 
-var vmin=0.25;
-
 var red = "red";
 var green = "rgb(0,255,0)";
 var blue = "blue";
@@ -306,8 +306,9 @@ var black = "black";
 var orange = "orange";
 
 function drawWindWidget(ctx,size, maprotation, data){
-//        console.log("draw widget",data);
+        console.log("draw widget",data);
         if (typeof(maprotation) == 'undefined') { return; }
+        var vmin = typeof(data.VMIN) == 'undefined' ? 0 : data.VMIN;
         DrawKompassring(ctx, size, maprotation);
         if (data.HDT>=0) {
             DrawOuterRing(ctx, size, maprotation + data.HDT);
