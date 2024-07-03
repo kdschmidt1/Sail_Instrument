@@ -293,18 +293,6 @@ class Plugin(object):
         self.api.registerEditableParameters(CONFIG, self.changeParam)
         self.api.registerRestart(self.stop)
 
-        try:
-            self.polar = Polar(self.get_file(POLAR_FILE))
-        except:
-            self.polar = None
-
-        try:
-            self.heels = Polar(self.get_file(HEEL_FILE))
-        except:
-            self.heels = None
-
-        self.variation_model = None
-
         self.saveAllConfig()
 
     def stop(self):
@@ -347,6 +335,18 @@ class Plugin(object):
         assert config[PRIORITY] > 0
         assert len(config[TALKER_ID]) == 2
         self.config = config
+
+        try:
+            self.polar = Polar(self.get_file(POLAR_FILE))
+        except:
+            self.polar = None
+
+        try:
+            self.heels = Polar(self.get_file(HEEL_FILE))
+        except:
+            self.heels = None
+
+        self.variation_model = None
 
     def readValue(self, path):
         "prevents reading values that we self have calculated"
