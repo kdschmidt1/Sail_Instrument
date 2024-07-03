@@ -59,6 +59,12 @@ avnav.api.registerFormatter("mySpecialLL", formatLL);
 
 var Sail_InstrumentInfoWidget = {
     name: "Sail_InstrumentInfo",
+    storeKeys: {
+        boatposition: 'nav.gps.position',
+        speed: 'nav.gps.sail_instrument.STW',
+        LLSB: 'nav.gps.sail_instrument.LLSB',
+        LLBB: 'nav.gps.sail_instrument.LLBB',
+    },
     //unit: "nm",
     renderHtml: function(props) {
         let fmtParam = "";
@@ -109,12 +115,6 @@ var Sail_InstrumentInfoWidget = {
                                 						 "
         }
         return (ret)
-    },
-    storeKeys: {
-        boatposition: 'nav.gps.position',
-        speed: 'nav.gps.sail_instrument.STW',
-        LLSB: 'nav.gps.sail_instrument.LLSB',
-        LLBB: 'nav.gps.sail_instrument.LLBB',
     },
     formatter: formatLL,
 };
@@ -312,6 +312,8 @@ function drawWindWidget(ctx,size, maprotation, data){
         DrawKompassring(ctx, size, maprotation);
         if (data.HDT>=0) {
             DrawOuterRing(ctx, size, maprotation + data.HDT);
+        } else {
+          return; // cannot draw anything w/o HDT
         }
         if (knots(data.DFTF)>=vmin && data.SETF>=0) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));

@@ -497,8 +497,8 @@ class Plugin(object):
                 calculated -= present
 
                 data.VMIN = self.config[VMIN]
-                if data.misses("COG"): data.COG=-1
-                if data.misses("SOG"): data.SOG=-1
+                for k in ("COG","SOG","HDT","STW"):
+                    if data.misses(k): data[k] = -1 # explicitly mark as undefined
 
                 for k in data.keys():
                     # print(f"{PATH_PREFIX + k}={data[k]}")
