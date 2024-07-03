@@ -137,7 +137,7 @@ CONFIG = [
         "name": PERIOD,
         "description": "compute period (s)",
         "type": "FLOAT",
-        "default": 1,
+        "default": 0.5,
     },
     {
         "name": SMOOTHING_FACTOR,
@@ -496,9 +496,12 @@ class Plugin(object):
                 calculated = {k for k in data.keys() if data[k] is not None}
                 calculated -= present
 
+                # print(f"{data.TWS*KNOTS:.1f} {data.TWA:.0f} {data.STW*KNOTS:.1f}")
+
                 data.VMIN = self.config[VMIN]
                 for k in ("COG","SOG","HDT","STW"):
                     if data.misses(k): data[k] = -1 # explicitly mark as undefined
+
 
                 for k in data.keys():
                     # print(f"{PATH_PREFIX + k}={data[k]}")
@@ -629,10 +632,11 @@ class Polar:
             val = "STW" if "STW" in self.data else "heel"
             try:
                 interp2d = scipy.interpolate.RectBivariateSpline
+                kw = {"kx":1, "ky":min(1,len(self.data["TWS"])-1)}
             except:
                 interp2d = scipy.interpolate.interp2d
-            self.spl = interp2d(
-                self.data["TWA"], self.data["TWS"], self.data[val])
+                kw = {}
+            self.spl = interp2d(self.data["TWA"], self.data["TWS"], self.data[val],**kw)
 
         return max(0.0, float(self.spl(abs(twa), tws)))
 
