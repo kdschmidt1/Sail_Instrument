@@ -439,7 +439,6 @@ class Plugin(object):
                 data["HEL"] = data["HEL"] or data["HEL1"] or (
                     degrees(data["HEL2"]) if data.get("HEL2") is not None else None)
                 present = {k for k in data.keys() if data[k] is not None}
-
                 data["LEF"] = self.config[LEEWAY_FACTOR] / KNOTS ** 2
 
                 if data["VAR"] is None and all(data.get(k) is not None for k in ("LAT", "LON")):
@@ -528,9 +527,11 @@ class Plugin(object):
                     "NMEA",
                     f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
             except Exception as x:
+                self.api.error("ERROR", f"{x}")
                 self.api.setStatus("ERROR", f"{x}")
-
             time.sleep(self.config[PERIOD])
+        self.api.log("terminated run-loop")
+
 
     def laylines(self, data):
         try:
