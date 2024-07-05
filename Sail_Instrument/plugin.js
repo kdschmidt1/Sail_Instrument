@@ -139,6 +139,7 @@ var Sail_InstrumentWidget = {
 //        SOG: 'nav.gps.sail_instrument.SOG',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
+        STW: 'nav.gps.sail_instrument.STW',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
         AWDF: 'nav.gps.sail_instrument.AWDF',
@@ -147,6 +148,8 @@ var Sail_InstrumentWidget = {
         DFTF: 'nav.gps.sail_instrument.DFTF',
         minTWD: 'nav.gps.sail_instrument.TWDMIN',
         maxTWD: 'nav.gps.sail_instrument.TWDMAX',
+        VMG: 'nav.gps.sail_instrument.VMG',
+        VMC: 'nav.wp.vmg',
         VMCA: 'nav.gps.sail_instrument.VMCA',
         VMCB: 'nav.gps.sail_instrument.VMCB',
         POLAR: 'nav.gps.sail_instrument.POLAR',
@@ -205,17 +208,35 @@ var Sail_InstrumentWidget = {
 
       drawWindWidget(ctx, 100, -data.HDT, data);
 
-      // print AWS/TWS
-//      ctx.save();
-      ctx.fillStyle = "black";
-      ctx.textAlign = "left";
-      ctx.font = "bold " + 0.2*radius + "px Arial";
-      ctx.fillText("AWS", -1.4*radius,-1.3*radius);
-      ctx.fillText(knots(data.AWSF).toFixed(1), -1.4*radius,-1.1*radius);
-      ctx.textAlign = "right";
-      ctx.fillText("TWS", 1.4*radius,-1.3*radius);
-      ctx.fillText(knots(data.TWSF).toFixed(1), 1.4*radius,-1.1*radius);
-//      ctx.restore();
+      // print data fields in corners
+      if(canvas.width>200){
+        ctx.fillStyle = "black";
+        ctx.textAlign = "left";
+        ctx.font = "bold " + 0.2*radius + "px Arial";
+        if(typeof(data.AWSF)=="number" && isFinite(data.AWSF)){
+          ctx.fillText("AWS", -1.4*radius,-1.3*radius);
+          ctx.fillText(knots(data.AWSF).toFixed(1), -1.4*radius,-1.1*radius);
+        }
+        if(typeof(data.TWSF)=="number" && isFinite(data.TWSF)){
+          ctx.textAlign = "right";
+          ctx.fillText("TWS", +1.4*radius,-1.3*radius);
+          ctx.fillText(knots(data.TWSF).toFixed(1), +1.4*radius,-1.1*radius);
+        }
+        if(typeof(data.STW)=="number" && isFinite(data.STW)){
+          ctx.textAlign = "right";
+          ctx.fillText("STW", +1.4*radius,+1.4*radius);
+          ctx.fillText(knots(data.STW).toFixed(1), +1.4*radius,+1.2*radius);
+        }
+        if(typeof(data.VMC)=="number" && isFinite(data.VMC)){
+          ctx.textAlign = "left";
+          ctx.fillText("VMC", -1.4*radius,+1.4*radius);
+          ctx.fillText(knots(data.VMC).toFixed(1), -1.4*radius,+1.2*radius);
+        } else if(typeof(data.VMG)=="number" && isFinite(data.VMG)){
+          ctx.textAlign = "left";
+          ctx.fillText("VMG", -1.4*radius,+1.4*radius);
+          ctx.fillText(knots(data.VMG).toFixed(1), -1.4*radius,+1.2*radius);
+        }
+      }
       ctx.restore();
     },
 };
