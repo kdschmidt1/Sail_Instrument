@@ -442,11 +442,6 @@ class Plugin(object):
 
                 data["LEF"] = self.config[LEEWAY_FACTOR] / KNOTS ** 2
 
-                if all(data.get(k) is None for k in ("AWA", "AWS", "TWA", "TWS", "TWD")):
-                    gwd, gws = self.manual_wind() or (None, None)
-                    data["GWD"], data["GWS"] = gwd, gws
-                    self.msg += f", manually entered wind {(gwd, gws * KNOTS)}" if gwd is not None else ""
-
                 if data["VAR"] is None and all(data.get(k) is not None for k in ("LAT", "LON")):
                     data["VAR"] = self.mag_variation(data["LAT"], data["LON"])
                     self.msg += ", variation from WMM"
@@ -461,6 +456,13 @@ class Plugin(object):
 
                 if data["DEV"] is None:
                     data["DEV"] = 0
+
+                if all(data.get(k) is None for k in ("AWA", "AWS", "TWA", "TWS", "TWD")):
+                    data["GWD"], data["GWS"] = self.manual_wind() or (None, None)
+                    if all(data.get(k) is not None for k in ("GWD","GWS")):
+                      if data["COG"] is None and (data["SOG"] or 0)<self.config[VMIN]:
+                          data["COG"],data["SOG"] = -0.1,0 # allow to compute TW w/o COG if not moving
+                      self.msg += ", manually entered wind"
 
                 if data["HEL"] is None and self.heels and all(d.has(k) for k in ("TWAF", "TWSF")):
                     data["HEL"] = self.heels.value(d["TWAF"], d["TWSF"] * KNOTS)
@@ -575,7 +577,7 @@ class Plugin(object):
                 self.msg += ", laylines from table"
 
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
-            self.msg += ", VPOL"
+            self.msg += ", calculate VPOL"
 
             if self.config[SHOW_POLAR]:
                 values = numpy.array(
