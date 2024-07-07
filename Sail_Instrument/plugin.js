@@ -339,7 +339,7 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (knots(data.DFTF)>=vmin && data.SETF>=0) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
-        if (knots(data.TWSF)>=1 && knots(data.SOG)>=vmin) {
+        if (knots(data.TWSF)>=1) {
           if(data.POLAR){
             drawPolar(ctx,size,maprotation,data,"black");
           }
