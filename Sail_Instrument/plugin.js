@@ -339,19 +339,19 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (knots(data.DFTF)>=vmin && data.SETF>=0) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
-        if (knots(data.TWSF)>=1) {
+        if (knots(data.TWSF)>=1 && knots(data.SOG)>=vmin) {
           if(data.POLAR){
             drawPolar(ctx,size,maprotation,data,"black");
           }
           var mm = [data.minTWD, data.maxTWD];
           DrawLaylineArea(ctx, size, maprotation + data.TWDF - data.LAY, mm, green);
           DrawLaylineArea(ctx, size, maprotation + data.TWDF + data.LAY, mm, red);
-        }
-        if (data.VMCA>=0) {
-          DrawLaylineArea(ctx, size, maprotation + data.VMCA, [0,0], blue);
-        }
-        if (data.VMCB>=0) {
-          DrawLaylineArea(ctx, size, maprotation + data.VMCB, [0,0], "lightblue");
+          if (data.VMCA>=0) {
+            DrawLaylineArea(ctx, size, maprotation + data.VMCA, [0,0], blue);
+          }
+          if (data.VMCB>=0) {
+            DrawLaylineArea(ctx, size, maprotation + data.VMCB, [0,0], "lightblue");
+          }
         }
         if (knots(data.AWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, green, 'A');
