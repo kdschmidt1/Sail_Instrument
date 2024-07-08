@@ -124,11 +124,181 @@ var Sail_InstrumentInfoWidget = {
 avnav.api.registerWidget(Sail_InstrumentInfoWidget, Sail_InstrumentInfoParameters);
 
 
+function clamp(a,x,b){
+  return Math.max(a,Math.min(b,x));
+}
+
+var WindPlotWidget = {
+    name: "WindPlot",
+    caption: "TWD",
+    unit: "°",
+    history: 600,
+    quantity: "TWD",
+    storeKeys: {
+        TIME: 'nav.gps.rtime',
+        AWA: 'nav.gps.sail_instrument.AWA',
+        AWS: 'nav.gps.sail_instrument.AWS',
+        TWA: 'nav.gps.sail_instrument.TWA',
+        TWD: 'nav.gps.sail_instrument.TWD',
+        TWS: 'nav.gps.sail_instrument.TWS',
+        AWAF: 'nav.gps.sail_instrument.AWAF',
+        AWSF: 'nav.gps.sail_instrument.AWSF',
+        TWAF: 'nav.gps.sail_instrument.TWAF',
+        TWDF: 'nav.gps.sail_instrument.TWDF',
+        TWSF: 'nav.gps.sail_instrument.TWSF',
+        TWDA: 'nav.gps.sail_instrument.TWDMIN',
+        TWDB: 'nav.gps.sail_instrument.TWDMAX',
+    },
+    initFunction: function() {},
+    finalizeFunction: function() {},
+    renderCanvas: function(canvas, data) {
+//      console.log(data);
+      let ctx = canvas.getContext('2d');
+      ctx.save();
+      canvas.style.height='99%';
+      let bcr = canvas.getBoundingClientRect();
+      let w = canvas.width = bcr.width;
+      let h = canvas.height = bcr.height;
+
+      if(!(data.TWD>0) || !(data.TWS>0)) return;
+
+//      ctx.scale(w/100,h/100);
+//      ctx.translate(width / 2 * f1 / f, height / 2 * f2 / f);
+      let now=Date.now();
+      let time=data.TIME.valueOf();
+      let tmax=data.history, n=5;
+
+      var m=2*Math.ceil(Math.max(1,Math.abs(data.TWDA),Math.abs(data.TWDB)));
+      var c0 = d=>d.TWA<0?red:green;
+      if(data.quantity=="AWA"){
+        var c=Math.round(data.AWAF);
+        var v0 = d=>to180(d.AWA-c)/m;
+        var v1 = d=>to180(d.AWAF-c)/m;
+      } else if(data.quantity=="TWA"){
+        var c=Math.round(data.TWAF);
+        var v0 = d=>to180(d.TWA-c)/m;
+        var v1 = d=>to180(d.TWAF-c)/m;
+      } else if(data.quantity=="TWD"){
+        var c=Math.round(data.TWDF);
+        var v0 = d=>to180(d.TWD-c)/m;
+        var v1 = d=>to180(d.TWDF-c)/m;
+      } else if(data.quantity=="TWS"){
+        var c=Math.round(data.TWSF);
+        var m=c;
+        var v0 = d=>(d.TWS-c)/m;
+        var v1 = d=>(d.TWSF-c)/m;
+        c0 = d=>"gray";
+      } else if(data.quantity=="AWS"){
+        var c=Math.round(data.AWSF);
+        var m=c;
+        var v0 = d=>(d.AWS-c)/m;
+        var v1 = d=>(d.AWSF-c)/m;
+        var c0 = d=>"gray";
+      }
+      var c1 = blue;
+
+      var f=w>300?Math.min(w/40,30):0;
+      var o=1.4*f;
+
+      let x0=o, x1=w-o, xc=(x0+x1)/2, dx=x1-x0;
+      let y0=o, y1=h-o/4, yc=(y0+y1)/2, dy=y1-y0;
+
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      ctx.font = f.toFixed(0)+"px sans-serif";
+      o=0.45*f;
+      ctx.fillText((c-m/1).toFixed(1).replace(".0",""), x0,y0-o);
+      ctx.fillText((c-m/2).toFixed(1).replace(".0",""), xc-dx/4,y0-o);
+      ctx.fillText(      c.toFixed(1).replace(".0",""), xc,y0-o);
+      ctx.fillText((c+m/2).toFixed(1).replace(".0",""), xc+dx/4,y0-o);
+      ctx.fillText((c+m/1).toFixed(1).replace(".0",""), x1,y0-o);
+
+      ctx.beginPath();
+      ctx.moveTo(xc,y0);
+      ctx.lineTo(xc,y1);
+      ctx.moveTo(xc-dx/4,y0);
+      ctx.lineTo(xc-dx/4,y1);
+      ctx.moveTo(xc+dx/4,y0);
+      ctx.lineTo(xc+dx/4,y1);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "gray";
+      let d=dy/n;
+      ctx.textAlign = "left";
+      for (let i = 1; i<=n; i++) {
+        ctx.fillText((i*tmax/60/n).toFixed(1).replace(".0",""), 5+x1,y0+i*d+5);
+        ctx.moveTo(x0,y0+i*d);
+        ctx.lineTo(x1,y0+i*d);
+      }
+      ctx.stroke();
+
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      let p=[Number.NaN,0];
+
+      var hist=window.windplothist;
+      if(typeof(hist)=="undefined"){
+          window.windplothist=hist=new Map();
+      }
+      hist.set(time,data);
+
+      for (k of hist.keys()) {
+        ctx.beginPath();
+        let t=(now-k)/1000;
+        if(t>tmax){ hist.delete(k); continue; }
+        let x=xc+v0(hist.get(k))*dx/2;
+        let y=y0+t*dy/tmax;
+        ctx.strokeStyle = c0(hist.get(k));
+        ctx.moveTo(clamp(x0,p[0],x1),p[1]);
+        ctx.lineTo(clamp(x0,x,x1),y);
+        p=[x,y];
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = c1;
+      ctx.setLineDash([8,3]);
+      for (k of hist.keys()) {
+        let t=(now-k)/1000;
+        let x=xc+v1(hist.get(k))*dx/2;
+        let y=y0+t*dy/tmax;
+        ctx.lineTo(clamp(x0,x,x1),y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.beginPath();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = black;
+      ctx.rect(x0,y0,dx,dy);
+      ctx.stroke();
+
+      ctx.restore();
+    },
+};
+
+var WindPlotParams = {
+    quantity: {
+        type: 'SELECT',
+        list: ['TWD','TWS','TWA','AWA','AWS'],
+        default: 'TWD'
+    },
+    history: {
+        type: 'NUMBER',
+        default: 600
+    },
+};
+avnav.api.registerWidget(WindPlotWidget, WindPlotParams);
+
+
+/*################################################################################################*/
+
+
 
 
 var Sail_InstrumentWidget = {
     name: "Sail_InstrumentWidget",
-    caption: "SailInstrument",
+    caption: "",
     unit: "",
     storeKeys: {
         BRG: 'nav.wp.course',
@@ -245,6 +415,8 @@ avnav.api.registerWidget(Sail_InstrumentWidget, {});
 
 
 /*################################################################################################*/
+
+
 var Sail_Instrument_OverlayParameter = {
     Widgetposition: {
         type: 'SELECT',

@@ -461,7 +461,7 @@ class Plugin(object):
                     data["GWD"], data["GWS"] = self.manual_wind() or (None, None)
                     if all(data.get(k) is not None for k in ("GWD","GWS")):
                       if data["COG"] is None and (data["SOG"] or 0)<self.config[VMIN]:
-                          data["COG"],data["SOG"] = -0.1,0 # allow to compute TW w/o COG if not moving
+                          data["COG"],data["SOG"] = 0,0 # allow to compute TW w/o COG if not moving
                       self.msg += ", manually entered wind"
 
                 if data["HEL"] is None and self.heels and all(d.has(k) for k in ("TWAF", "TWSF")):
