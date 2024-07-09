@@ -496,12 +496,9 @@ class Plugin(object):
                 calculated = {k for k in data.keys() if data[k] is not None}
                 calculated -= present
 
-                # print(f"{data.TWS*KNOTS:.1f} {data.TWA:.0f} {data.STW*KNOTS:.1f}")
-
                 data.VMIN = self.config[VMIN]
                 for k in ("COG","SOG","HDT","STW"):
                     if data.misses(k): data[k] = -1 # explicitly mark as undefined
-
 
                 for k in data.keys():
                     # print(f"{PATH_PREFIX + k}={data[k]}")
@@ -785,7 +782,7 @@ class CourseData:
             self.LEE = 0
 
         if self.misses("CRS") and self.has("HDT", "LEE"):
-            self.CRS = self.HDT + self.LEE
+            self.CRS = to360(self.HDT + self.LEE)
 
         if self.misses("SET", "DFT") and self.has("COG", "SOG", "CRS", "STW"):
             self.SET, self.DFT = add_polar((self.COG, self.SOG), (self.CRS, -self.STW))
@@ -895,3 +892,4 @@ def add_polar(a, b):
     a, b = toCart(a), toCart(b)
     s = a[0] + b[0], a[1] + b[1]
     return toPol(s)
+
