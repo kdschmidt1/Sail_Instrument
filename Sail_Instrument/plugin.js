@@ -187,17 +187,17 @@ var WindPlotWidget = {
         var v0 = d=>to180(d.TWD-c)/m;
         var v1 = d=>to180(d.TWDF-c)/m;
       } else if(data.quantity=="TWS"){
-        var c=Math.round(data.TWSF*10)/10;
+        var c=Math.round(knots(data.TWSF)*10)/10;
         var m=c;
-        var v0 = d=>(d.TWS-c)/m;
-        var v1 = d=>(d.TWSF-c)/m;
+        var v0 = d=>(knots(d.TWS)-c)/m;
+        var v1 = d=>(knots(d.TWSF)-c)/m;
         var c0 = d=>"gray";
 //        var c1 = d=>blue;
       } else if(data.quantity=="AWS"){
-        var c=Math.round(data.AWSF*10)/10;
+        var c=Math.round(knots(data.AWSF)*10)/10;
         var m=c;
-        var v0 = d=>(d.AWS-c)/m;
-        var v1 = d=>(d.AWSF-c)/m;
+        var v0 = d=>(knots(d.AWS)-c)/m;
+        var v1 = d=>(knots(d.AWSF)-c)/m;
         var c0 = d=>"gray";
 //        var c1 = d=>blue;
       }
