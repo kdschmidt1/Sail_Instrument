@@ -133,6 +133,7 @@ var WindPlotWidget = {
     caption: "TWD",
     unit: "°",
     history: 600,
+    range: 20,
     quantity: "TWD",
     storeKeys: {
         TIME: 'nav.gps.rtime',
@@ -146,8 +147,6 @@ var WindPlotWidget = {
         TWAF: 'nav.gps.sail_instrument.TWAF',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
-        TWDA: 'nav.gps.sail_instrument.TWDMIN',
-        TWDB: 'nav.gps.sail_instrument.TWDMAX',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -172,7 +171,7 @@ var WindPlotWidget = {
       let time=data.TIME.valueOf();
       let tmax=data.history, n=5;
 
-      var m=2*Math.ceil(Math.max(1,Math.abs(data.TWDA),Math.abs(data.TWDB)));
+      var m=data.range;
       var c0 = d=>d.TWA<0 ? red : green;
       var c1 = d=>Math.abs(d.TWA)<70 ? blue : Math.abs(d.TWA)<130 ? "#06c4d1": "#cf9904";
       if(data.quantity=="AWA"){
@@ -188,14 +187,14 @@ var WindPlotWidget = {
         var v0 = d=>to180(d.TWD-c)/m;
         var v1 = d=>to180(d.TWDF-c)/m;
       } else if(data.quantity=="TWS"){
-        var c=Math.round(data.TWSF);
+        var c=Math.round(data.TWSF*10)/10;
         var m=c;
         var v0 = d=>(d.TWS-c)/m;
         var v1 = d=>(d.TWSF-c)/m;
         var c0 = d=>"gray";
 //        var c1 = d=>blue;
       } else if(data.quantity=="AWS"){
-        var c=Math.round(data.AWSF);
+        var c=Math.round(data.AWSF*10)/10;
         var m=c;
         var v0 = d=>(d.AWS-c)/m;
         var v1 = d=>(d.AWSF-c)/m;
@@ -211,11 +210,12 @@ var WindPlotWidget = {
 
       ctx.fillStyle = "black";
       ctx.textAlign = "center";
-      ctx.font = f.toFixed(0)+"px sans-serif";
       o=0.45*f;
+      ctx.font = "bold "+f.toFixed(0)+"px sans-serif";
+      ctx.fillText(      c.toFixed(1).replace(".0",""), xc,y0-o);
+      ctx.font = f.toFixed(0)+"px sans-serif";
       ctx.fillText((c-m/1).toFixed(1).replace(".0",""), x0,y0-o);
       ctx.fillText((c-m/2).toFixed(1).replace(".0",""), xc-dx/4,y0-o);
-      ctx.fillText(      c.toFixed(1).replace(".0",""), xc,y0-o);
       ctx.fillText((c+m/2).toFixed(1).replace(".0",""), xc+dx/4,y0-o);
       ctx.fillText((c+m/1).toFixed(1).replace(".0",""), x1,y0-o);
 
@@ -290,6 +290,10 @@ var WindPlotParams = {
     history: {
         type: 'NUMBER',
         default: 600
+    },
+    range: {
+        type: 'NUMBER',
+        default: 20
     },
 };
 avnav.api.registerWidget(WindPlotWidget, WindPlotParams);
