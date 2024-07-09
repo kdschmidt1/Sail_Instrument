@@ -4,4 +4,5 @@ This plugin for [AvNav](https://www.wellenvogel.net/software/avnav/docs/beschrei
 
 The documentation can be found in the [`docs` directory](docs/0-Documentation.md).
 
-![sail_instrument in AvNav](docs/Images/widget.png)
+![SailInstrument  in AvNav](docs/Images/widget.png)
+![WinDplot in AvNav](docs/Images/windplot.png)
