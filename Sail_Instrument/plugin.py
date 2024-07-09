@@ -480,12 +480,10 @@ class Plugin(object):
 
                 data = d = CourseData(**data)  # compute missing values
 
-                self.smooth(data, "AWA", "AWS")
-                data["AWDF"] = to360(
-                    data["AWAF"] + data["HDT"]) if d.has("AWAF", "HDT") else None
+                # self.smooth(data, "AWD", "AWS")
+                # data["AWAF"] = to360(data["AWDF"] - data["HDT"]) if d.has("AWDF", "HDT") else None
                 self.smooth(data, "TWD", "TWS")
-                data["TWAF"] = to180(
-                    data["TWDF"] - data["HDT"]) if d.has("TWDF", "HDT") else None
+                data["TWAF"] = to180(data["TWDF"] - data["HDT"]) if d.has("TWDF", "HDT") else None
                 self.smooth(data, "SET", "DFT")
                 self.min_max(data, "TWD", lambda v: to180(v - data["TWDF"]))
                 for k in ("AWS", "TWS", "DFT"):
