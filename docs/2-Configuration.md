@@ -32,18 +32,23 @@ You can avoid to transmit a specific record by adding its name as inverse (i.e. 
 ***
 
 
-# The Viewer-Part
+# The Viewer
 
-> ## Two Classical Widgets
+## Widgets
 
 These widgets are installed and configured with the [Layout-Editor](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html?lang=en#h2:LayoutEditor)
-> ### SailinstrumentWidget
-<img src="Images/sailinstrument-Widget.png" width="25%" height="25%">
 
+### Sail Instrument Widget
+
+![SailInstrument in AvNav](Images/widget.png)
+
+### Wind Plot Widget
+
+![WindPlot in AvNav](Images/windplot.png)
 
 There is no specific configuration option available for this widget.
 
-> ### SailinstrumentInfo
+### SailinstrumentInfo
 <img src="Images/sailinstrumentInfo-Widget.png">
 
 
@@ -51,10 +56,10 @@ The configuration offers to select 4 different informations using the Displaytyp
 
 <img src="Images/Sailinstrument-Info.png">
 
-> #####     dist (The distance to the waypoint for each layline individually)
-> #####     time (The time to the waypoint for each layline individually (based on current speed))
-> #####     cum-dist (The cumulated distance to the waypoint for both laylines)
-> #####     cum-time (The cumulated time to the waypoint for both laylines (based on current speed))
+#####     dist (The distance to the waypoint for each layline individually)
+#####     time (The time to the waypoint for each layline individually (based on current speed))
+#####     cum-dist (The cumulated distance to the waypoint for both laylines)
+#####     cum-time (The cumulated time to the waypoint for both laylines (based on current speed))
 
 
 ## Two Map Widgets

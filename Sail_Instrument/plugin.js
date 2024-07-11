@@ -365,6 +365,8 @@ var Sail_InstrumentWidget = {
       ctx.fill();
       ctx.stroke();
 
+      drawWindWidget(ctx, 100, -data.HDT, data);
+
       // print data fields in corners
       if(canvas.width>200){
         function val(label, x, y, speed=false, digits=1) {
@@ -377,6 +379,8 @@ var Sail_InstrumentWidget = {
             ctx.font = "bold "+0.15*radius + "px Arial"; ctx.fillStyle = "gray";
             ctx.fillText(label, x*radius, 0.8*y*radius);
             ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
+            ctx.strokeStyle = "white"; ctx.lineWidth = 0.03 * radius;
+            ctx.strokeText(value.toFixed(digits), x*radius,y*radius);
             ctx.fillText(value.toFixed(digits), x*radius,y*radius);
             ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
             return true;
@@ -390,8 +394,6 @@ var Sail_InstrumentWidget = {
         val("STW", +1.4, +1.4, true);
       }
       ctx.restore();
-
-      drawWindWidget(ctx, 100, -data.HDT, data);
     },
 };
 
