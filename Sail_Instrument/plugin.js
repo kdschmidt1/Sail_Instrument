@@ -365,38 +365,33 @@ var Sail_InstrumentWidget = {
       ctx.fill();
       ctx.stroke();
 
-      drawWindWidget(ctx, 100, -data.HDT, data);
-
       // print data fields in corners
       if(canvas.width>200){
-        ctx.fillStyle = "black";
-        ctx.textAlign = "left";
-        ctx.font = "bold " + 0.2*radius + "px Arial";
-        if(typeof(data.AWS)=="number" && isFinite(data.AWS)){
-          ctx.fillText("AWS", -1.4*radius,-1.3*radius);
-          ctx.fillText(knots(data.AWS).toFixed(1), -1.4*radius,-1.1*radius);
+        function val(label, x, y, speed=false, digits=1) {
+          var value=data[label];
+          if(typeof(value)=="number" && isFinite(value)){
+            value = speed ? knots(value) : value;
+            if(label.endsWith("F")) label=label.substring(0,label.length-1);
+            ctx.textAlign = x<0 ? "left" : "right";
+            ctx.textBaseline = y<0 ? "top" : "bottom";
+            ctx.font = "bold "+0.15*radius + "px Arial"; ctx.fillStyle = "gray";
+            ctx.fillText(label, x*radius, 0.8*y*radius);
+            ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
+            ctx.fillText(value.toFixed(digits), x*radius,y*radius);
+            ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
+            return true;
+          }
+          return false;
         }
-        if(typeof(data.TWSF)=="number" && isFinite(data.TWSF)){
-          ctx.textAlign = "right";
-          ctx.fillText("TWS", +1.4*radius,-1.3*radius);
-          ctx.fillText(knots(data.TWSF).toFixed(1), +1.4*radius,-1.1*radius);
-        }
-        if(typeof(data.STW)=="number" && isFinite(data.STW)){
-          ctx.textAlign = "right";
-          ctx.fillText("STW", +1.4*radius,+1.4*radius);
-          ctx.fillText(knots(data.STW).toFixed(1), +1.4*radius,+1.2*radius);
-        }
-        if(typeof(data.VMC)=="number" && isFinite(data.VMC)){
-          ctx.textAlign = "left";
-          ctx.fillText("VMC", -1.4*radius,+1.4*radius);
-          ctx.fillText(knots(data.VMC).toFixed(1), -1.4*radius,+1.2*radius);
-        } else if(typeof(data.VMG)=="number" && isFinite(data.VMG)){
-          ctx.textAlign = "left";
-          ctx.fillText("VMG", -1.4*radius,+1.4*radius);
-          ctx.fillText(knots(data.VMG).toFixed(1), -1.4*radius,+1.2*radius);
-        }
+
+        val("AWS", -1.4, -1.4, true);
+        val("TWSF", +1.4, -1.4, true);
+        if(!val("VMC", -1.4, +1.4, true)) val("VMG", -1.4, +1.4, true);
+        val("STW", +1.4, +1.4, true);
       }
       ctx.restore();
+
+      drawWindWidget(ctx, 100, -data.HDT, data);
     },
 };
 
@@ -882,6 +877,7 @@ let DrawWindpfeilIcon = function(ctx, radius, angle, color, Text) {
 
     ctx.fillStyle = "rgb(255,255,255)";
     ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
     ctx.font = "bold " + radius / 4 + "px Arial";
     ctx.fillText(Text, 0, -1.02*radius_outer_ring);
     ctx.restore();
