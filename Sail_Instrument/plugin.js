@@ -369,10 +369,11 @@ var Sail_InstrumentWidget = {
 
       // print data fields in corners
       if(canvas.width>200){
-        function val(label, x, y, speed=false, digits=1) {
+        function val(label, x, y, speed=true, digits=1) {
           var value=data[label];
           if(typeof(value)=="number" && isFinite(value)){
             value = speed ? knots(value) : value;
+            value = value.toFixed(digits);
             if(label.endsWith("F")) label=label.substring(0,label.length-1);
             ctx.textAlign = x<0 ? "left" : "right";
             ctx.textBaseline = y<0 ? "top" : "bottom";
@@ -380,18 +381,18 @@ var Sail_InstrumentWidget = {
             ctx.fillText(label, x*radius, 0.8*y*radius);
             ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
             ctx.strokeStyle = "white"; ctx.lineWidth = 0.03 * radius;
-            ctx.strokeText(value.toFixed(digits), x*radius,y*radius);
-            ctx.fillText(value.toFixed(digits), x*radius,y*radius);
+            ctx.strokeText(value, x*radius,y*radius);
+            ctx.fillText(value, x*radius,y*radius);
             ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
             return true;
           }
           return false;
         }
 
-        val("AWS", -1.4, -1.4, true);
-        val("TWSF", +1.4, -1.4, true);
-        if(!val("VMC", -1.4, +1.4, true)) val("VMG", -1.4, +1.4, true);
-        val("STW", +1.4, +1.4, true);
+        val("AWS", -1.4, -1.4);
+        val("TWSF", +1.4, -1.4);
+        if(!val("VMC", -1.4, +1.4)) val("VMG", -1.4, +1.4);
+        if(!val("STW", +1.4, +1.4)) val("SOG", +1.4, +1.4);
       }
       ctx.restore();
     },
