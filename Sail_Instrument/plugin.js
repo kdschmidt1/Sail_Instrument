@@ -163,10 +163,10 @@ var WindPlotWidget = {
       }
       canvas.width=w; canvas.height=h;
 
-      if(!(data.TWD>0) || !(data.TWS>0)) return;
+      let v = data[data.quantity];
+      let valid = typeof(v)=="number" && isFinite(v);
+      if(!valid) return;
 
-//      ctx.scale(w/100,h/100);
-//      ctx.translate(width / 2 * f1 / f, height / 2 * f2 / f);
       let now=Date.now();
       let time=data.TIME.valueOf();
       let tmax=data.history, n=5;
