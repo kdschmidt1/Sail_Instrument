@@ -173,7 +173,7 @@ var WindPlotWidget = {
 
       var m=data.range;
       var c0 = d=>d.TWA<0 ? red : green;
-      var c1 = d=>Math.abs(d.TWA)<70 ? blue : Math.abs(d.TWA)<130 ? "#06c4d1": "#cf9904";
+      var c1 = d=>Math.abs(d.TWA)<70 ? blue : Math.abs(d.TWA)<130 ? "#06c4d1": "#b304de";
       if(data.quantity=="AWA"){
         var c=Math.round(data.AWAF);
         var v0 = d=>to180(d.AWA-c)/m;

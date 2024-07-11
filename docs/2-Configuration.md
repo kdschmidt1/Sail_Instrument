@@ -42,11 +42,26 @@ These widgets are installed and configured with the [Layout-Editor](https://www.
 
 ![SailInstrument in AvNav](Images/widget.png)
 
+The widget shows apparent (A) and true (T) wind directions as triangles on the outer ring. Current HDT is displayed in the box on the top, COG is shown by the orange hour glass shaped marker. The BRG to the waypoint is shown by the yellow circle. If there is current, it is displayed as teal coloured triangle inside the inner ring. Laylines with range of the wind shifts are displayed as red/green dashed lines, a blue line shows the course for optimal VMC. The wind speed polar for current TWS is displayed around the center. 
+
+In the four corners are values of
+
+- AWS current apparent wind speed
+- TWS average true wind speed
+- VMC/VMG current velocity made good
+- STW current water speed
+
 ### Wind Plot Widget
 
 ![WindPlot in AvNav](Images/windplot.png)
 
-There is no specific configuration option available for this widget.
+The wind plot show the history of TWD of the last couple of minutes, newest data is on top. One graph shows the history of raw values, coloured red/green to indicate port/starboard tack. The dashed line is the history of the smoothed data. Here the colour code indicates TWA.
+
+- blue - beating <70°
+- cyan - beam reach <130°
+- magenta - broad reach/run >130°
+
+The history (height) and range (width) can be configured, as well as the displayed value (TWS can be displayed as well). 
 
 ### SailinstrumentInfo
 <img src="Images/sailinstrumentInfo-Widget.png">
