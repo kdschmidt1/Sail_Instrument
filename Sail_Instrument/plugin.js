@@ -17,10 +17,7 @@ var Sail_InstrumentInfoParameters = {
     },
 };
 
-
-
-
-var intersections
+var intersections;
 
 const formatLL = function(dist, speed, opt_unit) {
     let ret = ["", ""]
@@ -62,6 +59,12 @@ avnav.api.registerFormatter("mySpecialLL", formatLL);
 
 var Sail_InstrumentInfoWidget = {
     name: "Sail_InstrumentInfo",
+    storeKeys: {
+        boatposition: 'nav.gps.position',
+        speed: 'nav.gps.sail_instrument.STW',
+        LLSB: 'nav.gps.sail_instrument.LLSB',
+        LLBB: 'nav.gps.sail_instrument.LLBB',
+    },
     //unit: "nm",
     renderHtml: function(props) {
         let fmtParam = "";
@@ -73,7 +76,7 @@ var Sail_InstrumentInfoWidget = {
 
         //var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
         if (typeof(intersections) != 'undefined' && intersections) {
-            if (gpsdata.Displaytype != undefined)
+            if (typeof(gpsdata.Displaytype) != 'undefined')
                 fmtParam = gpsdata.Displaytype
             else
                 fmtParam = ['dist']; //((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
@@ -113,12 +116,6 @@ var Sail_InstrumentInfoWidget = {
         }
         return (ret)
     },
-    storeKeys: {
-        boatposition: 'nav.gps.position',
-        speed: 'nav.gps.sail_instrument.STW',
-        LLSB: 'nav.gps.sail_instrument.LLSB',
-        LLBB: 'nav.gps.sail_instrument.LLBB',
-    },
     formatter: formatLL,
 };
 /**
@@ -127,29 +124,214 @@ var Sail_InstrumentInfoWidget = {
 avnav.api.registerWidget(Sail_InstrumentInfoWidget, Sail_InstrumentInfoParameters);
 
 
+function clamp(a,x,b){
+  return Math.max(a,Math.min(b,x));
+}
+
+var WindPlotWidget = {
+    name: "WindPlot",
+    caption: "TWD",
+    unit: "°",
+    history: 600,
+    range: 20,
+    quantity: "TWD",
+    storeKeys: {
+        TIME: 'nav.gps.rtime',
+        AWA: 'nav.gps.sail_instrument.AWA',
+        AWS: 'nav.gps.sail_instrument.AWS',
+        TWA: 'nav.gps.sail_instrument.TWA',
+        TWD: 'nav.gps.sail_instrument.TWD',
+        TWS: 'nav.gps.sail_instrument.TWS',
+        AWAF: 'nav.gps.sail_instrument.AWAF',
+        AWSF: 'nav.gps.sail_instrument.AWSF',
+        TWAF: 'nav.gps.sail_instrument.TWAF',
+        TWDF: 'nav.gps.sail_instrument.TWDF',
+        TWSF: 'nav.gps.sail_instrument.TWSF',
+    },
+    initFunction: function() {},
+    finalizeFunction: function() {},
+    renderCanvas: function(canvas, data) {
+//      console.log(data);
+      let ctx = canvas.getContext('2d');
+      ctx.save();
+      canvas.style.height='99%';
+      let bcr = canvas.getBoundingClientRect();
+      let w = bcr.width, h = bcr.height;
+      if(w<150){
+          canvas.style.height='';
+          h = w;
+      }
+      canvas.width=w; canvas.height=h;
+
+      let v = data[data.quantity];
+      let valid = typeof(v)=="number" && isFinite(v);
+      if(!valid) return;
+
+      let now=Date.now();
+      let time=data.TIME.valueOf();
+      let tmax=data.history, n=5;
+
+      var m=data.range;
+      var c0 = d=>d.TWA<0 ? red : green;
+      var c1 = d=>Math.abs(d.TWA)<70 ? blue : Math.abs(d.TWA)<130 ? "#06c4d1": "#b304de";
+      if(data.quantity=="AWA"){
+        var c=Math.round(data.AWAF);
+        var v0 = d=>to180(d.AWA-c)/m;
+        var v1 = d=>to180(d.AWAF-c)/m;
+      } else if(data.quantity=="TWA"){
+        var c=Math.round(data.TWAF);
+        var v0 = d=>to180(d.TWA-c)/m;
+        var v1 = d=>to180(d.TWAF-c)/m;
+      } else if(data.quantity=="TWD"){
+        var c=Math.round(data.TWDF);
+        var v0 = d=>to180(d.TWD-c)/m;
+        var v1 = d=>to180(d.TWDF-c)/m;
+      } else if(data.quantity=="TWS"){
+        var c=Math.round(knots(data.TWSF)*10)/10;
+        var m=c;
+        var v0 = d=>(knots(d.TWS)-c)/m;
+        var v1 = d=>(knots(d.TWSF)-c)/m;
+        var c0 = d=>"gray";
+//        var c1 = d=>blue;
+      } else if(data.quantity=="AWS"){
+        var c=Math.round(knots(data.AWSF)*10)/10;
+        var m=c;
+        var v0 = d=>(knots(d.AWS)-c)/m;
+        var v1 = d=>(knots(d.AWSF)-c)/m;
+        var c0 = d=>"gray";
+//        var c1 = d=>blue;
+      }
+
+      var f=w<400 ? 0 : Math.min(w/40,30);
+      var o=1.4*f;
+
+      let x0=o, x1=w-o, xc=(x0+x1)/2, dx=x1-x0;
+      let y0=o, y1=h-o/4, yc=(y0+y1)/2, dy=y1-y0;
+
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      o=0.45*f;
+      ctx.font = "bold "+f.toFixed(0)+"px sans-serif";
+      ctx.fillText(      c.toFixed(1).replace(".0",""), xc,y0-o);
+      ctx.font = f.toFixed(0)+"px sans-serif";
+      ctx.fillText((c-m/1).toFixed(1).replace(".0",""), x0,y0-o);
+      ctx.fillText((c-m/2).toFixed(1).replace(".0",""), xc-dx/4,y0-o);
+      ctx.fillText((c+m/2).toFixed(1).replace(".0",""), xc+dx/4,y0-o);
+      ctx.fillText((c+m/1).toFixed(1).replace(".0",""), x1,y0-o);
+
+      ctx.beginPath();
+      ctx.moveTo(xc,y0);
+      ctx.lineTo(xc,y1);
+      ctx.moveTo(xc-dx/4,y0);
+      ctx.lineTo(xc-dx/4,y1);
+      ctx.moveTo(xc+dx/4,y0);
+      ctx.lineTo(xc+dx/4,y1);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "gray";
+      let d=dy/n;
+      ctx.textAlign = "left";
+      for (let i = 1; i<=n; i++) {
+        ctx.fillText((i*tmax/60/n).toFixed(1).replace(".0",""), 5+x1,y0+i*d+5);
+        ctx.moveTo(x0,y0+i*d);
+        ctx.lineTo(x1,y0+i*d);
+      }
+      ctx.stroke();
+
+      var hist=window.windplothist;
+      if(typeof(hist)=="undefined"){
+          window.windplothist=hist=new Map();
+      }
+      hist.set(time,data);
+
+      function line(val,col,width,dash=[]){
+        ctx.lineWidth = width;
+        ctx.setLineDash(dash);
+        let p=[Number.NaN,0];
+        let c="";
+        ctx.beginPath();
+        for (k of hist.keys()) {
+          let t=(now-k)/1000;
+          if(t>tmax){ hist.delete(k); continue; }
+          let x=xc+val(hist.get(k))*dx/2;
+          let y=y0+t*dy/tmax;
+          let s = col(hist.get(k));
+          if(c!=s){
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.strokeStyle = c = s;
+            ctx.moveTo(clamp(x0,p[0],x1),p[1]);
+          }
+          ctx.lineTo(clamp(x0,x,x1),y);
+          p=[x,y];
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      line(v0,c0,2);
+      line(v1,c1,3,[8,2]);
+
+      ctx.beginPath();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = black;
+      ctx.rect(x0,y0,dx,dy);
+      ctx.stroke();
+
+      ctx.restore();
+    },
+};
+
+var WindPlotParams = {
+    quantity: {
+        type: 'SELECT',
+        list: ['TWD','TWS','TWA','AWA','AWS'],
+        default: 'TWD'
+    },
+    history: {
+        type: 'NUMBER',
+        default: 600
+    },
+    range: {
+        type: 'NUMBER',
+        default: 20
+    },
+};
+avnav.api.registerWidget(WindPlotWidget, WindPlotParams);
+
+
+/*################################################################################################*/
+
+
 
 
 var Sail_InstrumentWidget = {
     name: "Sail_InstrumentWidget",
-    caption: "sail_instrument",
+    caption: "",
     unit: "",
     storeKeys: {
         BRG: 'nav.wp.course',
         POS: 'nav.gps.position',
+        COG: 'nav.gps.course',
+        SOG: 'nav.gps.speed',
+//        COG: 'nav.gps.sail_instrument.COG',
+//        SOG: 'nav.gps.sail_instrument.SOG',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
-        COG: 'nav.gps.sail_instrument.COG',
+        STW: 'nav.gps.sail_instrument.STW',
+        AWD: 'nav.gps.sail_instrument.AWD',
+        AWS: 'nav.gps.sail_instrument.AWS',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
-        AWDF: 'nav.gps.sail_instrument.AWDF',
-        AWSF: 'nav.gps.sail_instrument.AWSF',
         SETF: 'nav.gps.sail_instrument.SETF',
         DFTF: 'nav.gps.sail_instrument.DFTF',
         minTWD: 'nav.gps.sail_instrument.TWDMIN',
         maxTWD: 'nav.gps.sail_instrument.TWDMAX',
+        VMG: 'nav.gps.sail_instrument.VMG',
+        VMC: 'nav.wp.vmg',
         VMCA: 'nav.gps.sail_instrument.VMCA',
         VMCB: 'nav.gps.sail_instrument.VMCB',
         POLAR: 'nav.gps.sail_instrument.POLAR',
+        VMIN: 'nav.gps.sail_instrument.VMIN',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -158,37 +340,19 @@ var Sail_InstrumentWidget = {
       var ctx = canvas.getContext('2d');
       ctx.save();
       // Set scale factor for all values
-      var crect = canvas.getBoundingClientRect();
-      var w = crect.width;
-      var h = crect.height;
-      canvas.width = w;
-      canvas.height = h;
-//      ctx.save();
-      var width = 300;
-      var height = 300;
-      var f1 = w / width;
-      var f2 = h / height;
+      var bcr = canvas.getBoundingClientRect();
+      var w = bcr.width, h = bcr.height;
+      canvas.width = w; canvas.height = h;
+      var size = 300;
+      var f1 = w / size;
+      var f2 = h / size;
       var f = Math.min(f1, f2);
       ctx.scale(f, f);
-      ctx.translate(width / 2 * f1 / f, height / 2 * f2 / f);
+      ctx.translate(w/2/f, h/2/f);
 
-      self = this
-//      ctx.save();
-
-      if (data.Widgetposition == 'Mapcenter')
-          ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
-      else if (data.Widgetposition == 'Boatposition') {
-          if (typeof(data.POS) != 'undefined') {
-              coordinates = this.lonLatToPixel(data.POS.lon, data.POS.lat)
-              ctx.translate(coordinates[0], coordinates[1]);
-          } else
-              ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
-      }
       ctx.globalAlpha *= data.Opacity;
 
      // draw triangle symbolizing the boat
-//      ctx.save();
-      //ctx.rotate(radians(angle));
       ctx.beginPath();
       var radius=100;
       ctx.moveTo(0, -0.75*radius );
@@ -200,21 +364,36 @@ var Sail_InstrumentWidget = {
       ctx.strokeStyle = "black";
       ctx.fill();
       ctx.stroke();
-//      ctx.restore();
 
       drawWindWidget(ctx, 100, -data.HDT, data);
 
-      // print AWS/TWS
-//      ctx.save();
-      ctx.fillStyle = "black";
-      ctx.textAlign = "left";
-      ctx.font = "bold " + 0.2*radius + "px Arial";
-      ctx.fillText("AWS", -1.4*radius,-1.3*radius);
-      ctx.fillText(knots(data.AWSF).toFixed(1), -1.4*radius,-1.1*radius);
-      ctx.textAlign = "right";
-      ctx.fillText("TWS", 1.4*radius,-1.3*radius);
-      ctx.fillText(knots(data.TWSF).toFixed(1), 1.4*radius,-1.1*radius);
-//      ctx.restore();
+      // print data fields in corners
+      if(canvas.width>200){
+        function val(label, x, y, speed=true, digits=1) {
+          var value=data[label];
+          if(typeof(value)=="number" && isFinite(value)){
+            value = speed ? knots(value) : value;
+            value = value.toFixed(digits);
+            if(label.endsWith("F")) label=label.substring(0,label.length-1);
+            ctx.textAlign = x<0 ? "left" : "right";
+            ctx.textBaseline = y<0 ? "top" : "bottom";
+            ctx.font = "bold "+0.15*radius + "px Arial"; ctx.fillStyle = "gray";
+            ctx.fillText(label, x*radius, 0.8*y*radius);
+            ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
+            ctx.strokeStyle = "white"; ctx.lineWidth = 0.03 * radius;
+            ctx.strokeText(value, x*radius,y*radius);
+            ctx.fillText(value, x*radius,y*radius);
+            ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
+            return true;
+          }
+          return false;
+        }
+
+        val("AWS", -1.4, -1.4);
+        val("TWSF", +1.4, -1.4);
+        if(!val("VMC", -1.4, +1.4)) val("VMG", -1.4, +1.4);
+        if(!val("STW", +1.4, +1.4)) val("SOG", +1.4, +1.4);
+      }
       ctx.restore();
     },
 };
@@ -223,6 +402,8 @@ avnav.api.registerWidget(Sail_InstrumentWidget, {});
 
 
 /*################################################################################################*/
+
+
 var Sail_Instrument_OverlayParameter = {
     Widgetposition: {
         type: 'SELECT',
@@ -251,13 +432,16 @@ let Sail_Instrument_Overlay = {
     storeKeys: {
         BRG: 'nav.wp.course',
         POS: 'nav.gps.position',
+        COG: 'nav.gps.course',
+        SOG: 'nav.gps.speed',
+//        COG: 'nav.gps.sail_instrument.COG',
+//        SOG: 'nav.gps.sail_instrument.SOG',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
-        COG: 'nav.gps.sail_instrument.COG',
+        AWD: 'nav.gps.sail_instrument.AWD',
+        AWS: 'nav.gps.sail_instrument.AWS',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
-        AWDF: 'nav.gps.sail_instrument.AWDF',
-        AWSF: 'nav.gps.sail_instrument.AWSF',
         SETF: 'nav.gps.sail_instrument.SETF',
         DFTF: 'nav.gps.sail_instrument.DFTF',
         minTWD: 'nav.gps.sail_instrument.TWDMIN',
@@ -265,25 +449,27 @@ let Sail_Instrument_Overlay = {
         VMCA: 'nav.gps.sail_instrument.VMCA',
         VMCB: 'nav.gps.sail_instrument.VMCB',
         POLAR: 'nav.gps.sail_instrument.POLAR',
+        VMIN: 'nav.gps.sail_instrument.VMIN',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data, center) {
-        //console.log(data);
+//        console.log(data);
         let ctx = canvas.getContext('2d')
         ctx.save();
-        
-        if (data.Widgetposition == 'Mapcenter')
-            ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
-        else if (data.Widgetposition == 'Boatposition') {
+
+        if (data.Widgetposition == 'Mapcenter') {
+            ctx.translate(canvas.width/2, canvas.height/2);
+        } else if (data.Widgetposition == 'Boatposition') {
             if (typeof(data.POS) != 'undefined') {
                 coordinates = this.lonLatToPixel(data.POS.lon, data.POS.lat)
                 ctx.translate(coordinates[0], coordinates[1]);
-            } else
-                ctx.translate(canvas.getAttribute("width") / 2, canvas.getAttribute("height") / 2);
+            } else {
+                return;
+            }
         }
-        ctx.globalAlpha *= data.Opacity;
 
+        ctx.globalAlpha *= data.Opacity;
         drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
         ctx.restore();
     }
@@ -301,10 +487,16 @@ var black = "black";
 var orange = "orange";
 
 function drawWindWidget(ctx,size, maprotation, data){
-        //console.log("draw widget");
-        DrawOuterRing(ctx, size, maprotation + data.HDT);
+//        console.log("wind widget",data);
+        if (typeof(maprotation) == 'undefined') { return; }
+        var vmin = typeof(data.VMIN) == 'undefined' ? 0 : data.VMIN;
         DrawKompassring(ctx, size, maprotation);
-        if (knots(data.DFTF)>=0.3) {
+        if (data.HDT>=0) {
+            DrawOuterRing(ctx, size, maprotation + data.HDT);
+        } else {
+          return; // cannot draw anything w/o HDT
+        }
+        if (knots(data.DFTF)>=vmin && data.SETF>=0) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
         if (knots(data.TWSF)>=1) {
@@ -314,24 +506,28 @@ function drawWindWidget(ctx,size, maprotation, data){
           var mm = [data.minTWD, data.maxTWD];
           DrawLaylineArea(ctx, size, maprotation + data.TWDF - data.LAY, mm, green);
           DrawLaylineArea(ctx, size, maprotation + data.TWDF + data.LAY, mm, red);
+          if (data.VMCA>=0) {
+            DrawLaylineArea(ctx, size, maprotation + data.VMCA, [0,0], blue);
+          }
+          if (data.VMCB>=0) {
+            DrawLaylineArea(ctx, size, maprotation + data.VMCB, [0,0], "lightblue");
+          }
         }
-        if (data.VMCA>=0) {
-          DrawLaylineArea(ctx, size, maprotation + data.VMCA, [0,0], blue);
-        }
-        if (data.VMCB>=0) {
-          DrawLaylineArea(ctx, size, maprotation + data.VMCB, [0,0], "lightblue");
-        }
-        if (knots(data.AWSF)>=1) {
-            DrawWindpfeilIcon(ctx, size, maprotation + data.AWDF, green, 'A');
+        if (knots(data.AWS)>=1) {
+            DrawWindpfeilIcon(ctx, size, maprotation + data.AWD, green, 'A');
         }
         if (knots(data.TWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, blue, data.HDT==data.COG ? 'G' : 'T');
         }
-        if (typeof(data.BRG) != 'undefined') {
+        if (data.BRG>=0) {
             DrawWPIcon(ctx, size, maprotation + data.BRG);
         }
-        DrawEierUhr(ctx, size, maprotation + data.COG, orange, 'T');
-        DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+        if (knots(data.SOG)>=vmin && data.COG>=0) {
+            DrawEierUhr(ctx, size, maprotation + data.COG, orange);
+        }
+        if (data.HDT>=0) {
+            DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+        }
 }
 
 avnav.api.registerWidget(Sail_Instrument_Overlay, Sail_Instrument_OverlayParameter);
@@ -626,7 +822,7 @@ let DrawCourseBox = function(ctx, radius, angle, color, Text) {
 
 }
 
-let DrawEierUhr = function(ctx, radius, angle, color, Text) {
+let DrawEierUhr = function(ctx, radius, angle, color) {
     ctx.save();
 
     var radius_kompassring = radius //0.525*Math.min(x,y);
@@ -684,6 +880,7 @@ let DrawWindpfeilIcon = function(ctx, radius, angle, color, Text) {
 
     ctx.fillStyle = "rgb(255,255,255)";
     ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
     ctx.font = "bold " + radius / 4 + "px Arial";
     ctx.fillText(Text, 0, -1.02*radius_outer_ring);
     ctx.restore();
