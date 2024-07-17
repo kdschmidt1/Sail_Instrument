@@ -124,8 +124,8 @@ var Sail_InstrumentInfoWidget = {
 avnav.api.registerWidget(Sail_InstrumentInfoWidget, Sail_InstrumentInfoParameters);
 
 
-function clamp(a,x,b){
-  return Math.max(a,Math.min(b,x));
+function clamp(smallest,x,largest){
+  return Math.max(smallest,Math.min(largest,x));
 }
 
 var WindPlotWidget = {
@@ -168,7 +168,7 @@ var WindPlotWidget = {
       if(!valid) return;
 
       let now=Date.now();
-      let time=data.TIME.valueOf();
+      var time=data.TIME.valueOf();
       let tmax=data.history, n=5;
 
       var m=data.range;
@@ -178,6 +178,7 @@ var WindPlotWidget = {
         var c=Math.round(data.AWAF);
         var v0 = d=>to180(d.AWA-c)/m;
         var v1 = d=>to180(d.AWAF-c)/m;
+        c=to180(c);
       } else if(data.quantity=="TWA"){
         var c=Math.round(data.TWAF);
         var v0 = d=>to180(d.TWA-c)/m;
