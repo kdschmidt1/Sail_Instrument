@@ -147,6 +147,14 @@ var WindPlotWidget = {
         TWAF: 'nav.gps.sail_instrument.TWAF',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
+        COG: 'nav.gps.course',
+        SOG: 'nav.gps.speed',
+        HDT: 'nav.gps.sail_instrument.HDT',
+        STW: 'nav.gps.sail_instrument.STW',
+        HEL: 'nav.gps.sail_instrument.HEL',
+        DBS: 'nav.gps.sail_instrument.DBS',
+        DBT: 'nav.gps.sail_instrument.DBT',
+        DBK: 'nav.gps.sail_instrument.DBK',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -165,41 +173,118 @@ var WindPlotWidget = {
 
       let v = data[data.quantity];
       let valid = typeof(v)=="number" && isFinite(v);
+//      console.log(data.quantity,v);
       if(!valid) return;
 
       let time=data.TIME.valueOf();
       let tmax=data.history, n=5;
 
-      var m=data.range;
-      var c0 = d=>d.TWA<0 ? red : green;
-      var c1 = d=>Math.abs(d.TWA)<70 ? blue : Math.abs(d.TWA)<130 ? "#06c4d1": "#b304de";
+      var hist=window.windplothist;
+      if(typeof(hist)=="undefined"){
+          window.windplothist=hist=new Map();
+      }
+      hist.set(time,data);
+
+      function maxrange(name,c){
+        let min=data[name]; let max=min;
+        if(typeof(c)!="undefined"){
+          min=max=0;
+        }
+        for (let [k,d] of hist) {
+          let v = d[name];
+          if(typeof(c)!="undefined"){
+            v = to180(v-c);
+          }
+          if(v){
+            min = Math.min(min,v);
+            max = Math.max(max,v);
+          }
+        }
+        return Math.ceil(Math.max(1,max-min));
+      }
+
+      var q = data.quantity;
+      var r = data.range;
+      var xtick = x => x.toFixed(1).replace(".0","");
+      var c0 = d => d.AWA<0 ? red : d.AWA>0 ? green : blue;
+      var c1 = d => Math.abs(d.TWA)<70 ? blue : Math.abs(d.TWA)<130 ? "#06c4d1": "#b304de";
+      var v1 = false;
+
       if(data.quantity=="AWA"){
-        var c=Math.round(data.AWAF);
+        var c = Math.round(data.AWAF);
+        var m = r>0 ? r : maxrange(q,c);
+        var xtick = x => to180(x).toFixed(1).replace(".0","");
         var v0 = d=>to180(d.AWA-c)/m;
         var v1 = d=>to180(d.AWAF-c)/m;
+
       } else if(data.quantity=="TWA"){
-        var c=Math.round(data.TWAF);
+        var c = Math.round(data.TWAF);
+        var m = r>0 ? r : maxrange(q,c);
+        var xtick = x => to180(x).toFixed(1).replace(".0","");
         var v0 = d=>to180(d.TWA-c)/m;
         var v1 = d=>to180(d.TWAF-c)/m;
+
       } else if(data.quantity=="TWD"){
-        var c=Math.round(data.TWDF);
+        var c = Math.round(data.TWDF);
+        var m = r>0 ? r : maxrange(q,c);
+        var xtick = x => to360(x).toFixed(1).replace(".0","");
         var v0 = d=>to180(d.TWD-c)/m;
         var v1 = d=>to180(d.TWDF-c)/m;
+
       } else if(data.quantity=="TWS"){
-        var c=Math.round(knots(data.TWSF)*10)/10;
-        var m=c;
+        var c = r>0 ? r/2 : Math.round(knots(data.TWSF)*10)/10;
+        var m = c;
         var v0 = d=>(knots(d.TWS)-c)/m;
         var v1 = d=>(knots(d.TWSF)-c)/m;
         var c0 = d=>"gray";
-//        var c1 = d=>blue;
+
       } else if(data.quantity=="AWS"){
-        var c=Math.round(knots(data.AWSF)*10)/10;
-        var m=c;
+        var c = r>0 ? r/2 : Math.round(knots(data.AWSF)*10)/10;
+        var m = c;
         var v0 = d=>(knots(d.AWS)-c)/m;
         var v1 = d=>(knots(d.AWSF)-c)/m;
         var c0 = d=>"gray";
-//        var c1 = d=>blue;
+
+      } else if(data.quantity=="COG"){
+        var c = Math.round(data.COG);
+        var m = r>0 ? r : maxrange(q,c);
+        var xtick = x => to360(x).toFixed(1).replace(".0","");
+        var v0 = d=>to180(d.COG-c)/m;
+        var c0 = d=>blue;
+
+      } else if(data.quantity=="SOG"){
+        var c = Math.round(knots(data.SOG)*10)/10;
+        var m = c;
+        var v0 = d=>(knots(d.SOG)-c)/m;
+        var c0 = d=>"gray";
+
+      } else if(data.quantity=="HDT"){
+        var c = Math.round(data.HDT);
+        var m = r>0 ? r : maxrange(q,c);
+        var xtick = x => to360(x).toFixed(1).replace(".0","");
+        var v0 = d=>to180(d.HDT-c)/m;
+        var c0 = d=>blue;
+
+      } else if(data.quantity=="STW"){
+        var c = r>0 ? r/2 : Math.round(knots(data.STW)*10)/10;
+        var m = c;
+        var v0 = d=>(knots(d.STW)-c)/m;
+        var c0 = d=>"gray";
+
+      } else if(data.quantity=="HEL"){
+        var c = 0;
+        var m = r>0 ? r : maxrange(q);
+        var v0 = d=>d.HEL/m;
+        var c0 = d=>blue;
+
+      } else if(data.quantity=="DBS"){
+        var c = r>0 ? r/2 : Math.round(knots(data.DBS)*10)/10; m = c;
+        var m = c;
+        var v0 = d=>(d.DBS-c)/m;
+        var c0 = d=>blue;
       }
+
+//      console.log(q,data[q],r,c,m);
 
       var f=w<400 ? 0 : Math.min(w/40,30);
       var o=1.4*f;
@@ -211,12 +296,12 @@ var WindPlotWidget = {
       ctx.textAlign = "center";
       o=0.45*f;
       ctx.font = "bold "+f.toFixed(0)+"px sans-serif";
-      ctx.fillText(      c.toFixed(1).replace(".0",""), xc,y0-o);
+      ctx.fillText(xtick(c), xc,y0-o);
       ctx.font = f.toFixed(0)+"px sans-serif";
-      ctx.fillText((c-m/1).toFixed(1).replace(".0",""), x0,y0-o);
-      ctx.fillText((c-m/2).toFixed(1).replace(".0",""), xc-dx/4,y0-o);
-      ctx.fillText((c+m/2).toFixed(1).replace(".0",""), xc+dx/4,y0-o);
-      ctx.fillText((c+m/1).toFixed(1).replace(".0",""), x1,y0-o);
+      ctx.fillText(xtick(c-m/1), x0,y0-o);
+      ctx.fillText(xtick(c+m/1), x1,y0-o);
+      ctx.fillText(xtick(c-m/2), xc-dx/4,y0-o);
+      ctx.fillText(xtick(c+m/2), xc+dx/4,y0-o);
 
       ctx.beginPath();
       ctx.moveTo(xc,y0);
@@ -236,20 +321,15 @@ var WindPlotWidget = {
       }
       ctx.stroke();
 
-      var hist=window.windplothist;
-      if(typeof(hist)=="undefined"){
-          window.windplothist=hist=new Map();
-      }
-      hist.set(time,data);
-
       function line(val,col,width,dash=[]){
+        if(!val) return;
         ctx.lineWidth = width;
         ctx.setLineDash(dash);
         let p=[Number.NaN,0];
         let c="";
         ctx.beginPath();
         for (k of hist.keys()) {
-          let t=(time-k)/1000;
+          let t=Math.max(0,time-k)/1000;
           if(t>tmax){ hist.delete(k); continue; }
           let x=xc+val(hist.get(k))*dx/2;
           let y=y0+t*dy/tmax;
@@ -283,7 +363,7 @@ var WindPlotWidget = {
 var WindPlotParams = {
     quantity: {
         type: 'SELECT',
-        list: ['TWD','TWS','TWA','AWA','AWS'],
+        list: ['TWD','TWS','TWA','AWA','AWS','COG','SOG','HDT','STW','HEL','DBS'],
         default: 'TWD'
     },
     history: {
@@ -292,7 +372,7 @@ var WindPlotParams = {
     },
     range: {
         type: 'NUMBER',
-        default: 20
+        default: 0
     },
 };
 avnav.api.registerWidget(WindPlotWidget, WindPlotParams);

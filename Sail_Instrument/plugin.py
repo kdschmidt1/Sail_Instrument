@@ -29,7 +29,7 @@ import re
 import shutil
 import sys
 import time
-from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign, nan
+from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
 
 import numpy
 import scipy.interpolate
@@ -465,7 +465,7 @@ class Plugin(object):
                       self.msg += ", manually entered wind"
 
                 if data["HEL"] is None and self.heels and all(d.has(k) for k in ("TWAF", "TWSF")):
-                    data["HEL"] = self.heels.value(d["TWAF"], d["TWSF"] * KNOTS)
+                    data["HEL"] = copysign(self.heels.value(d["TWAF"], d["TWSF"] * KNOTS), -d["TWAF"])
                     self.msg += ", heel from polar"
 
                 if data["HEL"] is not None:
