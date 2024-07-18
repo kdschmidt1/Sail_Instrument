@@ -167,7 +167,6 @@ var WindPlotWidget = {
       let valid = typeof(v)=="number" && isFinite(v);
       if(!valid) return;
 
-      let now=Date.now();
       let time=data.TIME.valueOf();
       let tmax=data.history, n=5;
 
@@ -250,7 +249,7 @@ var WindPlotWidget = {
         let c="";
         ctx.beginPath();
         for (k of hist.keys()) {
-          let t=(now-k)/1000;
+          let t=(time-k)/1000;
           if(t>tmax){ hist.delete(k); continue; }
           let x=xc+val(hist.get(k))*dx/2;
           let y=y0+t*dy/tmax;
