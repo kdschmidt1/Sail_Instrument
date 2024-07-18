@@ -476,7 +476,7 @@ class Plugin(object):
                 data["DOT"] = dot if dot >= 0 else None
                 data["DRT"] = draught if draught >= 0 else None
 
-                data = {k: (to180(v) if k.endswith("A") else v) for k, v in data.items() if len(k) == 3} 
+                data = {k: (to180(v) if k.endswith("A") and v else v) for k, v in data.items() if len(k) == 3}
 
                 data = d = CourseData(**data)  # compute missing values
 
