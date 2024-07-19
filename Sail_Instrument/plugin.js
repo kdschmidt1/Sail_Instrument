@@ -278,7 +278,7 @@ var WindPlotWidget = {
         var c0 = d=>blue;
 
       } else if(data.quantity=="DBS"){
-        var c = r>0 ? r/2 : Math.round(knots(data.DBS)*10)/10; m = c;
+        var c = r>0 ? r/2 : Math.round(data.DBS*10)/10;
         var m = c;
         var v0 = d=>(d.DBS-c)/m;
         var c0 = d=>blue;
@@ -330,7 +330,8 @@ var WindPlotWidget = {
         ctx.beginPath();
         for (k of hist.keys()) {
           let t=Math.max(0,time-k)/1000;
-          if(t>tmax){ hist.delete(k); continue; }
+          if(t>tmax){ continue; }
+          if(t>1800){ hist.delete(k); continue; }
           let x=xc+val(hist.get(k))*dx/2;
           let y=y0+t*dy/tmax;
           let s = col(hist.get(k));
