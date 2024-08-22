@@ -173,7 +173,19 @@ This equation corresponds to the triangle/parallelogram on the right side of the
 
 ### Wind
 
-In general, angles (xxA, relative to heading) and directions (xxD rel. to true north) are always converted by adding/subtracting true heading HDT.
+- AWS = Apparent Wind Speed = wind speed relativ of boat, measured by the wind sensor
+- AWA = Apparent Wind Angle = angle between the direction of the apparent wind (where it comes from) and the direction the bow is pointing to (heading), measured by the wind sensor
+- AWD = Apparent Wind Direction = direction of the wind relative to true north (usually not used)
+- TWS = True Wind Speed = wind speed relative to the surface of the water, true wind is calculated from apparent wind, heading, waterspeed (and leeway)
+- TWA = True Wind Angle = angle between the direction of the true wind and heading
+- TWD = True Wind Direction = direction of the true wind relative to true north
+- GWS = Ground Wind Speed = wind speed relative to the ground, ground wind is calculated from apparent wind, heading, course and speed over ground, in the weather forecast
+- GWA = Ground Wind Angle = angle between the direction of the ground wind and heading (usually not used)
+- GWD = Ground Wind Direction = direction of the ground wind relative to true north, in the weather forecast
+
+ In general, angles (xxA, relative to heading) and directions (xxD rel. to true north) are always converted by adding/subtracting true heading HDT.
+
+$$ xxD = xxA + HDT, xxA = xxD - HDT $$
 
 True wind, which is the wind vector relative to water, can be obtained from apparent wind measured by the wind meter (direction and speed) and water speed. To get the angle right, leeway also enters the equation.
 
