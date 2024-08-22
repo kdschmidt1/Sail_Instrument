@@ -173,8 +173,8 @@ This equation corresponds to the triangle/parallelogram on the right side of the
 
 ### Wind
 
-- AWS = Apparent Wind Speed = wind speed relativ of boat, measured by the wind sensor
-- AWA = Apparent Wind Angle = angle between the direction of the apparent wind (where it comes from) and the direction the bow is pointing to (heading), measured by the wind sensor
+- AWS = Apparent Wind Speed = wind speed relativ to boat, measured by the wind sensor
+- AWA = Apparent Wind Angle = angle between the direction of apparent wind (where it comes from) and direction the bow is pointing to (heading), measured by the wind sensor
 - AWD = Apparent Wind Direction = direction of the wind relative to true north (usually not used)
 - TWS = True Wind Speed = wind speed relative to the surface of the water, true wind is calculated from apparent wind, heading, waterspeed (and leeway)
 - TWA = True Wind Angle = angle between the direction of the true wind and heading
