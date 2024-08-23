@@ -572,6 +572,8 @@ class Plugin(object):
                 self.msg += ", laylines from table"
 
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
+            if data.has("VPOL","STW"):
+                data.VPP = data.STW/data.VPOL*100
             self.msg += ", calculate VPOL"
 
             if self.config[SHOW_POLAR]:
