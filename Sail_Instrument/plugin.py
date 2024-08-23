@@ -869,8 +869,6 @@ class CourseData:
 
 def to360(a):
     "limit a to [0,360)"
-    while a < 0:
-        a += 360
     return a % 360
 
 
