@@ -134,6 +134,7 @@ var WindPlotWidget = {
     unit: "°",
     history: 600,
     range: 20,
+    aspect: 1,
     quantity: "TWD",
     storeKeys: {
         TIME: 'nav.gps.rtime',
@@ -160,6 +161,9 @@ var WindPlotWidget = {
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data) {
 //      console.log(data);
+      let time=data.TIME.valueOf();
+      let tmax=data.history, n=5;
+
       let ctx = canvas.getContext('2d');
       ctx.save();
       canvas.style.height='99%';
@@ -167,7 +171,7 @@ var WindPlotWidget = {
       let w = bcr.width, h = bcr.height;
       if(w<150){
           canvas.style.height='';
-          h = w;
+          h = w*data.aspect;
       }
       canvas.width=w; canvas.height=h;
 
@@ -175,9 +179,6 @@ var WindPlotWidget = {
       let valid = typeof(v)=="number" && isFinite(v);
 //      console.log(data.quantity,v);
       if(!valid) return;
-
-      let time=data.TIME.valueOf();
-      let tmax=data.history, n=5;
 
       var hist=window.windplothist;
       if(typeof(hist)=="undefined"){
@@ -375,6 +376,10 @@ var WindPlotParams = {
         type: 'NUMBER',
         default: 0
     },
+    aspect: {
+        type: 'NUMBER',
+        default: 1
+    },
 };
 avnav.api.registerWidget(WindPlotWidget, WindPlotParams);
 
@@ -498,6 +503,10 @@ var Sail_Instrument_OverlayParameter = {
         type: 'NUMBER',
         default: 1
     },
+    Rings: {
+        type: 'BOOLEAN',
+        default: true
+    },
 };
 
 let Sail_Instrument_Overlay = {
@@ -570,16 +579,17 @@ function drawWindWidget(ctx,size, maprotation, data){
 //        console.log("wind widget",data);
         if (typeof(maprotation) == 'undefined') { return; }
         var vmin = typeof(data.VMIN) == 'undefined' ? 0 : data.VMIN;
-        DrawKompassring(ctx, size, maprotation);
+        var rings = typeof(data.Rings) == 'undefined' ? true : data.Rings;
+        if(rings) DrawKompassring(ctx, size, maprotation);
         if (data.HDT>=0) {
-            DrawOuterRing(ctx, size, maprotation + data.HDT);
+          if(rings) DrawOuterRing(ctx, size, maprotation + data.HDT);
         } else {
           return; // cannot draw anything w/o HDT
         }
         if (knots(data.DFTF)>=vmin && data.SETF>=0) {
             drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
         }
-        if (knots(data.TWSF)>=1) {
+        if (knots(data.TWSF)>=1 && rings) {
           if(data.POLAR){
             drawPolar(ctx,size,maprotation,data,"black");
           }
@@ -599,14 +609,16 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (knots(data.TWSF)>=1) {
             DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, blue, data.HDT==data.COG ? 'G' : 'T');
         }
-        if (data.BRG>=0) {
-            DrawWPIcon(ctx, size, maprotation + data.BRG);
-        }
-        if (knots(data.SOG)>=vmin && data.COG>=0) {
-            DrawEierUhr(ctx, size, maprotation + data.COG, orange);
-        }
-        if (data.HDT>=0) {
-            DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+        if(rings) {
+          if (data.BRG>=0) {
+              DrawWPIcon(ctx, size, maprotation + data.BRG);
+          }
+          if (knots(data.SOG)>=vmin && data.COG>=0) {
+              DrawEierUhr(ctx, size, maprotation + data.COG, orange);
+          }
+          if (data.HDT>=0) {
+              DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+          }
         }
 }
 
