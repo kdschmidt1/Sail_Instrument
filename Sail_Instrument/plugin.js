@@ -550,7 +550,7 @@ let Sail_Instrument_Overlay = {
         if (data.Widgetposition == 'Mapcenter') {
             ctx.translate(canvas.width/2, canvas.height/2);
         } else if (data.Widgetposition == 'Boatposition') {
-            if (typeof(data.POS) != 'undefined') {
+            if (typeof(data.POS) != 'undefined' && data.POS.lat!=0 && data.POS.lon!=0) {
                 coordinates = this.lonLatToPixel(data.POS.lon, data.POS.lat)
                 ctx.translate(coordinates[0], coordinates[1]);
             } else {
