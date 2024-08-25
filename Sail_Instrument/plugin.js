@@ -160,7 +160,8 @@ var WindPlotWidget = {
     initFunction: function() {},
     finalizeFunction: function() {},
     renderCanvas: function(canvas, data) {
-//      console.log(data);
+      // console.log(data);
+      if(typeof(data.TIME)=="undefined") return;
       let time=data.TIME.valueOf();
       let tmax=data.history, n=5;
 
