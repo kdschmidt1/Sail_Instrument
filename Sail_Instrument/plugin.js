@@ -124,8 +124,8 @@ var Sail_InstrumentInfoWidget = {
 avnav.api.registerWidget(Sail_InstrumentInfoWidget, Sail_InstrumentInfoParameters);
 
 
-function clamp(a,x,b){
-  return Math.max(a,Math.min(b,x));
+function clamp(smallest,x,largest){
+  return Math.max(smallest,Math.min(largest,x));
 }
 
 var WindPlotWidget = {
@@ -332,6 +332,7 @@ var WindPlotWidget = {
         ctx.beginPath();
         for (k of hist.keys()) {
           let t=Math.max(0,time-k)/1000;
+          if(t>1800){ continue; }
           if(t>1800){ hist.delete(k); continue; }
           if(t>tmax){ continue; }
           let x=xc+val(hist.get(k))*dx/2;
