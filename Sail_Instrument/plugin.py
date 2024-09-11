@@ -361,7 +361,7 @@ class Plugin(object):
             return
         a = self.api.getSingleValue(path, includeInfo=True)
         if a is None or SOURCE in a.source:
-            self.api.addData(path, data[key])
+            self.api.addData(path, data[key], source=SOURCE)
 
     def mag_variation(self, lat, lon):
         if not self.variation_model:
