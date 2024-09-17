@@ -498,7 +498,7 @@ class Plugin(object):
 
                 data.VMIN = self.config[VMIN]
                 # for k in ("COG","SOG","HDT","STW"):
-                #     if data.misses(k): data[k] = -1 # explicitly mark as undefined, workaround for
+                #     if data.misses(k): data[k] = -1 # explicitly mark as undefined, workaround for https://github.com/wellenvogel/avnav/issues/347
 
                 for k in data.keys():
                     # print(f"{PATH_PREFIX + k}={data[k]}")
