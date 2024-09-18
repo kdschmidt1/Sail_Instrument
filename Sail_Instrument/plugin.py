@@ -52,7 +52,7 @@ try:
 except:
     pass
 
-PLUGIN_VERSION = 20240911
+PLUGIN_VERSION = 20240918
 SOURCE = "Sail_Instrument"
 MIN_AVNAV_VERSION = 20230705
 KNOTS = 1.94384  # knots per m/s
@@ -129,7 +129,8 @@ NMEA_SENTENCES = {
     "DBS": "${ID}DBS,,,{data.DBS:.1f},M,,",  # depth below surface
     "DBT": "${ID}DBT,,,{data.DBT:.1f},M,,",  # depth below transducer
     "DBK": "${ID}DBK,,,{data.DBK:.1f},M,,",  # depth below keel
-    "DBT,DOT": "${ID}DPT,{data.DBK:.1f},{data.DOT:.1f},,",  # depth of transducer and offset
+    # depth of transducer and offset
+    "DBT,DOT": "${ID}DPT,{data.DBK:.1f},{data.DOT:.1f},,",
 }
 
 CONFIG = [
@@ -458,13 +459,15 @@ class Plugin(object):
 
                 if all(data.get(k) is None for k in ("AWA", "AWS", "TWA", "TWS", "TWD")):
                     data["GWD"], data["GWS"] = self.manual_wind() or (None, None)
-                    if all(data.get(k) is not None for k in ("GWD","GWS")):
-                      if data["COG"] is None and (data["SOG"] or 0)<self.config[VMIN]:
-                          data["COG"],data["SOG"] = 0,0 # allow to compute TW w/o COG if not moving
-                      self.msg += ", manually entered wind"
+                    if all(data.get(k) is not None for k in ("GWD", "GWS")):
+                        if data["COG"] is None and (data["SOG"] or 0) < self.config[VMIN]:
+                            # allow to compute TW w/o COG if not moving
+                            data["COG"], data["SOG"] = 0, 0
+                        self.msg += ", manually entered wind"
 
                 if data["HEL"] is None and self.heels and all(d.has(k) for k in ("TWAF", "TWSF")):
-                    data["HEL"] = copysign(self.heels.value(d["TWAF"], d["TWSF"] * KNOTS), -d["TWAF"])
+                    data["HEL"] = copysign(self.heels.value(
+                        d["TWAF"], d["TWSF"] * KNOTS), -d["TWAF"])
                     self.msg += ", heel from polar"
 
                 if data["HEL"] is not None:
@@ -475,14 +478,17 @@ class Plugin(object):
                 data["DOT"] = dot if dot >= 0 else None
                 data["DRT"] = draught if draught >= 0 else None
 
-                data = {k: (to180(v) if k.endswith("A") and v else v) for k, v in data.items() if len(k) == 3}
+                data = {k: (to180(v) if k.endswith("A") and v else v)
+                        for k, v in data.items() if len(k) == 3}
 
                 data = d = CourseData(**data)  # compute missing values
 
                 self.smooth(data, "AWD", "AWS")
-                data["AWAF"] = to360(data["AWDF"] - data["HDT"]) if d.has("AWDF", "HDT") else None
+                data["AWAF"] = to360(
+                    data["AWDF"] - data["HDT"]) if d.has("AWDF", "HDT") else None
                 self.smooth(data, "TWD", "TWS")
-                data["TWAF"] = to180(data["TWDF"] - data["HDT"]) if d.has("TWDF", "HDT") else None
+                data["TWAF"] = to180(
+                    data["TWDF"] - data["HDT"]) if d.has("TWDF", "HDT") else None
                 self.smooth(data, "SET", "DFT")
                 self.min_max(data, "TWD", lambda v: to180(v - data["TWDF"]))
                 for k in ("AWS", "TWS", "DFT"):
@@ -532,7 +538,6 @@ class Plugin(object):
             time.sleep(self.config[PERIOD])
         self.api.log("terminated run-loop")
 
-
     def laylines(self, data):
         try:
             twa, tws, twd = data.TWAF, data.TWSF, data.TWDF
@@ -573,7 +578,7 @@ class Plugin(object):
                 self.msg += ", laylines from table"
 
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
-            if data.has("VPOL","STW"):
+            if data.has("VPOL", "STW"):
                 data.VPP = data.STW/data.VPOL*100
             self.msg += ", calculate VPOL"
 
@@ -632,11 +637,12 @@ class Polar:
             val = "STW" if "STW" in self.data else "heel"
             try:
                 interp2d = scipy.interpolate.RectBivariateSpline
-                kw = {"kx":1, "ky":min(1,len(self.data["TWS"])-1)}
+                kw = {"kx": 1, "ky": min(1, len(self.data["TWS"])-1)}
             except:
                 interp2d = scipy.interpolate.interp2d
                 kw = {}
-            self.spl = interp2d(self.data["TWA"], self.data["TWS"], self.data[val],**kw)
+            self.spl = interp2d(
+                self.data["TWA"], self.data["TWS"], self.data[val], **kw)
 
         return max(0.0, float(self.spl(abs(twa), tws)))
 
@@ -788,17 +794,21 @@ class CourseData:
             self.CRS = to360(self.HDT + self.LEE)
 
         if self.misses("SET", "DFT") and self.has("COG", "SOG", "CRS", "STW"):
-            self.SET, self.DFT = add_polar((self.COG, self.SOG), (self.CRS, -self.STW))
+            self.SET, self.DFT = add_polar(
+                (self.COG, self.SOG), (self.CRS, -self.STW))
 
         if self.misses("COG", "SOG") and self.has("SET", "DFT", "CRS", "STW"):
-            self.COG, self.SOG = add_polar((self.SET, self.DFT), (self.CRS, self.STW))
+            self.COG, self.SOG = add_polar(
+                (self.SET, self.DFT), (self.CRS, self.STW))
 
         if self.misses("TWA", "TWS") and self.has("AWA", "AWS", "STW", "LEE"):
-            self.TWA, self.TWS = add_polar((self.AWA, self.AWS), (self.LEE, -self.STW))
+            self.TWA, self.TWS = add_polar(
+                (self.AWA, self.AWS), (self.LEE, -self.STW))
             self.TWA = self.angle(self.TWA)
 
         if self.misses("TWD", "TWS") and self.has("GWD", "GWS", "SET", "DFT"):
-            self.TWD, self.TWS = add_polar((self.GWD, self.GWS), (self.SET, self.DFT))
+            self.TWD, self.TWS = add_polar(
+                (self.GWD, self.GWS), (self.SET, self.DFT))
 
         if self.misses("AWD") and self.has("AWA", "HDT"):
             self.AWD = to360(self.AWA + self.HDT)
@@ -810,13 +820,15 @@ class CourseData:
             self.TWA = self.angle(self.TWD - self.HDT)
 
         if self.misses("GWD", "GWS") and self.has("AWD", "AWS", "COG", "SOG"):
-            self.GWD, self.GWS = add_polar((self.AWD, self.AWS), (self.COG, -self.SOG))
+            self.GWD, self.GWS = add_polar(
+                (self.AWD, self.AWS), (self.COG, -self.SOG))
 
         if self.misses("GWA") and self.has("GWD", "HDT"):
             self.GWA = self.angle(self.GWD - self.HDT)
 
         if self.misses("AWA", "AWS") and self.has("TWA", "TWS", "LEE", "STW"):
-            self.AWA, self.AWS = add_polar((self.TWA, self.TWS), (self.LEE, self.STW))
+            self.AWA, self.AWS = add_polar(
+                (self.TWA, self.TWS), (self.LEE, self.STW))
             self.AWA = self.angle(self.AWA)
 
         if self.misses("VMG") and self.has("TWD", "CRS", "STW"):
@@ -893,4 +905,3 @@ def add_polar(a, b):
     a, b = toCart(a), toCart(b)
     s = a[0] + b[0], a[1] + b[1]
     return toPol(s)
-
