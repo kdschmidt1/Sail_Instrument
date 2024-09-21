@@ -128,6 +128,142 @@ function clamp(smallest,x,largest){
   return Math.max(smallest,Math.min(largest,x));
 }
 
+      function drawCircularText(  ctxRef,  text,  x,  y,  diameter,  startAngle,  align,  textInside,  inwardFacing,  fName,  fSize,  kerning) 
+{
+  // text:         The text to be displayed in circular fashion
+  // diameter:     The diameter of the circle around which the text will
+  //               be displayed (inside or outside)
+  // startAngle:   In degrees, Where the text will be shown. 0 degrees
+  //               if the top of the circle
+  // align:        Positions text to left right or center of startAngle
+  // textInside:   true to show inside the diameter. False to show outside
+  // inwardFacing: true for base of text facing inward. false for outward
+  // fName:        name of font family. Make sure it is loaded
+  // fSize:        size of font family. Don't forget to include units
+  // kearning:     0 for normal gap between letters. positive or
+  //               negative number to expand/compact gap in pixels
+  //------------------------------------------------------------------------
+  ctxRef.save()
+  /*
+  ctxRef.strokeStyle = "rgb(255,0,0)"
+  ctxRef.lineWidth = 5
+  ctxRef.beginPath()
+  ctxRef.arc(x, y, diameter/2, 0, Math.PI * 2, false)
+  ctxRef.stroke();
+  ctxRef.closePath()
+  */
+  
+  
+  //ctx.translate(x/2,y/2);
+  // declare and intialize canvas, reference, and useful variables
+  align = align.toLowerCase()
+  //var mainCanvas = document.createElement('canvas');
+  //var ctxRef = mainCanvas.getContext('2d');
+  var clockwise = align == "right" ? 1 : -1 // draw clockwise for aligned right. Else Anticlockwise
+  startAngle = startAngle * (Math.PI / 180) // convert to radians
+
+  // calculate height of the font. Many ways to do this
+  // you can replace with your own!
+  var div = document.createElement("div")
+  div.innerHTML = text
+  div.style.position = "absolute"
+  div.style.top = "-10000px"
+  div.style.left = "-10000px"
+  div.style.fontFamily = fName
+  div.style.fontSize = fSize
+  document.body.appendChild(div)
+  var textHeight = div.offsetHeight
+  document.body.removeChild(div)
+  
+  
+  let metrics = ctxRef.measureText('Mann');
+let fontHeight = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
+let actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+  //textHeight=actualHeight
+
+ // simplified calculation of height of the font
+// var textHeight=ctxRef.measureText('M').width
+
+  // in cases where we are drawing outside diameter,
+  // expand diameter to handle it
+  // in cases where we are drawing outside diameter,
+  // expand diameter to handle it
+  if (!textInside)
+    {
+    if(inwardFacing)
+      diameter += textHeight * 2
+    else
+      diameter += textHeight * 3
+    }
+
+  //mainCanvas.width = diameter;
+  //mainCanvas.height = diameter;
+  // omit next line for transparent background
+  //mainCanvas.style.backgroundColor = 'lightgray';
+  ctxRef.fillStyle = "black"
+  ctxRef.font = "bold "+fSize + " " + fName
+
+  // Reverse letters for align Left inward, align right outward
+  // and align center inward.
+  if (
+    (["left", "center"].indexOf(align) > -1 && inwardFacing) ||
+    (align == "right" && !inwardFacing)
+  )
+    text = text.split("").reverse().join("")
+
+  // Setup letters and positioning
+  ctxRef.translate(x, y) // Move to center
+  startAngle += Math.PI * !inwardFacing // Rotate 180 if outward
+  ctxRef.textBaseline = "middle" // Ensure we draw in exact center
+  ctxRef.textAlign = "center" // Ensure we draw in exact center
+
+  // rotate 50% of total angle for center alignment
+  if (align == "center") {
+    for (var j = 0; j < text.length; j++) {
+      var charWid = ctxRef.measureText(text[j]).width
+      startAngle +=
+        ((charWid + (j == text.length - 1 ? 0 : kerning)) /
+          (diameter / 2 - textHeight) /
+          2) *
+        -clockwise
+    }
+  }
+
+  // Phew... now rotate into final start position
+  ctxRef.rotate(startAngle)
+
+  // Now for the fun bit: draw, rotate, and repeat
+  for (var j = 0; j < text.length; j++) {
+    var charWid = ctxRef.measureText(text[j]).width // half letter
+    // rotate half letter
+    ctxRef.rotate((charWid / 2 / (diameter / 2 - textHeight)) * clockwise)
+    // draw the character at "top" or "bottom"
+    // depending on inward or outward facing
+    ctxRef.fillStyle = "black";
+    ctxRef.strokeStyle = "white"; 
+    ctxRef.lineWidth = diameter/600//0.03 * 30//radius;
+
+    ctxRef.fillText(
+      text[j],
+      0,
+      (inwardFacing ? 1 : -1) * (0 - diameter / 2 + textHeight / 2),
+    )
+    ctxRef.strokeText(
+      text[j],
+      0,
+      (inwardFacing ? 1 : -1) * (0 - diameter / 2 + textHeight / 2),
+    )
+
+    ctxRef.rotate(
+      ((charWid / 2 + kerning) / (diameter / 2 - textHeight)) * clockwise,
+    ) // rotate half letter
+  }
+
+  // Return it
+  ctxRef.restore()
+  }
+
+
 var WindPlotWidget = {
     name: "WindPlot",
     caption: "TWD",
@@ -454,31 +590,36 @@ var Sail_InstrumentWidget = {
       drawWindWidget(ctx, 100, -data.HDT, data);
 
       // print data fields in corners
-      if(canvas.width>200){
-        function val(label, x, y, speed=true, digits=1) {
+      if(canvas.width>0){
+        function val(label, startAngle, speed=true, digits=1) {
           var value=data[label];
           if(typeof(value)=="number" && isFinite(value)){
             value = speed ? knots(value) : value;
             value = value.toFixed(digits);
             if(label.endsWith("F")) label=label.substring(0,label.length-1);
+      drawCircularText(  ctx,label+" "+value,  0,  0,  radius*2*1.4,  startAngle,  "center",  false,  true,  "sans-serif",  "15pt",  0,)
+/*            
             ctx.textAlign = x<0 ? "left" : "right";
             ctx.textBaseline = y<0 ? "top" : "bottom";
-            ctx.font = "bold "+0.15*radius + "px Arial"; ctx.fillStyle = "gray";
+            ctx.font = "bold "+0.15*radius + "px Arial"; 
+            ctx.fillStyle = "gray";
             ctx.fillText(label, x*radius, 0.8*y*radius);
-            ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
+            ctx.font = "bold " + 0.3*radius + "px Arial"; 
+            ctx.fillStyle = "black";
             ctx.strokeStyle = "white"; ctx.lineWidth = 0.03 * radius;
             ctx.strokeText(value, x*radius,y*radius);
             ctx.fillText(value, x*radius,y*radius);
             ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
+  */
             return true;
           }
           return false;
         }
 
-        val("AWS", -1.4, -1.4);
-        val("TWSF", +1.4, -1.4);
-        if(!val("VMC", -1.4, +1.4)) val("VMG", -1.4, +1.4);
-        if(!val("STW", +1.4, +1.4)) val("SOG", +1.4, +1.4);
+        val("AWS", -45);
+        val("TWSF", 45);
+        if(!val("VMC", -135)) val("VMG", -135);
+        if(!val("STW", +135)) val("SOG", 135);
       }
       ctx.restore();
     },
@@ -528,6 +669,7 @@ let Sail_Instrument_Overlay = {
 //        SOG: 'nav.gps.sail_instrument.SOG',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
+        STW: 'nav.gps.sail_instrument.STW',
         AWD: 'nav.gps.sail_instrument.AWD',
         AWS: 'nav.gps.sail_instrument.AWS',
         TWDF: 'nav.gps.sail_instrument.TWDF',
@@ -536,6 +678,8 @@ let Sail_Instrument_Overlay = {
         DFTF: 'nav.gps.sail_instrument.DFTF',
         minTWD: 'nav.gps.sail_instrument.TWDMIN',
         maxTWD: 'nav.gps.sail_instrument.TWDMAX',
+        VMG: 'nav.gps.sail_instrument.VMG',
+        VMC: 'nav.wp.vmg',
         VMCA: 'nav.gps.sail_instrument.VMCA',
         VMCB: 'nav.gps.sail_instrument.VMCB',
         POLAR: 'nav.gps.sail_instrument.POLAR',
@@ -543,7 +687,7 @@ let Sail_Instrument_Overlay = {
     },
     initFunction: function() {},
     finalizeFunction: function() {},
-    renderCanvas: function(canvas, data, center) {
+    renderCanvas: function(canvas, data) {
 //        console.log(data);
         let ctx = canvas.getContext('2d')
         ctx.save();
@@ -561,6 +705,39 @@ let Sail_Instrument_Overlay = {
 
         ctx.globalAlpha *= data.Opacity;
         drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
+              // print data fields in corners
+        function val(label, startAngle, speed=true, digits=1) {
+          var value=data[label];
+          if(typeof(value)=="number" && isFinite(value)){
+            value = speed ? knots(value) : value;
+            value = value.toFixed(digits);
+            if(label.endsWith("F")) label=label.substring(0,label.length-1);
+      drawCircularText(  ctx,label+" "+value,  0,  0,  data.Displaysize*2*1.35,  startAngle,  "center",  false,  true,  "sans-serif",  data.Displaysize/100*15+"pt",  -2,)
+/*
+            radius=200
+            x=1
+            y=1
+            ctx.textAlign =  "left"
+            ctx.textBaseline = "top";
+            ctx.font = "bold "+0.15*radius + "px Arial"; 
+            ctx.fillStyle = "red";
+            ctx.fillText(label, x*radius, 0.8*y*radius);
+            ctx.font = "bold " + 0.3*radius + "px Arial"; 
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = "blue"; ctx.lineWidth = 0.03 * radius;
+            ctx.strokeText(value, x*radius,y*radius);
+            ctx.fillText(value, x*radius,y*radius);
+            ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
+  */
+            return true;
+          }
+          return false;
+        }
+
+        val("AWS", -45);
+        val("TWSF", 45);
+        if(!val("VMC", -135)) val("VMG", -135);
+        if(!val("STW", +135)) val("SOG", 135);
         ctx.restore();
     }
 
@@ -960,9 +1137,9 @@ let DrawWindpfeilIcon = function(ctx, radius, angle, color, Text) {
     if (Text == 'A')
         ctx.moveTo(0, -radius_kompassring + 0.75 * thickness); // Move pen to bottom-center corner
     else
-        ctx.moveTo(0, -radius_kompassring - 0.5 * thickness); // Move pen to bottom-center corner
-    ctx.lineTo(-0.75 * thickness, -radius_outer_ring - thickness); // Line to top left corner
-    ctx.lineTo(+0.75 * thickness, -radius_outer_ring - thickness); // Line to top-right corner
+        ctx.moveTo(0, -radius_kompassring + 0.25 * thickness); // Move pen to bottom-center corner
+    ctx.lineTo(-0.75 * thickness, -radius_outer_ring - 0.25*thickness); // Line to top left corner
+    ctx.lineTo(+0.75 * thickness, -radius_outer_ring - 0.25*thickness); // Line to top-right corner
     ctx.closePath(); // Line to bottom-center corner
     ctx.fillStyle = color;
     ctx.lineWidth = 0.05 * thickness;
@@ -975,7 +1152,7 @@ let DrawWindpfeilIcon = function(ctx, radius, angle, color, Text) {
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
     ctx.font = "bold " + radius / 4 + "px Arial";
-    ctx.fillText(Text, 0, -1.02*radius_outer_ring);
+    ctx.fillText(Text, 0, -0.87*radius_outer_ring);
     ctx.restore();
 
 }
@@ -1084,7 +1261,7 @@ let DrawKompassring = function(ctx, radius, angle) {
     var fontsize = Math.round(radius / 100 * 12)
     ctx.arc(0, 0, radius, 0, 2 * Math.PI, false);
     ctx.lineWidth = thickness;
-    ctx.strokeStyle = "rgb(255,255,255)";
+    ctx.strokeStyle = "rgb(225,225,225)";
     ctx.stroke();
     for (var i = 0; i < 360; i += 10) {
         ctx.save();
