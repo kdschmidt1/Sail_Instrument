@@ -557,6 +557,7 @@ class Plugin(object):
 
             data.VMCA, data.VMCB = -1, -1
             data.VPOL, data.POLAR = 0, 0
+            data.VMCA_VMC = data.VMCB_VMC = -1
 
             if upwind and tack_angle or not upwind and gybe_angle:
                 data.LAY = (
@@ -577,7 +578,7 @@ class Plugin(object):
                 data.LAY = self.polar.angle(tws * KNOTS, upwind)
                 self.msg += ", laylines from table"
 
-            data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
+            data.VPOL = self.polar.value(twa, tws * KNOTS)
             if data.has("VPOL", "STW"):
                 data.VPP = data.STW/data.VPOL*100
             self.msg += ", calculate VPOL"
@@ -594,11 +595,28 @@ class Plugin(object):
                 self.msg += ", show polar"
 
             if brg and self.config[CALC_VMC]:
-                data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
-                if upwind and abs(to180(brg - twd)) < data.LAY:
-                    data.VMCB = self.polar.vmc_angle(twd, tws * KNOTS, brg, -1)
-                self.msg += ", VMC"
+                crs = data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
+                vpol = self.polar.value(twd-crs, tws * KNOTS)
+                data.VMCA_VMC = vpol * cos(radians(brg-crs))
 
+                if upwind and abs(to180(brg - twd)) < data.LAY:
+                    crs = data.VMCB = self.polar.vmc_angle(
+                        twd, tws * KNOTS, brg, -1)
+                    vpol = self.polar.value(twd-crs, tws * KNOTS)
+                    data.VMCB_VMC = vpol * cos(radians(brg-crs))
+                crs = (twd-data.LAY)
+                vpol = self.polar.value(twd-crs, tws * KNOTS)
+                data.LAY_MINUS_VMC = vpol * cos(radians(brg-crs))
+
+                crs = (twd+data.LAY)
+                vpol = self.polar.value(twd-crs, tws * KNOTS)
+                data.LAY_PLUS_VMC = vpol * cos(radians(brg-crs))
+
+                crs = brg
+                vpol = self.polar.value(twd-crs, tws * KNOTS)
+                data.DIRECT_VMC = vpol * cos(radians(brg-crs))
+
+                self.msg += ", VMC"
         except Exception as x:
             self.api.error(f"laylines {x}")
             self.msg += f", laylines error {x}"
@@ -632,7 +650,14 @@ class Polar:
         angle = self.data["beat_angle" if upwind else "run_angle"]
         return numpy.interp(tws, self.data["TWS"], angle)
 
-    def value(self, twa, tws):
+    def value(self, twa, tws):  # Sollte speed in m/s zurückgeben    '''
+        """
+        get the 2d interpolated value
+        @param twa: TrueWindAngle in degrees
+        @param tws: TrueWindSpeed in m/s
+        @return: interpolated speed through water in m/s
+        """
+
         if not self.spl:
             val = "STW" if "STW" in self.data else "heel"
             try:
@@ -644,7 +669,7 @@ class Polar:
             self.spl = interp2d(
                 self.data["TWA"], self.data["TWS"], self.data[val], **kw)
 
-        return max(0.0, float(self.spl(abs(twa), tws)))
+        return max(0.0, float(self.spl(abs(twa), tws*KNOTS))*MPS)
 
     def vmc_angle(self, twd, tws, brg, s=1):
         brg_twd = to180(brg - twd)  # BRG from wind
