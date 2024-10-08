@@ -678,7 +678,8 @@ class Polar:
             # negative sign for minimizer
             return -self.value(twa, tws) * cos(radians(s * twa - abs(brg_twd)))
 
-        res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
+        res = scipy.optimize.minimize_scalar(
+            vmc, bounds=(0, 180), method='bounded')
 
         if res.success:
             return to360(twd + s * copysign(res.x, brg_twd))
