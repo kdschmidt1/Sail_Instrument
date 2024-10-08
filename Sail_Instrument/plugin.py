@@ -657,7 +657,7 @@ class Polar:
         @param tws: TrueWindSpeed in m/s
         @return: interpolated speed through water in m/s
         """
-
+        twa = to180(twa)
         if not self.spl:
             val = "STW" if "STW" in self.data else "heel"
             try:
