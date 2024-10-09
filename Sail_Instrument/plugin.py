@@ -595,27 +595,9 @@ class Plugin(object):
                 self.msg += ", show polar"
 
             if brg and self.config[CALC_VMC]:
-                crs = data.VMCA = self.polar.vmc_angle(twd, tws, brg)
-                vpol = self.polar.value(twd-crs, tws)
-                data.VMCA_VMC = vpol * cos(radians(brg-crs))
-
+                data.VMCA = self.polar.vmc_angle(twd, tws, brg)
                 if upwind and abs(to180(brg - twd)) < data.LAY:
-                    crs = data.VMCB = self.polar.vmc_angle(
-                        twd, tws, brg, -1)
-                    vpol = self.polar.value(twd-crs, tws)
-                    data.VMCB_VMC = vpol * cos(radians(brg-crs))
-                crs = (twd-data.LAY)
-                vpol = self.polar.value(twd-crs, tws)
-                data.LAY_MINUS_VMC = vpol * cos(radians(brg-crs))
-
-                crs = (twd+data.LAY)
-                vpol = self.polar.value(twd-crs, tws)
-                data.LAY_PLUS_VMC = vpol * cos(radians(brg-crs))
-
-                crs = brg
-                vpol = self.polar.value(twd-crs, tws)
-                data.DIRECT_VMC = vpol * cos(radians(brg-crs))
-
+                    data.VMCB = self.polar.vmc_angle(twd, tws, brg, -1)
                 self.msg += ", VMC"
         except Exception as x:
             self.api.error(f"laylines {x}")
