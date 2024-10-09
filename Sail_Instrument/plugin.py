@@ -571,14 +571,14 @@ class Plugin(object):
             if self.config[LAYLINES_FROM_MATRIX] or not self.polar.has_angle(upwind):
                 data.LAY = abs(
                     to180(self.polar.vmc_angle(
-                        0, tws * KNOTS, 0 if upwind else 180))
+                        0, tws, 0 if upwind else 180))
                 )
                 self.msg += ", laylines from polar"
             else:
-                data.LAY = self.polar.angle(tws * KNOTS, upwind)
+                data.LAY = self.polar.angle(tws, upwind)
                 self.msg += ", laylines from table"
 
-            data.VPOL = self.polar.value(twa, tws * KNOTS)
+            data.VPOL = self.polar.value(twa, tws)
             if data.has("VPOL", "STW"):
                 data.VPP = data.STW/data.VPOL*100
             self.msg += ", calculate VPOL"
@@ -586,7 +586,7 @@ class Plugin(object):
             if self.config[SHOW_POLAR]:
                 values = numpy.array(
                     [
-                        self.polar.value(a, tws * KNOTS)
+                        self.polar.value(a, tws)
                         for a in numpy.linspace(0, 180, 36)
                     ]
                 )
@@ -595,25 +595,25 @@ class Plugin(object):
                 self.msg += ", show polar"
 
             if brg and self.config[CALC_VMC]:
-                crs = data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
-                vpol = self.polar.value(twd-crs, tws * KNOTS)
+                crs = data.VMCA = self.polar.vmc_angle(twd, tws, brg)
+                vpol = self.polar.value(twd-crs, tws)
                 data.VMCA_VMC = vpol * cos(radians(brg-crs))
 
                 if upwind and abs(to180(brg - twd)) < data.LAY:
                     crs = data.VMCB = self.polar.vmc_angle(
-                        twd, tws * KNOTS, brg, -1)
-                    vpol = self.polar.value(twd-crs, tws * KNOTS)
+                        twd, tws, brg, -1)
+                    vpol = self.polar.value(twd-crs, tws)
                     data.VMCB_VMC = vpol * cos(radians(brg-crs))
                 crs = (twd-data.LAY)
-                vpol = self.polar.value(twd-crs, tws * KNOTS)
+                vpol = self.polar.value(twd-crs, tws)
                 data.LAY_MINUS_VMC = vpol * cos(radians(brg-crs))
 
                 crs = (twd+data.LAY)
-                vpol = self.polar.value(twd-crs, tws * KNOTS)
+                vpol = self.polar.value(twd-crs, tws)
                 data.LAY_PLUS_VMC = vpol * cos(radians(brg-crs))
 
                 crs = brg
-                vpol = self.polar.value(twd-crs, tws * KNOTS)
+                vpol = self.polar.value(twd-crs, tws)
                 data.DIRECT_VMC = vpol * cos(radians(brg-crs))
 
                 self.msg += ", VMC"
@@ -655,9 +655,10 @@ class Polar:
         get the 2d interpolated value
         @param twa: TrueWindAngle in degrees
         @param tws: TrueWindSpeed in m/s
-        @return: interpolated speed through water in m/s
+        @return: 2d interpolated speed through water in m/s
         """
         twa = to180(twa)
+
         if not self.spl:
             val = "STW" if "STW" in self.data else "heel"
             try:
@@ -669,9 +670,20 @@ class Polar:
             self.spl = interp2d(
                 self.data["TWA"], self.data["TWS"], self.data[val], **kw)
 
-        return max(0.0, float(self.spl(abs(twa), tws*KNOTS))*MPS)
+        # !! weil die Matrix in kn aufgebaut ist, muss tws in kn angegeben werden
+        ret = max(0.0, float(self.spl(abs(twa), tws*KNOTS)))
+        # ret ist in kn, daher umrechnung in m/s:
+        return ret*MPS
 
     def vmc_angle(self, twd, tws, brg, s=1):
+        """
+        get the course for highest VMC
+        @param twd: TrueWindDirection in degrees
+        @param tws: TrueWindSpeed in m/s
+        @param brg: Bearing to waypoint in degrees
+        @return: course for highest VMC
+        """
+
         brg_twd = to180(brg - twd)  # BRG from wind
 
         def vmc(twa):
