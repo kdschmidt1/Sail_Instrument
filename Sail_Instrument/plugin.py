@@ -557,6 +557,7 @@ class Plugin(object):
 
             data.VMCA, data.VMCB = -1, -1
             data.VPOL, data.POLAR = 0, 0
+            data.VMCA_VMC = data.VMCB_VMC = -1
 
             if upwind and tack_angle or not upwind and gybe_angle:
                 data.LAY = (
@@ -632,7 +633,15 @@ class Polar:
         angle = self.data["beat_angle" if upwind else "run_angle"]
         return numpy.interp(tws, self.data["TWS"], angle)
 
-    def value(self, twa, tws):
+    def value(self, twa, tws):  # Sollte speed in m/s zurückgeben    '''
+        """
+        get the 2d interpolated value
+        @param twa: TrueWindAngle in degrees
+        @param tws: TrueWindSpeed in m/s
+        @return: 2d interpolated speed through water in m/s
+        """
+        twa = to180(twa)
+
         """
         get the 2d interpolated value
         @param twa: TrueWindAngle in degrees
@@ -672,7 +681,8 @@ class Polar:
             # negative sign for minimizer
             return -self.value(twa, tws) * cos(radians(s * twa - abs(brg_twd)))
 
-        res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
+        res = scipy.optimize.minimize_scalar(
+            vmc, bounds=(0, 180), method='bounded')
 
         if res.success:
             return to360(twd + s * copysign(res.x, brg_twd))
