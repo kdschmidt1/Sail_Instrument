@@ -432,7 +432,7 @@ class Plugin(object):
     def run(self):
         self.read_config()
         self.api.setStatus("STARTED", "running")
-        d = CourseData()
+        d = CourseData(self.polar)
         while not self.api.shouldStopMainThread():
             try:
                 self.msg = ""
@@ -481,7 +481,7 @@ class Plugin(object):
                 data = {k: (to180(v) if k.endswith("A") and v else v)
                         for k, v in data.items() if len(k) == 3}
 
-                data = d = CourseData(**data)  # compute missing values
+                data = d = CourseData(self.polar, **data)  # compute missing values
 
                 self.smooth(data, "AWD", "AWS")
                 data["AWAF"] = to360(
@@ -497,7 +497,6 @@ class Plugin(object):
                         self.msg += ", no " + k
 
                 self.laylines(data)
-
                 calculated = {k for k in data.keys() if data[k] is not None}
                 calculated -= present
 
@@ -533,7 +532,7 @@ class Plugin(object):
                     "NMEA",
                     f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
             except Exception as x:
-                self.api.error("ERROR", f"{x}")
+                self.api.error(f"{x}")
                 self.api.setStatus("ERROR", f"{x}")
             time.sleep(self.config[PERIOD])
         self.api.log("terminated run-loop")
@@ -556,8 +555,7 @@ class Plugin(object):
             assert 0 <= gybe_angle < 180
 
             data.VMCA, data.VMCB = -1, -1
-            data.VPOL, data.POLAR = 0, 0
-            data.VMCA_VMC = data.VMCB_VMC = -1
+            data.POLAR = 0
 
             if upwind and tack_angle or not upwind and gybe_angle:
                 data.LAY = (
@@ -577,12 +575,7 @@ class Plugin(object):
             else:
                 data.LAY = self.polar.angle(tws, upwind)
                 self.msg += ", laylines from table"
-
-            data.VPOL = self.polar.value(twa, tws)
-            if data.has("VPOL", "STW"):
-                data.VPP = data.STW/data.VPOL*100
-            self.msg += ", calculate VPOL"
-
+            
             if self.config[SHOW_POLAR]:
                 values = numpy.array(
                     [
@@ -598,7 +591,7 @@ class Plugin(object):
                 data.VMCA = self.polar.vmc_angle(twd, tws, brg)
                 if upwind and abs(to180(brg - twd)) < data.LAY:
                     data.VMCB = self.polar.vmc_angle(twd, tws, brg, -1)
-                self.msg += ", VMC"
+                self.msg += ", VMCangles"
 
         except Exception as x:
             self.api.error(f"laylines {x}")
@@ -634,14 +627,6 @@ class Polar:
         return numpy.interp(tws, self.data["TWS"], angle)
 
     def value(self, twa, tws):  # Sollte speed in m/s zurückgeben    '''
-        """
-        get the 2d interpolated value
-        @param twa: TrueWindAngle in degrees
-        @param tws: TrueWindSpeed in m/s
-        @return: 2d interpolated speed through water in m/s
-        """
-        twa = to180(twa)
-
         """
         get the 2d interpolated value
         @param twa: TrueWindAngle in degrees
@@ -791,7 +776,8 @@ class CourseData:
     See test.py for examples.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, polar, **kwargs):
+        self.polar=polar
         self._data = kwargs
         self.angles360 = kwargs.get("angles360", False)
         self.compute_missing()
@@ -863,6 +849,13 @@ class CourseData:
         if self.misses("VMG") and self.has("TWD", "CRS", "STW"):
             self.VMG = cos(radians(self.TWD - self.CRS)) * self.STW
 
+        if self.misses("VMC") and self.has("CRS", "SOG"):
+            try:
+              self.VMC = self.SOG * cos(radians(bearing_to_waypoint()-self.CRS))
+            except:
+              self.VMC=0
+            #print("VMC ",self.VMC)
+
         if self.misses("AWD") and self.has("AWA", "HDT"):
             self.AWD = to360(self.AWA + self.HDT)
 
@@ -871,6 +864,15 @@ class CourseData:
 
         if self.misses("DBK") and self.has("DBS", "DRT"):
             self.DBK = self.DBS - self.DRT
+            
+        if self.misses("VPOL") and self.has("TWA", "TWS"):
+            self.VPOL = self.polar.value(self["TWA"], self["TWS"])
+            self.VPOLPP=99  
+                      
+            
+        if self.misses("VPP") and self.has("VPOL", "STW"):
+            self.VPP = self.STW/self.VPOL*100
+            
 
     def __getattribute__(self, item):
         if re.match("[A-Z]+", item):
