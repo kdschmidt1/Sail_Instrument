@@ -521,7 +521,7 @@
             minTWD: 'nav.gps.sail_instrument.TWDMIN',
             maxTWD: 'nav.gps.sail_instrument.TWDMAX',
             VMG: 'nav.gps.sail_instrument.VMG',
-            VMC: 'nav.wp.vmg',
+            VMC: 'nav.gps.sail_instrument.VMC',
             VMCA: 'nav.gps.sail_instrument.VMCA',
             VMCB: 'nav.gps.sail_instrument.VMCB',
             POLAR: 'nav.gps.sail_instrument.POLAR',
