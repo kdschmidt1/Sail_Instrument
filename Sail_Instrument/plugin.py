@@ -52,7 +52,8 @@ try:
 except:
     pass
 
-PLUGIN_VERSION = 20240918
+PLUGIN_VERSION = 20241011
+
 SOURCE = "Sail_Instrument"
 MIN_AVNAV_VERSION = 20230705
 KNOTS = 1.94384  # knots per m/s
@@ -477,12 +478,14 @@ class Plugin(object):
                 draught = self.config[DRAUGHT]
                 data["DOT"] = dot if dot >= 0 else None
                 data["DRT"] = draught if draught >= 0 else None
+                
 
                 data = {k: (to180(v) if k.endswith("A") and v else v)
                         for k, v in data.items() if len(k) == 3}
 
-                data = d = CourseData(self.polar, **data)  # compute missing values
 
+                data = d = CourseData(self.polar, **data)  # compute missing values
+                data["VERSION"]=str(PLUGIN_VERSION)
                 self.smooth(data, "AWD", "AWS")
                 data["AWAF"] = to360(
                     data["AWDF"] - data["HDT"]) if d.has("AWDF", "HDT") else None
@@ -867,11 +870,10 @@ class CourseData:
             
         if self.misses("VPOL") and self.has("TWA", "TWS"):
             self.VPOL = self.polar.value(self["TWA"], self["TWS"])
-            self.VPOLPP=99  
-                      
-            
+
         if self.misses("VPP") and self.has("VPOL", "STW"):
             self.VPP = self.STW/self.VPOL*100
+
             
 
     def __getattribute__(self, item):
