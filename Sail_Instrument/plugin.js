@@ -1,3 +1,12 @@
+//TODO: rename Windplot to Sail_Instrument_History_Plot
+
+
+
+
+
+
+
+
 (function () {
     console.log("sail_instrument loaded");
 
@@ -472,6 +481,7 @@
     };
 
     var WindPlotParams = {
+        formatterParameters: true,
         quantity: {
             type: 'SELECT',
             list: ['TWD', 'TWS', 'TWA', 'AWA', 'AWS', 'COG', 'SOG', 'HDT', 'STW', 'HEL', 'DBS'],
