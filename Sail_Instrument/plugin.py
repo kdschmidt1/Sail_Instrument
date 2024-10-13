@@ -530,6 +530,10 @@ class Plugin(object):
                                     sourcePriority=nmea_priority,
                                 )
                                 sending.add(s[:6])
+                        elif not data.has(*f.split(",")):
+                            self.api.debug(
+                                " Cannot send NMEA_SENTENCE $%s[%s] because missing: %s", s[5:8], f, {
+                                j for j in f.split(",") if data[j] is None})
 
                 self.api.setStatus(
                     "NMEA",
