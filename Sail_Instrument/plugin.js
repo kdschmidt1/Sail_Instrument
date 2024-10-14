@@ -328,80 +328,22 @@
             var c0 = d => d.AWA < 0 ? red : d.AWA > 0 ? green : blue;
             var c1 = d => Math.abs(d.TWA) < 70 ? blue : Math.abs(d.TWA) < 130 ? "#06c4d1" : "#b304de";
             var v1 = false;
-
-            if (data.quantity == "AWA") {
-                var c = Math.round(data.AWAF);
-                var m = r > 0 ? r : maxrange(q, c);
-                var xtick = x => to180(x).toFixed(1).replace(".0", "");
-                var v0 = d => to180(d.AWA - c) / m;
-                var v1 = d => to180(d.AWAF - c) / m;
-
-            } else if (data.quantity == "TWA") {
-                var c = Math.round(data.TWAF);
-                var m = r > 0 ? r : maxrange(q, c);
-                var xtick = x => to180(x).toFixed(1).replace(".0", "");
-                var v0 = d => to180(d.TWA - c) / m;
-                var v1 = d => to180(d.TWAF - c) / m;
-
-            } else if (data.quantity == "TWD") {
-                var c = Math.round(data.TWDF);
-                var m = r > 0 ? r : maxrange(q, c);
-                var xtick = x => to360(x).toFixed(1).replace(".0", "");
-                var v0 = d => to180(d.TWD - c) / m;
-                var v1 = d => to180(d.TWDF - c) / m;
-
-            } else if (data.quantity == "TWS") {
-                var c = r > 0 ? r / 2 : Math.round(knots(data.TWSF) * 10) / 10;
+            data.caption=q;
+            if (true) {
+              var val=data.quantity
+              var valf=data.quantity+"F"
+              let valid_f= typeof (data[valf]) == "number" && isFinite(data[valf])
+              if(valid_f)
+                  c = Math.round(data.formatter(data[valf]));
+                 else
+                 c = Math.round(data.formatter(data[val]));
                 var m = c;
-                var v0 = d => (knots(d.TWS) - c) / m;
-                var v1 = d => (knots(d.TWSF) - c) / m;
+                m = r > 0 ? r : maxrange(q, c);
+                var v0 = d => (data.formatter(d[val]) - c) / m;
+              if(validf)
+                  var v1 = d => (data.formatter(d[valf]) - c) / m;
                 var c0 = d => "gray";
-
-            } else if (data.quantity == "AWS") {
-                var c = r > 0 ? r / 2 : Math.round(knots(data.AWSF) * 10) / 10;
-                var m = c;
-                var v0 = d => (knots(d.AWS) - c) / m;
-                var v1 = d => (knots(d.AWSF) - c) / m;
-                var c0 = d => "gray";
-
-            } else if (data.quantity == "COG") {
-                var c = Math.round(data.COG);
-                var m = r > 0 ? r : maxrange(q, c);
-                var xtick = x => to360(x).toFixed(1).replace(".0", "");
-                var v0 = d => to180(d.COG - c) / m;
-                var c0 = d => blue;
-
-            } else if (data.quantity == "SOG") {
-                var c = Math.round(knots(data.SOG) * 10) / 10;
-                var m = c;
-                var v0 = d => (knots(d.SOG) - c) / m;
-                var c0 = d => "gray";
-
-            } else if (data.quantity == "HDT") {
-                var c = Math.round(data.HDT);
-                var m = r > 0 ? r : maxrange(q, c);
-                var xtick = x => to360(x).toFixed(1).replace(".0", "");
-                var v0 = d => to180(d.HDT - c) / m;
-                var c0 = d => blue;
-
-            } else if (data.quantity == "STW") {
-                var c = r > 0 ? r / 2 : Math.round(knots(data.STW) * 10) / 10;
-                var m = c;
-                var v0 = d => (knots(d.STW) - c) / m;
-                var c0 = d => "gray";
-
-            } else if (data.quantity == "HEL") {
-                var c = 0;
-                var m = r > 0 ? r : maxrange(q);
-                var v0 = d => d.HEL / m;
-                var c0 = d => blue;
-
-            } else if (data.quantity == "DBS") {
-                var c = r > 0 ? r / 2 : Math.round(data.DBS * 10) / 10;
-                var m = c;
-                var v0 = d => (d.DBS - c) / m;
-                var c0 = d => blue;
-            }
+              }
 
             //      console.log(q,data[q],r,c,m);
 
@@ -481,6 +423,7 @@
     };
 
     var WindPlotParams = {
+        formatter: true,
         formatterParameters: true,
         quantity: {
             type: 'SELECT',
