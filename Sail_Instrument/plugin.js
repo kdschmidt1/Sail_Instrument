@@ -1,11 +1,3 @@
-//TODO: rename Windplot to Sail_Instrument_History_Plot
-
-
-
-
-
-
-
 
 (function () {
 	console.log("sail_instrument loaded");
@@ -245,8 +237,8 @@
 	}
 
 
-	var WindPlotWidget = {
-		name: "WindPlot",
+	var SailInstrumentHistoryWidget = {
+		name: "SailInstrumentHistoryWidget",
 		caption: "TWD",
 		unit: "°",
 		history: 600,
@@ -298,9 +290,9 @@
 			//      console.log(data.quantity,v);
 			if (!valid) return;
 
-			var hist = window.windplothist;
+			var hist = window.SailInstrumentHistoryWidgethist;
 			if (typeof (hist) == "undefined") {
-				window.windplothist = hist = new Map();
+				window.SailInstrumentHistoryWidgethist = hist = new Map();
 			}
 			hist.set(time, data);
 
@@ -422,7 +414,7 @@
 		},
 	};
 
-	var WindPlotParams = {
+	var SailInstrumentHistoryWidgetParams = {
 		formatter: true,
 		formatterParameters: true,
 		quantity: {
@@ -443,7 +435,7 @@
 			default: 1
 		},
 	};
-	avnav.api.registerWidget(WindPlotWidget, WindPlotParams);
+	avnav.api.registerWidget(SailInstrumentHistoryWidget, SailInstrumentHistoryWidgetParams);
 
 
 	/*################################################################################################*/
