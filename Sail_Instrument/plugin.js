@@ -1188,6 +1188,8 @@
 
 
   function to360(a) {
+//    ((a % 360) + 360) % 360
+//    see: https://stackoverflow.com/questions/18618136/how-to-calculate-modulo-of-negative-integers-in-javascript
     while (a < 360) {
       a += 360;
     }
