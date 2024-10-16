@@ -12,6 +12,7 @@ echo building version $version
 tmpf=package$$.yaml
 rm -f $tmpf
 sed "s/^ *version:.*/version: \"$version\"/" $config > $tmpf
+sed -i "/^PLUGIN_VERSION =/cPLUGIN_VERSION = $version" Sail_Instrument/plugin.py
 config=$tmpf
 docker run  --rm   -v "$pdir":/tmp/pkg   --user `id -u`:`id -g` -w /tmp/pkg wellenvogel/nfpm:1.0 pkg -p deb -f $config
 rt=$?
