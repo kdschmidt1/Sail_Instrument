@@ -351,7 +351,7 @@
                 var v1 = d => to180(d.TWDF - c) / m;
 
             } else if (data.quantity == "TWS") {
-                var c = r > 0 ? r / 2 : Math.round(knots(data.TWSF) * 10) / 10;
+                var c = r > 0 ? r / 2 : Math.round(data.formatter(data.TWSF))
                 var m = c;
                 var v0 = d => (knots(d.TWS) - c) / m;
                 var v1 = d => (knots(d.TWSF) - c) / m;
@@ -481,6 +481,7 @@
     };
 
     var WindPlotParams = {
+        formatter: true,
         formatterParameters: true,
         quantity: {
             type: 'SELECT',
@@ -649,6 +650,16 @@
             let ctx = canvas.getContext('2d')
             ctx.save();
 
+
+            ctx.globalAlpha =0.5;
+
+            const image = document.getElementById('grib');
+            if(image){
+            ctx.drawImage(image, 0, 0)
+            }
+            ctx.restore();
+
+            ctx.save();
             if (data.Widgetposition == 'Mapcenter') {
                 ctx.translate(canvas.width / 2, canvas.height / 2);
             } else if (data.Widgetposition == 'Boatposition') {
