@@ -649,17 +649,6 @@
             //        console.log(data);
             let ctx = canvas.getContext('2d')
             ctx.save();
-
-
-            ctx.globalAlpha =0.5;
-
-            const image = document.getElementById('grib');
-            if(image){
-            ctx.drawImage(image, 0, 0)
-            }
-            ctx.restore();
-
-            ctx.save();
             if (data.Widgetposition == 'Mapcenter') {
                 ctx.translate(canvas.width / 2, canvas.height / 2);
             } else if (data.Widgetposition == 'Boatposition') {
