@@ -536,7 +536,7 @@ let Sail_Instrument_Overlay = {
     renderCanvas: function(canvas, data, center) {
 //        console.log(data);
         let ctx = canvas.getContext('2d')
-        ctx.save();
+         ctx.save();
 
         if (data.Widgetposition == 'Mapcenter') {
             ctx.translate(canvas.width/2, canvas.height/2);
