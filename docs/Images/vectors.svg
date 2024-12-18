@@ -24,9 +24,9 @@
      inkscape:deskcolor="#505050"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="2.3269546"
-     inkscape:cx="299.10338"
-     inkscape:cy="659.01586"
+     inkscape:zoom="1.6454054"
+     inkscape:cx="294.15244"
+     inkscape:cy="700.43529"
      inkscape:window-width="2784"
      inkscape:window-height="2091"
      inkscape:window-x="540"
@@ -4946,11 +4946,6 @@
          style="fill:#aa8800;stroke:none;stroke-width:0.264583px"
          x="207.49565"
          y="50.493652">COG</tspan></text>
-    <path
-       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
-       d="M 105,200.93205 77.868028,144.13363"
-       id="path72936"
-       sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
        style="font-size:1.21199px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#0000ff;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -4987,11 +4982,6 @@
          style="fill:#0000ff;stroke:none;stroke-width:0.264583px"
          x="166.93901"
          y="-10.609767">AWS</tspan></text>
-    <path
-       style="fill:#800080;fill-rule:evenodd;stroke:#008000;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
-       d="M 105,200.93205 36.896954,159.70198"
-       id="path77891"
-       sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
        style="font-size:2.90461px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#008000;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -5042,7 +5032,7 @@
          y="118.89143">TWD</tspan></text>
     <path
        style="fill:#800080;fill-rule:evenodd;stroke:#999999;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
-       d="M 105,200.93205 10.844534,155.51207"
+       d="m 10.10286,155.23193 94.15547,45.41998"
        id="path95139"
        sodipodi:nodetypes="cc" />
     <text
@@ -5249,5 +5239,15 @@
          inkscape:transform-center-x="0.56875872"
          inkscape:transform-center-y="-0.15544898" />
     </g>
+    <path
+       style="fill:#800080;fill-rule:evenodd;stroke:#008000;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
+       d="m 36.200063,159.33927 68.103047,41.23007"
+       id="path77891"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
+       d="m 77.591303,143.39032 27.131967,56.79842"
+       id="path72936"
+       sodipodi:nodetypes="cc" />
   </g>
 </svg>
