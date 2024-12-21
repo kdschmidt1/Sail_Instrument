@@ -68,6 +68,7 @@ TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
 CALC_VMC = "calc_vmc"
 LEEWAY_FACTOR = "lee_factor"
+POLAR_FACTOR = "polar_factor"
 LAYLINES_FROM_POLAR = "laylines_polar"
 LAYLINES_WITH_CURENT = "laylines_current"
 LAYLINES_LEEWAY = "laylines_leeway"
@@ -211,6 +212,12 @@ CONFIG = [
         "name": LEEWAY_FACTOR,
         "description": "leeway factor LEF, if >0 leeway angle is estimated as LEF * HEL / STW^2",
         "default": "10",
+        "type": "FLOAT",
+    },
+    {
+        "name": POLAR_FACTOR,
+        "description": "polar speed correction factor",
+        "default": "1",
         "type": "FLOAT",
     },
     {
@@ -587,13 +594,13 @@ class Plugin(object):
             data.LL1, data.LL2 = to360(twd-data.LAY-leeway), to360(twd+data.LAY+leeway) # absolute layline directions incl. leeway
 
             if self.config[LAYLINES_WITH_CURENT] and data.has('SET','DFT','LAY'):
-              stw = self.polar.value(data.LAY, tws) # STW on layline
+              stw = self.config[POLAR_FACTOR]*self.polar.value(data.LAY, tws) # STW on layline
               data.LL1=add_polar((data.SET,data.DFT),(data.LL1,stw))[0] # stb layline incl. current
               data.LL2=add_polar((data.SET,data.DFT),(data.LL2,stw))[0] # bb layline incl. current
 
-            data.VPOL = self.polar.value(twa, tws)
+            data.VPOL = self.config[POLAR_FACTOR]*self.polar.value(twa, tws)
             if data.has("VPOL","STW"):
-                data.VPP = data.STW/data.VPOL*100
+                data.VPP = 100*data.STW/data.VPOL
             self.msg += ", calculate VPOL"
 
             if self.config[SHOW_POLAR]:
@@ -608,9 +615,9 @@ class Plugin(object):
                 self.msg += ", show polar"
 
             if brg and self.config[CALC_VMC]:
-                data.VMCA = self.polar.vmc_angle(twd, tws * KNOTS, brg)
+                data.VMCA = self.polar.vmc_angle(twd, tws, brg)
                 if upwind and abs(to180(brg - twd)) < data.LAY:
-                    data.VMCB = self.polar.vmc_angle(twd, tws * KNOTS, brg, -1)
+                    data.VMCB = self.polar.vmc_angle(twd, tws, brg, -1)
                 self.msg += ", VMC"
 
         except Exception as x:
