@@ -156,6 +156,8 @@ var WindPlotWidget = {
         DBS: 'nav.gps.sail_instrument.DBS',
         DBT: 'nav.gps.sail_instrument.DBT',
         DBK: 'nav.gps.sail_instrument.DBK',
+        VMG: 'nav.gps.sail_instrument.VMG',
+        VMC: 'nav.wp.vmg',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -176,7 +178,8 @@ var WindPlotWidget = {
       }
       canvas.width=w; canvas.height=h;
 
-      let v = data[data.quantity];
+      var q = data.quantity;
+      let v = data[q.toUpperCase()];
       let valid = typeof(v)=="number" && isFinite(v);
 //      console.log(data.quantity,v);
       if(!valid) return;
@@ -205,12 +208,12 @@ var WindPlotWidget = {
         return Math.ceil(Math.max(1,max-min));
       }
 
-      var q = data.quantity;
       var r = data.range;
       var xtick = x => x.toFixed(1).replace(".0","");
       var c0 = d => d.AWA<0 ? red : d.AWA>0 ? green : blue;
-      var c1 = d => Math.abs(d.TWA)<70 ? blue : Math.abs(d.TWA)<130 ? "#06c4d1": "#b304de";
+      var c1 = d => blue;
       var v1 = false;
+      var tackPlot = false;
 
       if(data.quantity=="AWA"){
         var c = Math.round(data.AWAF);
@@ -225,6 +228,15 @@ var WindPlotWidget = {
         var xtick = x => to180(x).toFixed(1).replace(".0","");
         var v0 = d=>to180(d.TWA-c)/m;
         var v1 = d=>to180(d.TWAF-c)/m;
+
+      } else if(data.quantity=="twa"){
+        var tackPlot = true;
+        var c = 0;
+        var m = 2;
+        var xtick = x => '';
+        var v0 = d=>(to180(d.TWA)>0 ? +1 : -1)/m;
+        var v1 = d=>0;
+        var c1 = d => Math.abs(d.TWA)<70 ? blue : Math.abs(d.TWA)<130 ? "#06c4d1": "#ded714";
 
       } else if(data.quantity=="TWD"){
         var c = Math.round(data.TWDF);
@@ -258,6 +270,18 @@ var WindPlotWidget = {
         var c = Math.round(knots(data.SOG)*10)/10;
         var m = c;
         var v0 = d=>(knots(d.SOG)-c)/m;
+        var c0 = d=>"gray";
+
+      } else if(data.quantity=="VMG"){
+        var c = Math.round(knots(data.VMG)*10)/10;
+        var m = c;
+        var v0 = d=>(knots(d.VMG)-c)/m;
+        var c0 = d=>"gray";
+
+      } else if(data.quantity=="VMC"){
+        var c = Math.round(knots(data.VMC)*10)/10;
+        var m = c;
+        var v0 = d=>(knots(d.VMC)-c)/m;
         var c0 = d=>"gray";
 
       } else if(data.quantity=="HDT"){
@@ -323,7 +347,7 @@ var WindPlotWidget = {
       }
       ctx.stroke();
 
-      function line(val,col,width,dash=[]){
+      function line(val,col,width,dash=[],split=false){
         if(!val) return;
         ctx.lineWidth = width;
         ctx.setLineDash(dash);
@@ -338,6 +362,11 @@ var WindPlotWidget = {
           let y=y0+t*dy/tmax;
           let s = col(hist.get(k));
           if(c!=s){
+            if(split && c!='x') {
+              c='x';
+              p=[x,y];
+              continue;
+            }
             ctx.stroke();
             ctx.beginPath();
             ctx.strokeStyle = c = s;
@@ -350,8 +379,13 @@ var WindPlotWidget = {
         ctx.setLineDash([]);
       }
 
-      line(v0,c0,2);
-      line(v1,c1,3,[8,2]);
+      if(tackPlot){
+        line(v0,c0,5,[],true);
+        line(v1,c1,15);
+      } else {
+        line(v0,c0,2);
+        line(v1,c1,3,[8,2]);
+      }
 
       ctx.beginPath();
       ctx.lineWidth = 3;
@@ -366,7 +400,7 @@ var WindPlotWidget = {
 var WindPlotParams = {
     quantity: {
         type: 'SELECT',
-        list: ['TWD','TWS','TWA','AWA','AWS','COG','SOG','HDT','STW','HEL','DBS'],
+        list: ['TWD','TWS','TWA','AWA','AWS','COG','SOG','HDT','STW','HEL','DBS','twa','VMG','VMC'],
         default: 'TWD'
     },
     history: {

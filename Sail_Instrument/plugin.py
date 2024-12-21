@@ -637,7 +637,7 @@ class Polar:
                 kw = {}
             self.spl = interp2d(self.data["TWA"], self.data["TWS"], self.data[val],**kw)
 
-        return max(0.0, float(self.spl(abs(twa), tws)))
+        return float(self.spl(abs(twa), tws))
 
     def vmc_angle(self, twd, tws, brg, s=1):
         brg_twd = to180(brg - twd)  # BRG from wind
@@ -677,9 +677,9 @@ class CourseData:
     SET = set, direction of tide/current, cannot be measured directly
     DFT = drift, rate of tide/current, cannot be measured directly
     STW = speed through water, usually from paddle wheel, water speed vector projected onto HDT (long axis of boat)
+    CTW = course through water, estimated from heading + leeway
     HEL = heel angle, measured by sensor or from heel polar TWA/TWS -> HEL
     LEE = leeway angle, angle between HDT and direction of water speed vector, usually estimated from wind and/or heel and STW
-    CRS = course through water
     AWA = apparent wind angle, measured by wind direction sensor
     AWD = apparent wind direction, relative to true north
     AWS = apparent wind speed, measured by anemometer
@@ -723,25 +723,25 @@ class CourseData:
     ### Leeway and Course
 
     - LEE = LEF * HEL / STW^2
-    - CRS = HDT + LEE
+    - CTW = HDT + LEE
 
     With leeway factor LEF = 0..20, boat specific
 
     ### Course, Speed and Tide
 
-    - [COG,SOG] = [CRS,STW] (+) [SET,DFT]
-    - [SET,DFT] = [COG,SOG] (+) [CRS,-STW]
+    - [COG,SOG] = [CTW,STW] (+) [SET,DFT]
+    - [SET,DFT] = [COG,SOG] (+) [CTW,-STW]
 
     ### Wind
 
     angles and directions are always converted like xWD = xWA + HDT and xWA = xWD - HDT
 
     - [AWD,AWS] = [GWD,GWS] (+) [COG,SOG]
-    - [AWD,AWS] = [TWD,TWS] (+) [CRS,STW]
+    - [AWD,AWS] = [TWD,TWS] (+) [CTW,STW]
     - [AWA,AWS] = [TWA,TWS] (+) [LEE,STW]
 
     - [TWD,TWS] = [GWD,GWS] (+) [SET,DFT]
-    - [TWD,TWS] = [AWD,AWS] (+) [CRS,-STW]
+    - [TWD,TWS] = [AWD,AWS] (+) [CTW,-STW]
     - [TWA,TWS] = [AWA,AWS] (+) [LEE,-STW]
 
     - [GWD,GWS] = [AWD,AWS] (+) [COG,-SOG]
@@ -783,14 +783,14 @@ class CourseData:
         if self.misses("LEE"):
             self.LEE = 0
 
-        if self.misses("CRS") and self.has("HDT", "LEE"):
-            self.CRS = to360(self.HDT + self.LEE)
+        if self.misses("CTW") and self.has("HDT", "LEE"):
+            self.CTW = to360(self.HDT + self.LEE)
 
-        if self.misses("SET", "DFT") and self.has("COG", "SOG", "CRS", "STW"):
-            self.SET, self.DFT = add_polar((self.COG, self.SOG), (self.CRS, -self.STW))
+        if self.misses("SET", "DFT") and self.has("COG", "SOG", "CTW", "STW"):
+            self.SET, self.DFT = add_polar((self.COG, self.SOG), (self.CTW, -self.STW))
 
-        if self.misses("COG", "SOG") and self.has("SET", "DFT", "CRS", "STW"):
-            self.COG, self.SOG = add_polar((self.SET, self.DFT), (self.CRS, self.STW))
+        if self.misses("COG", "SOG") and self.has("SET", "DFT", "CTW", "STW"):
+            self.COG, self.SOG = add_polar((self.SET, self.DFT), (self.CTW, self.STW))
 
         if self.misses("TWA", "TWS") and self.has("AWA", "AWS", "STW", "LEE"):
             self.TWA, self.TWS = add_polar((self.AWA, self.AWS), (self.LEE, -self.STW))
@@ -818,8 +818,8 @@ class CourseData:
             self.AWA, self.AWS = add_polar((self.TWA, self.TWS), (self.LEE, self.STW))
             self.AWA = self.angle(self.AWA)
 
-        if self.misses("VMG") and self.has("TWD", "CRS", "STW"):
-            self.VMG = cos(radians(self.TWD - self.CRS)) * self.STW
+        if self.misses("VMG") and self.has("TWD", "CTW", "STW"):
+            self.VMG = cos(radians(self.TWD - self.CTW)) * self.STW
 
         if self.misses("AWD") and self.has("AWA", "HDT"):
             self.AWD = to360(self.AWA + self.HDT)
