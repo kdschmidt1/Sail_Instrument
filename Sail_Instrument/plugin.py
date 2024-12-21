@@ -489,6 +489,7 @@ class Plugin(object):
                 draught = self.config[DRAUGHT]
                 data["DOT"] = dot if dot >= 0 else None
                 data["DRT"] = draught if draught >= 0 else None
+                data["BRG"] = bearing_to_waypoint()
 
                 data = {k: (to180(v) if k.endswith("A") and v else v) for k, v in data.items() if len(k) == 3}
 
@@ -552,7 +553,7 @@ class Plugin(object):
             if any(v is None for v in (twa, tws, twd)):
                 return
 
-            brg = bearing_to_waypoint()
+            brg = data["BRG"]
             if brg:
                 upwind = abs(to180(brg - twd)) < 90
             else:
@@ -713,6 +714,8 @@ class CourseData:
     DBK = depth below keel
     DRT = draught
     DOT = depth of transducer
+    VMG = velocity made good to windward (water track projected on TWD)
+    VMC = velocity made good on track (ground track projected on BRG to waypoint)
 
     Beware! Wind direction is the direction where the wind is coming FROM, SET,HDG,COG is the direction where the tide/boat is going TO.
 
@@ -840,6 +843,9 @@ class CourseData:
         if self.misses("VMG") and self.has("TWD", "CTW", "STW"):
             self.VMG = cos(radians(self.TWD - self.CTW)) * self.STW
 
+        if self.misses("VMC") and self.has("BRG", "COG", "SOG"):
+            self.VMC = cos(radians(self.BRG - self.COG)) * self.SOG
+
         if self.misses("AWD") and self.has("AWA", "HDT"):
             self.AWD = to360(self.AWA + self.HDT)
 
@@ -848,6 +854,7 @@ class CourseData:
 
         if self.misses("DBK") and self.has("DBS", "DRT"):
             self.DBK = self.DBS - self.DRT
+
 
     def __getattribute__(self, item):
         if re.match("[A-Z]+", item):
