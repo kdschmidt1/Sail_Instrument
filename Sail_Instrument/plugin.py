@@ -68,7 +68,9 @@ TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
 CALC_VMC = "calc_vmc"
 LEEWAY_FACTOR = "lee_factor"
-LAYLINES_FROM_MATRIX = "laylines_polar"
+LAYLINES_FROM_POLAR = "laylines_polar"
+LAYLINES_WITH_CURENT = "laylines_current"
+LAYLINES_LEEWAY = "laylines_leeway"
 SHOW_POLAR = "show_polar"
 PERIOD = "period"
 WMM_FILE = "wmm_file"
@@ -164,10 +166,22 @@ CONFIG = [
         "type": "BOOLEAN",
     },
     {
-        "name": LAYLINES_FROM_MATRIX,
+        "name": LAYLINES_FROM_POLAR,
         "description": "calculate laylines from polar speed, not from beat/run angle table",
         "default": "False",
         "type": "BOOLEAN",
+    },
+    {
+        "name": LAYLINES_WITH_CURENT,
+        "description": "correct laylines for current and leeway (laylines over ground) with current data is present",
+        "default": "False",
+        "type": "BOOLEAN",
+    },
+    {
+        "name": LAYLINES_LEEWAY,
+        "description": "assumed upwind and downwind leeway used in layline calculation of corrected laylines",
+        "default": "0,0",
+        "type": "STRING",
     },
     {
         "name": SHOW_POLAR,
@@ -553,23 +567,28 @@ class Plugin(object):
             data.VPOL, data.POLAR = 0, 0
 
             if upwind and tack_angle or not upwind and gybe_angle:
-                data.LAY = (
-                    tack_angle / 2) if upwind else (180 - gybe_angle / 2)
+                data.LAY = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
+                data.LL1, data.LL2 = to360(twd-data.LAY), to360(twd+data.LAY) # absolute layline directions
                 self.msg += ", fixed laylines"
                 return
 
             if not self.polar:
                 return
 
-            if self.config[LAYLINES_FROM_MATRIX] or not self.polar.has_angle(upwind):
-                data.LAY = abs(
-                    to180(self.polar.vmc_angle(
-                        0, tws * KNOTS, 0 if upwind else 180))
-                )
+            if self.config[LAYLINES_FROM_POLAR] or not self.polar.has_angle(upwind):
+                data.LAY = abs(to180(self.polar.vmc_angle(0, tws * KNOTS, 0 if upwind else 180)))
                 self.msg += ", laylines from polar"
             else:
                 data.LAY = self.polar.angle(tws * KNOTS, upwind)
                 self.msg += ", laylines from table"
+
+            leeway = list(map(float,self.config[LAYLINES_LEEWAY].split(',')))[0 if upwind else 1]
+            data.LL1, data.LL2 = to360(twd-data.LAY-leeway), to360(twd+data.LAY+leeway) # absolute layline directions incl. leeway
+
+            if self.config[LAYLINES_WITH_CURENT] and data.has('SET','DFT','LAY'):
+              stw = self.polar.value(data.LAY, tws * KNOTS) * MPS # STW on layline
+              data.LL1=add_polar((data.SET,data.DFT),(data.LL1,stw))[0] # stb layline incl. current
+              data.LL2=add_polar((data.SET,data.DFT),(data.LL2,stw))[0] # bb layline incl. current
 
             data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
             if data.has("VPOL","STW"):

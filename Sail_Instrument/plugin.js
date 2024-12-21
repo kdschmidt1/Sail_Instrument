@@ -700,21 +700,23 @@ let LayLines_Overlay = {
     storeKeys: {
         WP: 'nav.wp.position',
         POS: 'nav.gps.position',
-        LAY: 'nav.gps.sail_instrument.LAY',
+        LL1: 'nav.gps.sail_instrument.LL1',
+        LL2: 'nav.gps.sail_instrument.LL2',
         TWDF: 'nav.gps.sail_instrument.TWDF',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
-    renderCanvas: function(canvas, props, center) {
-        if (typeof(props.POS) != 'undefined') {
+    renderCanvas: function(canvas, data, center) {
+        if (typeof(data.POS) != 'undefined') {
             let ctx = canvas.getContext('2d');
             ctx.save();
-            ctx.globalAlpha *= props.Opacity;
+            ctx.globalAlpha *= data.Opacity;
 
-            intersections = calc_intersections(self, props);
+            intersections = calc_intersections(self, data);
+//            console.log(intersections);
 
             if (typeof(intersections) != 'undefined') {
-                DrawMapLaylines(this, ctx, intersections, props);
+                DrawMapLaylines(this, ctx, intersections, data);
             }
             ctx.restore();
         }
@@ -750,18 +752,18 @@ avnav.api.registerWidget(LayLines_Overlay, LayLines_OverlayParameter);
 
 let LatLon = avnav.api.LatLon();
 let calc_intersections = function(self, props) {
-    //console.log(props);
-    intersections = null;
+//    console.log('props',props);
+    var intersections = null;
     let b_pos = new LatLon(props.POS.lat, props.POS.lon);
     //b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
     if (props.WP) {
         WP_pos = new LatLon(props.WP.lat, props.WP.lon);
 
         // Intersections berechnen
-        //console.log(props.TWDF-props.LAY,props.TWDF+props.LAY);
-        var is_SB = LatLon.intersection(b_pos, to360(props.TWDF-props.LAY), WP_pos, to360(props.TWDF+props.LAY + 180));
-        var is_BB = LatLon.intersection(b_pos, to360(props.TWDF+props.LAY), WP_pos, to360(props.TWDF-props.LAY + 180));
-        //console.log(b_pos,is_SB,is_BB);
+//        console.log(props.LL1,props.LL2);
+        var is_SB = LatLon.intersection(b_pos, props.LL1, WP_pos, to360(props.LL2 + 180));
+        var is_BB = LatLon.intersection(b_pos, props.LL2, WP_pos, to360(props.LL1 + 180));
+//        console.log(b_pos,is_SB,is_BB);
         calc_endpoint = function(intersection, pos) {
             let is_xx = {};
             is_xx.dist = pos.rhumbDistanceTo(intersection); // in m
