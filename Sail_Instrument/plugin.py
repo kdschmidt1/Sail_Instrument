@@ -587,11 +587,11 @@ class Plugin(object):
             data.LL1, data.LL2 = to360(twd-data.LAY-leeway), to360(twd+data.LAY+leeway) # absolute layline directions incl. leeway
 
             if self.config[LAYLINES_WITH_CURENT] and data.has('SET','DFT','LAY'):
-              stw = self.polar.value(data.LAY, tws * KNOTS) * MPS # STW on layline
+              stw = self.polar.value(data.LAY, tws) # STW on layline
               data.LL1=add_polar((data.SET,data.DFT),(data.LL1,stw))[0] # stb layline incl. current
               data.LL2=add_polar((data.SET,data.DFT),(data.LL2,stw))[0] # bb layline incl. current
 
-            data.VPOL = self.polar.value(twa, tws * KNOTS) * MPS
+            data.VPOL = self.polar.value(twa, tws)
             if data.has("VPOL","STW"):
                 data.VPP = data.STW/data.VPOL*100
             self.msg += ", calculate VPOL"
@@ -599,7 +599,7 @@ class Plugin(object):
             if self.config[SHOW_POLAR]:
                 values = numpy.array(
                     [
-                        self.polar.value(a, tws * KNOTS)
+                        self.polar.value(a, tws)
                         for a in numpy.linspace(0, 180, 36)
                     ]
                 )
@@ -657,7 +657,7 @@ class Polar:
                 kw = {}
             self.spl = interp2d(self.data["TWA"], self.data["TWS"], self.data[val],**kw)
 
-        return float(self.spl(abs(twa), tws))
+        return float(self.spl(abs(twa), tws*KNOTS))*MPS
 
     def vmc_angle(self, twd, tws, brg, s=1):
         brg_twd = to180(brg - twd)  # BRG from wind
