@@ -52,7 +52,7 @@ try:
 except:
     pass
 
-PLUGIN_VERSION = 20240911
+PLUGIN_VERSION = 20241221
 SOURCE = "Sail_Instrument"
 MIN_AVNAV_VERSION = 20230705
 KNOTS = 1.94384  # knots per m/s
@@ -171,18 +171,6 @@ CONFIG = [
         "description": "calculate laylines from polar speed, not from beat/run angle table",
         "default": "False",
         "type": "BOOLEAN",
-    },
-    {
-        "name": LAYLINES_WITH_CURENT,
-        "description": "correct laylines for current and leeway (laylines over ground) with current data is present",
-        "default": "False",
-        "type": "BOOLEAN",
-    },
-    {
-        "name": LAYLINES_LEEWAY,
-        "description": "assumed upwind and downwind leeway used in layline calculation of corrected laylines",
-        "default": "0,0",
-        "type": "STRING",
     },
     {
         "name": SHOW_POLAR,
@@ -545,14 +533,20 @@ class Plugin(object):
                                     sourcePriority=nmea_priority,
                                 )
                                 sending.add(s[:6])
+                        elif not data.has(*f.split(",")):
+                            self.api.debug(
+                                " Cannot send NMEA_SENTENCE $%s[%s] because missing: %s", s[5:8], f, {
+                                j for j in f.split(",") if data[j] is None})
 
                 self.api.setStatus(
                     "NMEA",
                     f"present:{sorted(present)} --> calculated:{sorted(calculated)} sending:{sorted(sending)}{self.msg}")
             except Exception as x:
+                self.api.error(f"{x}")
                 self.api.setStatus("ERROR", f"{x}")
 
             time.sleep(self.config[PERIOD])
+        self.api.log("terminated run-loop")
 
     def laylines(self, data):
         try:
@@ -584,10 +578,10 @@ class Plugin(object):
                 return
 
             if self.config[LAYLINES_FROM_POLAR] or not self.polar.has_angle(upwind):
-                data.LAY = abs(to180(self.polar.vmc_angle(0, tws * KNOTS, 0 if upwind else 180)))
+                data.LAY = abs(to180(self.polar.vmc_angle(0, tws, 0 if upwind else 180)))
                 self.msg += ", laylines from polar"
             else:
-                data.LAY = self.polar.angle(tws * KNOTS, upwind)
+                data.LAY = self.polar.angle(tws, upwind)
                 self.msg += ", laylines from table"
 
             leeway = list(map(float,self.config[LAYLINES_LEEWAY].split(',')))[0 if upwind else 1]
@@ -618,7 +612,7 @@ class Plugin(object):
                 data.VMCA = self.polar.vmc_angle(twd, tws, brg)
                 if upwind and abs(to180(brg - twd)) < data.LAY:
                     data.VMCB = self.polar.vmc_angle(twd, tws, brg, -1)
-                self.msg += ", VMC"
+                self.msg += ", VMC angles"
 
         except Exception as x:
             self.api.error(f"laylines {x}")
@@ -651,9 +645,16 @@ class Polar:
 
     def angle(self, tws, upwind):
         angle = self.data["beat_angle" if upwind else "run_angle"]
-        return numpy.interp(tws, self.data["TWS"], angle)
+        return numpy.interp(tws*KNOTS, self.data["TWS"], angle)
 
     def value(self, twa, tws):
+        """
+        get the 2d interpolated value
+        @param twa: TrueWindAngle in degrees
+        @param tws: TrueWindSpeed in m/s
+        @return: 2d interpolated speed through water in m/s
+        """
+
         if not self.spl:
             val = "STW" if "STW" in self.data else "heel"
             try:
@@ -664,16 +665,24 @@ class Polar:
                 kw = {}
             self.spl = interp2d(self.data["TWA"], self.data["TWS"], self.data[val],**kw)
 
-        return float(self.spl(abs(twa), tws*KNOTS))*MPS
+        return float(self.spl(abs(to180(twa)), tws*KNOTS))*MPS
 
     def vmc_angle(self, twd, tws, brg, s=1):
+        """
+        get the course for highest VMC
+        @param twd: TrueWindDirection in degrees
+        @param tws: TrueWindSpeed in m/s
+        @param brg: Bearing to waypoint in degrees
+        @return: course for highest VMC in degrees relative to twd
+        """
+
         brg_twd = to180(brg - twd)  # BRG from wind
 
         def vmc(twa):
             # negative sign for minimizer
             return -self.value(twa, tws) * cos(radians(s * twa - abs(brg_twd)))
 
-        res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180))
+        res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180), method='bounded')
 
         if res.success:
             return to360(twd + s * copysign(res.x, brg_twd))
