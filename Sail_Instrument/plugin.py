@@ -173,6 +173,18 @@ CONFIG = [
         "type": "BOOLEAN",
     },
     {
+        "name": LAYLINES_WITH_CURENT,
+        "description": "correct laylines for current and leeway (laylines over ground) with current data is present",
+        "default": "False",
+        "type": "BOOLEAN",
+    },
+    {
+        "name": LAYLINES_LEEWAY,
+        "description": "assumed upwind and downwind leeway used in layline calculation of corrected laylines",
+        "default": "0,0",
+        "type": "STRING",
+    },
+    {
         "name": SHOW_POLAR,
         "description": "compute and display normalized polar diagram in the widget",
         "default": "True",
