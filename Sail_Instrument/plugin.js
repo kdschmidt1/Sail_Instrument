@@ -594,33 +594,6 @@ var Sail_InstrumentWidget = {
 
       drawWindWidget(ctx, 100, -data.HDT, data);
 
-      // print data fields in corners
-      if(canvas.width>200){
-        function val(label, x, y, speed=true, digits=1) {
-          var value=data[label];
-          if(typeof(value)=="number" && isFinite(value)){
-            value = speed ? knots(value) : value;
-            value = value.toFixed(digits);
-            if(label.endsWith("F")) label=label.substring(0,label.length-1);
-            ctx.textAlign = x<0 ? "left" : "right";
-            ctx.textBaseline = y<0 ? "top" : "bottom";
-            ctx.font = "bold "+0.15*radius + "px Arial"; ctx.fillStyle = "gray";
-            ctx.fillText(label, x*radius, 0.8*y*radius);
-            ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
-            ctx.strokeStyle = "white"; ctx.lineWidth = 0.03 * radius;
-            ctx.strokeText(value, x*radius,y*radius);
-            ctx.fillText(value, x*radius,y*radius);
-            ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
-            return true;
-          }
-          return false;
-        }
-
-        val("AWS", -1.4, -1.4);
-        val("TWSF", +1.4, -1.4);
-        if(!val("VMC", -1.4, +1.4)) val("VMG", -1.4, +1.4);
-        if(!val("STW", +1.4, +1.4)) val("SOG", +1.4, +1.4);
-      }
       ctx.restore();
     },
 };
@@ -629,6 +602,10 @@ avnav.api.registerWidget(Sail_InstrumentWidget, {
     WaterTrack: {
         type: 'BOOLEAN',
         default: false
+    },
+    DisplayData: {
+        type: 'BOOLEAN',
+        default: true
     },
 });
 
@@ -655,6 +632,10 @@ var Sail_Instrument_OverlayParameter = {
         default: true
     },
     WaterTrack: {
+        type: 'BOOLEAN',
+        default: false
+    },
+    DisplayData: {
         type: 'BOOLEAN',
         default: false
     },
@@ -690,6 +671,8 @@ let Sail_Instrument_Overlay = {
         VMCB: 'nav.gps.sail_instrument.VMCB',
         POLAR: 'nav.gps.sail_instrument.POLAR',
         VMIN: 'nav.gps.sail_instrument.VMIN',
+        VMC: 'nav.gps.sail_instrument.VMC',
+        VMG: 'nav.gps.sail_instrument.VMG',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -732,6 +715,7 @@ function drawWindWidget(ctx, size, maprotation, data){
         if (typeof(maprotation) == 'undefined') { return; }
         var vmin = typeof(data.VMIN) == 'undefined' ? 0 : data.VMIN;
         var rings = typeof(data.Rings) == 'undefined' ? true : data.Rings;
+        var displayData = typeof(data.DisplayData) == 'undefined' ? false : data.DisplayData;
         var showWaterTrack = typeof(data.WaterTrack) == 'undefined' ? false : data.WaterTrack;
         if(rings) drawCompassRing(ctx, size, maprotation);
         if (data.HDT>=0) {
@@ -776,6 +760,33 @@ function drawWindWidget(ctx, size, maprotation, data){
           if (data.HDT>=0) {
               drawHeadingBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
           }
+        }
+        if(displayData) {
+          function val(label, x, y, speed=true, digits=1) {
+            var value=data[label];
+            var radius=size;
+            if(typeof(value)=="number" && isFinite(value)){
+              value = speed ? knots(value) : value;
+              value = value.toFixed(digits);
+              if(label.endsWith("F")) label=label.substring(0,label.length-1);
+              ctx.textAlign = x<0 ? "left" : "right";
+              ctx.textBaseline = y<0 ? "top" : "bottom";
+              ctx.font = "bold "+0.15*radius + "px Arial"; ctx.fillStyle = "gray";
+              ctx.fillText(label, x*radius, 0.8*y*radius);
+              ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
+              ctx.strokeStyle = "white"; ctx.lineWidth = 0.03 * radius;
+              ctx.strokeText(value, x*radius,y*radius);
+              ctx.fillText(value, x*radius,y*radius);
+              ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
+              return true;
+            }
+            return false;
+          }
+
+          val("AWS", -1.4, -1.4);
+          val("TWSF", +1.4, -1.4);
+          if(!val("VMC", -1.4, +1.4)) val("VMG", -1.4, +1.4);
+          if(!val("STW", +1.4, +1.4)) val("SOG", +1.4, +1.4);
         }
 }
 
