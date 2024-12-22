@@ -752,11 +752,12 @@ function drawWindWidget(ctx, size, maprotation, data){
             drawWindArrow(ctx, size, maprotation + data.AWD, blue, 'A');
         }
         if (knots(data.TWSF)>=1) {
-            var onTarget = (typeof(data.BRG) == 'undefined'
+            var noTarget = typeof(data.BRG) == 'undefined'
                 || Math.abs(to180(data.TWDF-data.BRG))>data.LAY && Math.abs(to180(data.TWDF-data.BRG))<=90
-                || Math.abs(to180(data.TWDF-data.BRG))<data.LAY && Math.abs(to180(data.TWDF-data.BRG))>90
-                || Math.abs(to180(data.TWDF-data.LAY-data.HDT))<10 || Math.abs(to180(data.TWDF+data.LAY-data.HDT))<10);
-            drawWindArrow(ctx, size, maprotation + data.TWDF, onTarget ? green : '#3ba3f7', data.HDT==data.COG ? 'G' : 'T');
+                || Math.abs(to180(data.TWDF-data.BRG))<data.LAY && Math.abs(to180(data.TWDF-data.BRG))>90;
+            var a = noTarget ? 0 : Math.min(1,Math.min(Math.abs(to180(data.TWDF-data.LAY-data.HDT)),Math.abs(to180(data.TWDF+data.LAY-data.HDT)))/10);
+            var h = a*210+(1-a)*120;
+            drawWindArrow(ctx, size, maprotation + data.TWDF, 'hsl('+h+',100%,50%)', data.HDT==data.COG ? 'G' : 'T');
         }
         if(rings) {
           if (knots(data.STW)>=vmin && data.CTW>=0 && showWaterTrack) {
