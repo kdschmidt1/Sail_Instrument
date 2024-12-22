@@ -723,9 +723,9 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (typeof(maprotation) == 'undefined') { return; }
         var vmin = typeof(data.VMIN) == 'undefined' ? 0 : data.VMIN;
         var rings = typeof(data.Rings) == 'undefined' ? true : data.Rings;
-        if(rings) DrawKompassring(ctx, size, maprotation);
+        if(rings) drawCompassRing(ctx, size, maprotation);
         if (data.HDT>=0) {
-          if(rings) DrawOuterRing(ctx, size, maprotation + data.HDT);
+          if(rings) drawOuterRing(ctx, size, maprotation + data.HDT);
         } else {
           return; // cannot draw anything w/o HDT
         }
@@ -737,31 +737,31 @@ function drawWindWidget(ctx,size, maprotation, data){
             drawPolar(ctx,size,maprotation,data,"black");
           }
           var mm = [data.minTWD, data.maxTWD];
-          DrawLaylineArea(ctx, size, maprotation + data.TWDF - data.LAY, mm, green);
-          DrawLaylineArea(ctx, size, maprotation + data.TWDF + data.LAY, mm, red);
+          drawLayline(ctx, size, maprotation + data.TWDF - data.LAY, mm, green);
+          drawLayline(ctx, size, maprotation + data.TWDF + data.LAY, mm, red);
           if (data.VMCA>=0) {
-            DrawLaylineArea(ctx, size, maprotation + data.VMCA, [0,0], blue);
+            drawLayline(ctx, size, maprotation + data.VMCA, [0,0], blue);
           }
           if (data.VMCB>=0) {
-            DrawLaylineArea(ctx, size, maprotation + data.VMCB, [0,0], "lightblue");
+            drawLayline(ctx, size, maprotation + data.VMCB, [0,0], "lightblue");
           }
         }
         if (knots(data.AWS)>=1) {
-            DrawWindpfeilIcon(ctx, size, maprotation + data.AWD, blue, 'A');
+            drawWindArrow(ctx, size, maprotation + data.AWD, blue, 'A');
         }
         if (knots(data.TWSF)>=1) {
             var onLayline = Math.abs(to180(data.TWDF-data.LAY-data.HDT))<10 || Math.abs(to180(data.TWDF+data.LAY-data.HDT))<10;
-            DrawWindpfeilIcon(ctx, size, maprotation + data.TWDF, onLayline ? green : '#3ba3f7', data.HDT==data.COG ? 'G' : 'T');
+            drawWindArrow(ctx, size, maprotation + data.TWDF, onLayline ? green : '#3ba3f7', data.HDT==data.COG ? 'G' : 'T');
         }
         if(rings) {
           if (data.BRG>=0) {
               DrawWPIcon(ctx, size, maprotation + data.BRG);
           }
           if (knots(data.SOG)>=vmin && data.COG>=0) {
-              DrawEierUhr(ctx, size, maprotation + data.COG, orange);
+              drawCOGmarker(ctx, size, maprotation + data.COG, orange);
           }
           if (data.HDT>=0) {
-              DrawCourseBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+              drawHeadingBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
           }
         }
 }
@@ -994,7 +994,7 @@ let DrawWPIcon = function(ctx, radius, angle) {
 }
 
 
-let DrawLaylineArea = function(ctx, radius, angle, minmax, color) {
+let drawLayline = function(ctx, radius, angle, minmax, color) {
 
     ctx.save();
     var radius = 0.9 * radius
@@ -1023,7 +1023,7 @@ let DrawLaylineArea = function(ctx, radius, angle, minmax, color) {
 }
 
 
-let DrawCourseBox = function(ctx, radius, angle, color, Text) {
+let drawHeadingBox = function(ctx, radius, angle, color, Text) {
     ctx.save();
     ctx.rotate((angle / 180) * Math.PI)
 
@@ -1061,7 +1061,7 @@ let DrawCourseBox = function(ctx, radius, angle, color, Text) {
 
 }
 
-let DrawEierUhr = function(ctx, radius, angle, color) {
+let drawCOGmarker = function(ctx, radius, angle, color) {
     ctx.save();
 
     var radius_kompassring = radius //0.525*Math.min(x,y);
@@ -1093,7 +1093,7 @@ let DrawEierUhr = function(ctx, radius, angle, color) {
 
 
 
-let DrawWindpfeilIcon = function(ctx, radius, angle, color, Text) {
+let drawWindArrow = function(ctx, radius, angle, color, Text) {
     ctx.save();
 
     var radius_kompassring = radius //0.525*Math.min(x,y);
@@ -1152,7 +1152,7 @@ function drawTideArrow(ctx, radius, angle, color, label) {
 
 
 
-let DrawOuterRing = function(ctx, radius, angle) {
+let drawOuterRing = function(ctx, radius, angle) {
     ctx.save();
     ctx.rotate((angle / 180) * Math.PI)
 
@@ -1222,7 +1222,7 @@ let DrawOuterRing = function(ctx, radius, angle) {
     ctx.restore();
 } //Ende OuterRing
 
-let DrawKompassring = function(ctx, radius, angle) {
+let drawCompassRing = function(ctx, radius, angle) {
     ctx.save();
     ctx.rotate((angle / 180) * Math.PI)
     var thickness = 0.2 * radius //1*Math.min(x,y)
