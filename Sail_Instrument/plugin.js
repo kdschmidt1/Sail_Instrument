@@ -607,6 +607,10 @@ avnav.api.registerWidget(Sail_InstrumentWidget, {
         type: 'BOOLEAN',
         default: true
     },
+    DataCircular: {
+        type: 'BOOLEAN',
+        default: false
+    },
 });
 
 
@@ -638,6 +642,10 @@ var Sail_Instrument_OverlayParameter = {
     DisplayData: {
         type: 'BOOLEAN',
         default: false
+    },
+    DataCircular: {
+        type: 'BOOLEAN',
+        default: true
     },
 };
 
@@ -762,32 +770,60 @@ function drawWindWidget(ctx, size, maprotation, data){
           }
         }
         if(displayData) {
-          function val(label, x, y, speed=true, digits=1) {
-            var value=data[label];
-            var radius=size;
-            if(typeof(value)=="number" && isFinite(value)){
-              value = speed ? knots(value) : value;
-              value = value.toFixed(digits);
-              if(label.endsWith("F")) label=label.substring(0,label.length-1);
-              ctx.textAlign = x<0 ? "left" : "right";
-              ctx.textBaseline = y<0 ? "top" : "bottom";
-              ctx.font = "bold "+0.15*radius + "px Arial"; ctx.fillStyle = "gray";
-              ctx.fillText(label, x*radius, 0.8*y*radius);
-              ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
-              ctx.strokeStyle = "white"; ctx.lineWidth = 0.03 * radius;
-              ctx.strokeText(value, x*radius,y*radius);
-              ctx.fillText(value, x*radius,y*radius);
-              ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
-              return true;
-            }
-            return false;
-          }
-
-          val("AWS", -1.4, -1.4);
-          val("TWSF", +1.4, -1.4);
-          if(!val("VMC", -1.4, +1.4)) val("VMG", -1.4, +1.4);
-          if(!val("STW", +1.4, +1.4)) val("SOG", +1.4, +1.4);
+          var circular = typeof(data.DataCircular) == 'undefined' ? false : data.DataCircular;
+          if (circular) displayDataCircle(ctx, size, data);
+          else displayDataCorner(ctx, size, data);
         }
+}
+
+function displayDataCorner(ctx, size, data) {
+  function val(label, x, y, speed=true, digits=1) {
+    var value=data[label];
+    var radius=size;
+    if(typeof(value)=="number" && isFinite(value)){
+      value = speed ? knots(value) : value;
+      value = value.toFixed(digits);
+      if(label.endsWith("F")) label=label.substring(0,label.length-1);
+      ctx.textAlign = x<0 ? "left" : "right";
+      ctx.textBaseline = y<0 ? "top" : "bottom";
+      ctx.font = "bold "+0.15*radius + "px Arial"; ctx.fillStyle = "gray";
+      ctx.fillText(label, x*radius, 0.8*y*radius);
+      ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
+      ctx.strokeStyle = "white"; ctx.lineWidth = 0.03 * radius;
+      ctx.strokeText(value, x*radius,y*radius);
+      ctx.fillText(value, x*radius,y*radius);
+      ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
+
+      return true;
+    }
+    return false;
+  }
+
+  val("AWS", -1.4, -1.4);
+  val("TWSF", +1.4, -1.4);
+  if(!val("VMC", -1.4, +1.4)) val("VMG", -1.4, +1.4);
+  if(!val("STW", +1.4, +1.4)) val("SOG", +1.4, +1.4);
+}
+
+function displayDataCircle(ctx, size, data) {
+  function val(label, size, angle, speed = true, digits = 1) {
+      var value = data[label];
+      if (typeof (value) == "number" && isFinite(value)) {
+          value = speed ? knots(value) : value;
+          value = value.toFixed(digits);
+          if (label.endsWith("F")) label = label.substring(0, label.length - 1);
+          let inward = Math.abs(angle)<90;
+          let radius = size * 2 * 1.35 * (inward ? 1 : 0.94);
+          drawCircularText(ctx, label + " " + value, 0, 0, radius, angle, "center", false, inward, "sans-serif", size / 100 * 15 + "pt", -2);
+          return true;
+      }
+      return false;
+  }
+
+  val("AWS", size, -45);
+  val("TWSF", size, 45);
+  if (!val("VMC", size, -135)) val("VMG", size, -135);
+  if (!val("STW", size, +135)) val("SOG", size, 135);
 }
 
 avnav.api.registerWidget(Sail_Instrument_Overlay, Sail_Instrument_OverlayParameter);
