@@ -874,17 +874,18 @@ let calc_intersections = function(self, props) {
         var is_BB = LatLon.intersection(b_pos, props.LL2, WP_pos, to360(props.LL1 + 180));
 //        console.log(b_pos,is_SB,is_BB);
         calc_endpoint = function(intersection, pos) {
-            let is_xx = {};
-            is_xx.dist = pos.rhumbDistanceTo(intersection); // in m
-            if (is_xx.dist / 1000 > 20000) // Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
-                return null;
-            if (is_xx.dist > props.Laylinelength_nm * 1852) // beides in m// wenn abstand gösser gewünschte LL-Länge, neuen endpunkt der LL berechnen
-                is_xx.pos = pos.rhumbDestinationPoint(props.Laylinelength_nm * 1852, pos.rhumbBearingTo(intersection)) // abstand in m
-            else if (is_xx.dist < props.Laylinelength * 1852 && props.Laylineoverlap == true) // wenn abstand kleiner gewünschte LL-Länge und Verlängerung über schnittpunkt gewollt, neuen endpunkt der LL berechnen
-                is_xx.pos = pos.rhumbDestinationPoint(props.Laylinelength_nm * 1852, pos.rhumbBearingTo(intersection)) // abstand in m
+            let is = {};
+            is.dist = pos.rhumbDistanceTo(intersection); // in m
+            let maxLength = props.Laylinelength_nm * 1852;
+            if (is.dist / 1000 > 20000)
+                return null; // Schnittpunkt liegt auf der gegenüberliegenden Erdseite!
+            if (is.dist > maxLength)
+                is.pos = pos.rhumbDestinationPoint(maxLength, pos.rhumbBearingTo(intersection))
+            else if (is.dist < maxLength && props.Laylineoverlap)
+                is.pos = pos.rhumbDestinationPoint(maxLength, pos.rhumbBearingTo(intersection))
             else
-                is_xx.pos = intersection;
-            return (is_xx)
+                is.pos = intersection;
+            return is;
         };
 
         is_BB_boat = is_BB_WP = is_SB_boat = is_SB_WP = null;
