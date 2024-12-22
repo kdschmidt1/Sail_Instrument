@@ -752,8 +752,11 @@ function drawWindWidget(ctx, size, maprotation, data){
             drawWindArrow(ctx, size, maprotation + data.AWD, blue, 'A');
         }
         if (knots(data.TWSF)>=1) {
-            var onLayline = Math.abs(to180(data.TWDF-data.LAY-data.HDT))<10 || Math.abs(to180(data.TWDF+data.LAY-data.HDT))<10;
-            drawWindArrow(ctx, size, maprotation + data.TWDF, onLayline ? green : '#3ba3f7', data.HDT==data.COG ? 'G' : 'T');
+            var onTarget = (typeof(data.BRG) == 'undefined'
+                || Math.abs(to180(data.TWDF-data.BRG))>data.LAY && Math.abs(to180(data.TWDF-data.BRG))<=90
+                || Math.abs(to180(data.TWDF-data.BRG))<data.LAY && Math.abs(to180(data.TWDF-data.BRG))>90
+                || Math.abs(to180(data.TWDF-data.LAY-data.HDT))<10 || Math.abs(to180(data.TWDF+data.LAY-data.HDT))<10);
+            drawWindArrow(ctx, size, maprotation + data.TWDF, onTarget ? green : '#3ba3f7', data.HDT==data.COG ? 'G' : 'T');
         }
         if(rings) {
           if (knots(data.STW)>=vmin && data.CTW>=0 && showWaterTrack) {
