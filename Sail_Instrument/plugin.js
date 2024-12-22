@@ -727,7 +727,7 @@ var lightblue = "#3ba3f7";
 var black = "black";
 var orange = "orange";
 
-function drawWindWidget(ctx,size, maprotation, data){
+function drawWindWidget(ctx, size, maprotation, data){
 //        console.log("wind widget",data);
         if (typeof(maprotation) == 'undefined') { return; }
         var vmin = typeof(data.VMIN) == 'undefined' ? 0 : data.VMIN;
@@ -1014,8 +1014,8 @@ let drawLayline = function(ctx, radius, angle, minmax, color) {
     ctx.lineTo(0, -radius);
     ctx.lineWidth = 0.02*radius;
     ctx.strokeStyle = color;
-    var d=5*window.devicePixelRatio;
-    ctx.setLineDash([2*d,d]);
+//    var d=5*window.devicePixelRatio;
+//    ctx.setLineDash([2*d,d]);
     ctx.stroke();
 
     // sectors
