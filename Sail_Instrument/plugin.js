@@ -1061,8 +1061,8 @@ let drawLayline = function(ctx, radius, angle, minmax, color) {
     ctx.lineTo(0, -radius);
     ctx.lineWidth = 0.02*radius;
     ctx.strokeStyle = color;
-//    var d=5*window.devicePixelRatio;
-//    ctx.setLineDash([2*d,d]);
+    var d=3*window.devicePixelRatio;
+    ctx.setLineDash([d,d]);
     ctx.stroke();
 
     // sectors
