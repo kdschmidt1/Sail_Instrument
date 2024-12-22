@@ -541,11 +541,10 @@ var Sail_InstrumentWidget = {
         POS: 'nav.gps.position',
         COG: 'nav.gps.course',
         SOG: 'nav.gps.speed',
-//        COG: 'nav.gps.sail_instrument.COG',
-//        SOG: 'nav.gps.sail_instrument.SOG',
+        STW: 'nav.gps.sail_instrument.STW',
+        CTW: 'nav.gps.sail_instrument.CTW',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
-        STW: 'nav.gps.sail_instrument.STW',
         AWD: 'nav.gps.sail_instrument.AWD',
         AWS: 'nav.gps.sail_instrument.AWS',
         TWDF: 'nav.gps.sail_instrument.TWDF',
@@ -626,7 +625,12 @@ var Sail_InstrumentWidget = {
     },
 };
 
-avnav.api.registerWidget(Sail_InstrumentWidget, {});
+avnav.api.registerWidget(Sail_InstrumentWidget, {
+    WaterTrack: {
+        type: 'BOOLEAN',
+        default: false
+    },
+});
 
 
 /*################################################################################################*/
@@ -650,6 +654,10 @@ var Sail_Instrument_OverlayParameter = {
         type: 'BOOLEAN',
         default: true
     },
+    WaterTrack: {
+        type: 'BOOLEAN',
+        default: false
+    },
 };
 
 let Sail_Instrument_Overlay = {
@@ -666,8 +674,8 @@ let Sail_Instrument_Overlay = {
         POS: 'nav.gps.position',
         COG: 'nav.gps.course',
         SOG: 'nav.gps.speed',
-//        COG: 'nav.gps.sail_instrument.COG',
-//        SOG: 'nav.gps.sail_instrument.SOG',
+        STW: 'nav.gps.sail_instrument.STW',
+        CTW: 'nav.gps.sail_instrument.CTW',
         LAY: 'nav.gps.sail_instrument.LAY',
         HDT: 'nav.gps.sail_instrument.HDT',
         AWD: 'nav.gps.sail_instrument.AWD',
@@ -715,6 +723,7 @@ function knots(v){
 var red = "red";
 var green = "rgb(0,255,0)";
 var blue = "blue";
+var lightblue = "#3ba3f7";
 var black = "black";
 var orange = "orange";
 
@@ -723,6 +732,7 @@ function drawWindWidget(ctx,size, maprotation, data){
         if (typeof(maprotation) == 'undefined') { return; }
         var vmin = typeof(data.VMIN) == 'undefined' ? 0 : data.VMIN;
         var rings = typeof(data.Rings) == 'undefined' ? true : data.Rings;
+        var showWaterTrack = typeof(data.WaterTrack) == 'undefined' ? false : data.WaterTrack;
         if(rings) drawCompassRing(ctx, size, maprotation);
         if (data.HDT>=0) {
           if(rings) drawOuterRing(ctx, size, maprotation + data.HDT);
@@ -754,11 +764,14 @@ function drawWindWidget(ctx,size, maprotation, data){
             drawWindArrow(ctx, size, maprotation + data.TWDF, onLayline ? green : '#3ba3f7', data.HDT==data.COG ? 'G' : 'T');
         }
         if(rings) {
-          if (data.BRG>=0) {
-              DrawWPIcon(ctx, size, maprotation + data.BRG);
+          if (knots(data.STW)>=vmin && data.CTW>=0 && showWaterTrack) {
+              drawCourseMarker(ctx, size, maprotation + data.CTW, lightblue, -1);
           }
           if (knots(data.SOG)>=vmin && data.COG>=0) {
-              drawCOGmarker(ctx, size, maprotation + data.COG, orange);
+              drawCourseMarker(ctx, size, maprotation + data.COG, orange, showWaterTrack?1:0);
+          }
+          if (data.BRG>=0) {
+              drawWaypointMarker(ctx, size, maprotation + data.BRG);
           }
           if (data.HDT>=0) {
               drawHeadingBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
@@ -974,24 +987,19 @@ let DrawMapLaylines = function(self, ctx, intersections, props) {
     ctx.restore()
 }
 
-let DrawWPIcon = function(ctx, radius, angle) {
+let drawWaypointMarker = function(ctx, radius, angle) {
     ctx.save();
     ctx.beginPath();
-
     var thickness = radius / 4;
-
-    ctx.rotate((angle / 180) * Math.PI)
-
+    ctx.rotate(radians(angle))
     ctx.arc(0, -radius + thickness / 3, thickness / 4, 0, 2 * Math.PI);
     ctx.strokeStyle = "black";
-    ctx.stroke();
-    ctx.fillStyle = "rgb(255,255,0)";
+    ctx.lineWidth = 0.05 * thickness;
+    ctx.fillStyle = "yellow";
     ctx.fill();
-
-
+    ctx.stroke();
     ctx.restore();
-
-}
+};
 
 
 let drawLayline = function(ctx, radius, angle, minmax, color) {
@@ -1020,7 +1028,7 @@ let drawLayline = function(ctx, radius, angle, minmax, color) {
     ctx.fillStyle = color;
     ctx.fill()
     ctx.restore()
-}
+};
 
 
 let drawHeadingBox = function(ctx, radius, angle, color, Text) {
@@ -1061,34 +1069,44 @@ let drawHeadingBox = function(ctx, radius, angle, color, Text) {
 
 }
 
-let drawCOGmarker = function(ctx, radius, angle, color) {
+let drawCourseMarker = function(ctx, radius, angle, color, part=0) {
+    // part: +1=upper, -1=lower, 0=both
     ctx.save();
 
     var radius_kompassring = radius //0.525*Math.min(x,y);
     var radius_outer_ring = radius * 1.3 //= 0.65*Math.min(x,y);
     var thickness = radius / 4;
 
-    ctx.rotate((angle / 180) * Math.PI)
-    let lx = -0.4 * thickness
-    let rx = +0.4 * thickness
-    let topy = -radius + 0.9 * thickness
-    let boty = -radius - 0.9 * thickness
+    ctx.rotate(radians(angle))
+    let xc = 0;
+    let yc = -radius;
+    let xl = -0.4 * thickness;
+    let xr = +0.4 * thickness;
+    let yt = yc - 0.9 * thickness;
+    let yb = yc + 0.9 * thickness;
     ctx.beginPath();
-    ctx.moveTo(lx, boty); // move to bottom left corner
-    ctx.lineTo(rx, topy); // line to top right corner
-    ctx.lineTo(lx, topy); // line to top left corner
-    ctx.lineTo(rx, boty); // line to bottom right corner
-    //ctx.lineTo(lx, boty); // line to bottom left corner
-    ctx.closePath()
+    if (part>0) { // upper triangle
+      ctx.moveTo(xl, yt);
+      ctx.lineTo(xr, yt);
+      ctx.lineTo(xc,yc);
+    } else if (part<0) { // lower triangle
+      ctx.moveTo(xl, yb);
+      ctx.lineTo(xr, yb);
+      ctx.lineTo(xc,yc);
+    } else { // hourglass
+      ctx.moveTo(xl, yb);
+      ctx.lineTo(xr, yb);
+      ctx.lineTo(xl,yt);
+      ctx.lineTo(xr,yt);
+    }
+    ctx.closePath();
     ctx.fillStyle = color;
     ctx.lineWidth = 0.05 * thickness;
     ctx.strokeStyle = color;
+    ctx.strokeStyle = 'black';
     ctx.fill();
-    ctx.strokeStyle = "rgb(0,0,0)";
-    ctx.stroke(); // Render the path				ctx.fillStyle='rgb(255,255,255)';
-
+    ctx.stroke();
     ctx.restore();
-
 }
 
 
