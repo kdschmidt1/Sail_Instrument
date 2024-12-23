@@ -648,6 +648,10 @@ var Sail_Instrument_OverlayParameter = {
         type: 'BOOLEAN',
         default: true
     },
+    NightInvert: {
+        type: 'BOOLEAN',
+        default: false
+    },
 };
 
 let Sail_Instrument_Overlay = {
@@ -701,7 +705,9 @@ let Sail_Instrument_Overlay = {
             }
         }
 
+
         ctx.globalAlpha *= data.Opacity;
+        if(data.NightInvert && isNightMode()) ctx.filter = 'invert(100%) hue-rotate(180deg)';
         drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
         ctx.restore();
     }
