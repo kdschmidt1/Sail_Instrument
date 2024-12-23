@@ -52,17 +52,19 @@ In the four corners are values of
 - AWS current apparent wind speed
 - TWS average true wind speed
 - VMC/VMG current velocity made good
-- STW current water speed
+- STW/SOG current water/ground speed
 
 ### Wind Plot Widget
 
 ![WindPlot in AvNav](Images/windplot.png)
 
-The wind plot show the history of TWD of the last couple of minutes, newest data is on top. One graph shows the history of raw values, coloured red/green to indicate port/starboard tack. The dashed line is the history of the smoothed data. Here the colour code indicates TWA.
+The wind plot show the history of TWD of the last couple of minutes, newest data is on top. One graph shows the history of raw values, coloured red/green to indicate port/starboard tack. The dashed line is the history of the smoothed data. 
+
+The tack plot shows the history of TWA, Here the colour code indicates TWA.
 
 - blue - beating <70°
 - cyan - beam reach <130°
-- magenta - broad reach/run >130°
+- yellow - broad reach/run >130°
 
 The history (height) and range (width) can be configured, as well as the displayed value (TWS can be displayed as well). 
 
