@@ -172,7 +172,9 @@ function drawCircularText(ctxRef, text, x, y, diameter, startAngle, align, textI
             diameter += textHeight * 3;
     }
 
-    ctxRef.fillStyle = "black";
+    var night = isNightMode();
+    ctxRef.fillStyle = night ? '#a00' : 'black';
+    ctxRef.strokeStyle = night ? 'black' : 'white';
     ctxRef.font = "bold " + fSize + " " + fName;
 
     // Reverse letters for align Left inward, align right outward
@@ -211,8 +213,6 @@ function drawCircularText(ctxRef, text, x, y, diameter, startAngle, align, textI
         ctxRef.rotate((charWid / 2 / (diameter / 2 - textHeight)) * clockwise)
         // draw the character at "top" or "bottom"
         // depending on inward or outward facing
-        ctxRef.fillStyle = "black";
-        ctxRef.strokeStyle = "white";
         ctxRef.lineWidth = diameter / 600//0.03 * 30//radius;
 
         ctxRef.fillText(
@@ -316,10 +316,11 @@ var WindPlotWidget = {
         return Math.ceil(Math.max(1,max-min));
       }
 
+      var night = isNightMode();
       var r = data.range;
       var xtick = x => x.toFixed(1).replace(".0","");
       var c0 = d => d.AWA<0 ? red : d.AWA>0 ? green : blue;
-      var c1 = d => blue;
+      var c1 = d => night ? "#ded714" : blue;
       var v1 = false;
       var tackPlot = false;
 
@@ -426,7 +427,7 @@ var WindPlotWidget = {
       let x0=o, x1=w-o, xc=(x0+x1)/2, dx=x1-x0;
       let y0=o, y1=h-o/4, yc=(y0+y1)/2, dy=y1-y0;
 
-      ctx.fillStyle = "black";
+      ctx.fillStyle = night ? 'red' : "black";
       ctx.textAlign = "center";
       o=0.45*f;
       ctx.font = "bold "+f.toFixed(0)+"px sans-serif";
@@ -718,6 +719,15 @@ var lightblue = "#3ba3f7";
 var black = "black";
 var orange = "orange";
 
+function isNightMode() {
+  try {
+    var e = document.getElementsByClassName('pageFrame');
+    return e[0].classList.contains('nightMode');
+  } catch(error) {
+    return false;
+  }
+}
+
 function drawWindWidget(ctx, size, maprotation, data){
 //        console.log("wind widget",data);
         if (typeof(maprotation) == 'undefined') { return; }
@@ -736,7 +746,7 @@ function drawWindWidget(ctx, size, maprotation, data){
         }
         if (knots(data.TWSF)>=1 && rings) {
           if(data.POLAR){
-            drawPolar(ctx,size,maprotation,data,"black");
+            drawPolar(ctx,size,maprotation,data,isNightMode()?'#aaa':'black');
           }
           var mm = [data.minTWD, data.maxTWD];
           drawLayline(ctx, size, maprotation + data.TWDF - data.LAY, mm, green);
@@ -785,15 +795,19 @@ function displayDataCorner(ctx, size, data) {
     var value=data[label];
     var radius=size;
     if(typeof(value)=="number" && isFinite(value)){
+      var night = isNightMode();
       value = speed ? knots(value) : value;
       value = value.toFixed(digits);
       if(label.endsWith("F")) label=label.substring(0,label.length-1);
       ctx.textAlign = x<0 ? "left" : "right";
       ctx.textBaseline = y<0 ? "top" : "bottom";
-      ctx.font = "bold "+0.15*radius + "px Arial"; ctx.fillStyle = "gray";
+      ctx.font = "bold "+0.15*radius + "px Arial";
+      ctx.fillStyle = "gray";
       ctx.fillText(label, x*radius, 0.8*y*radius);
-      ctx.font = "bold " + 0.3*radius + "px Arial"; ctx.fillStyle = "black";
-      ctx.strokeStyle = "white"; ctx.lineWidth = 0.03 * radius;
+      ctx.font = "bold " + 0.3*radius + "px Arial";
+      ctx.fillStyle = night ? '#a00' : 'black';
+      ctx.strokeStyle = night ? 'black' : 'white';
+      ctx.lineWidth = 0.03 * radius;
       ctx.strokeText(value, x*radius,y*radius);
       ctx.fillText(value, x*radius,y*radius);
       ctx.textAlign ="left"; ctx.textBaseline = "alphabetic";
@@ -1084,8 +1098,8 @@ let drawLayline = function(ctx, radius, angle, minmax, color) {
 
 let drawHeadingBox = function(ctx, radius, angle, color, Text) {
     ctx.save();
-    ctx.rotate((angle / 180) * Math.PI)
-
+    ctx.rotate(radians(angle));
+    var night = isNightMode();
 
     let roundRect = function(x, y, w, h, radius) {
         var r = x + w;
@@ -1110,11 +1124,11 @@ let drawHeadingBox = function(ctx, radius, angle, color, Text) {
     w = metrics.width
     h = (metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
     roundRect(-1.2 * w / 2, -radius - 1.2 * h / 2, 1.2 * w, 1.2 * h, 0.1 * radius / 4);
-    ctx.fillStyle = "rgb(255,255,255)";
+    ctx.fillStyle = night ? '#333' : 'white';
     ctx.fill();
     ctx.textAlign = "center";
     ctx.font = "bold " + radius / 5 + "px Arial";
-    ctx.fillStyle = "rgb(0,0,0)";
+    ctx.fillStyle = night ? 'red' : 'black';
     ctx.fillText(Text, 0, -radius + h / 2);
     ctx.restore();
 
@@ -1292,20 +1306,21 @@ let drawOuterRing = function(ctx, radius, angle) {
 } //Ende OuterRing
 
 let drawCompassRing = function(ctx, radius, angle) {
+    var night = isNightMode();
     ctx.save();
-    ctx.rotate((angle / 180) * Math.PI)
-    var thickness = 0.2 * radius //1*Math.min(x,y)
+    ctx.rotate(radians(angle));
+    var thickness = 0.2 * radius; //1*Math.min(x,y)
     ctx.beginPath();
-    var fontsize = Math.round(radius / 100 * 12)
+    var fontsize = Math.round(radius / 100 * 12);
     ctx.arc(0, 0, radius, 0, 2 * Math.PI, false);
     ctx.lineWidth = thickness;
-    ctx.strokeStyle = "rgb(230,230,230)";
+    ctx.strokeStyle = night ? '#333' : "rgb(230,230,230)";
     ctx.stroke();
     for (var i = 0; i < 360; i += 10) {
         ctx.save();
         ctx.rotate((i / 180) * Math.PI);
         if (i % 30 == 0) {
-            ctx.fillStyle = "rgb(00,00,00)";
+            ctx.fillStyle = night ? '#aaa' : 'black';
             ctx.textAlign = "center";
             ctx.font = `bold ${fontsize}px Arial`;
             ctx.fillText(i.toString().padStart(3, "0"), 0, -radius + thickness / 4);
