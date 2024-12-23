@@ -8,11 +8,14 @@ Going to the [Server/Status-Page](https://www.wellenvogel.net/software/avnav/doc
 - `allow_fallback` - allow fallback to use HDT=COG and/or STW=SOG if former are not available
 - `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
 - `laylines_polar` - calculate laylines from speed matrix, not from beat/run angle in polar data`
+- `laylines_current` - correct laylines in chart overlay for current
+- `laylines_leeway` - correct laylines in chart overlay for this leeway (upwind,downwind)
 - `show_polar` - compute and display normalized polar diagram in the widget
 - `tack_angle` - tack angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data
 - `gybe_angle` - gybe angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data
 - `ground_wind` - manually entered ground wind as `direction,speed`, used to calculate true and apparent wind if no other wind data is present (for simulation)
 - `lee_factor` - leeway factor, if >0 leeway angle is estimated, see below
+- `polar_factor` - correction factor multiplied to polar speed
 - `wmm_file` - file with WMM-coefficents for magnetic deviation
 - `wmm_period` - period (s) to recompute magnetic variation
 - `depth_transducer` - depth of transducer (m) (negative=disabled)
