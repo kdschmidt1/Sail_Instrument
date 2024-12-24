@@ -8,7 +8,7 @@ Going to the [Server/Status-Page](https://www.wellenvogel.net/software/avnav/doc
 - `allow_fallback` - allow fallback to use HDT=COG and/or STW=SOG if former are not available
 - `calc_vmc` - perform calculation of optimal TWA for maximum VMC (see below)
 - `laylines_polar` - calculate laylines from speed matrix, not from beat/run angle in polar data`
-- `laylines_current` - correct laylines in chart overlay for current
+- `laylines_current` - correct laylines in chart overlay for current (if SET/DFT and polar data are available)
 - `laylines_leeway` - correct laylines in chart overlay for this leeway (upwind,downwind)
 - `show_polar` - compute and display normalized polar diagram in the widget
 - `tack_angle` - tack angle [0,180) used for laylines, if >0 this fixed angle is used instead the one from the polar data
@@ -29,9 +29,9 @@ Going to the [Server/Status-Page](https://www.wellenvogel.net/software/avnav/doc
 If you are only interested in the calculations (or use the plugin as a replacement for the [more_nmea plugin](https://github.com/kdschmidt1/avnav-more-nmea-plugin) ) you can finish the configuration here.
 
 ## Filter for NMEA-sentences
-You can explicitly declare which records to be sent by using the nmea_filter-Parameter (i.e. “$HDT,$MWV" to transmit only these two).
+You can explicitly declare which records to be sent by using the nmea_filter-Parameter (i.e. `$HDT,$MWV` to transmit only these two).
 If the "nmea_filter" is empty, all records are transmitted.  
-You can avoid to transmit a specific record by adding its name as inverse (i.e. “^$HDT”) to the "nmea_filter".   
+You can avoid to transmit a specific record by adding its name as inverse (i.e. `^$HDT`) to the "nmea_filter".   
 ***
 
 
@@ -43,7 +43,7 @@ These widgets are installed and configured with the [Layout-Editor](https://www.
 
 ### Sail Instrument Widget
 
-![SailInstrument in AvNav](Images/widget.png)
+![SailInstrument](Images/widget.png)
 
 The widget shows apparent (A) and true (T) wind directions as triangles on the outer ring. Current HDT is displayed in the box on the top, COG is shown by the orange hour glass shaped marker. The BRG to the waypoint is shown by the yellow circle. If there is current, it is displayed as teal coloured triangle inside the inner ring. Laylines with range of the wind shifts are displayed as red/green dashed lines, a blue line shows the course for optimal VMC. The wind speed polar for current TWS is displayed around the center. 
 
@@ -51,7 +51,7 @@ In the four corners are values of
 
 - AWS current apparent wind speed
 - TWS average true wind speed
-- VMC/VMG current velocity made good
+- VMC/VMG current velocity made good on course/to windward
 - STW/SOG current water/ground speed
 
 ### Wind Plot Widget
@@ -68,70 +68,21 @@ The tack plot shows the history of TWA, Here the colour code indicates TWA.
 
 The history (height) and range (width) can be configured, as well as the displayed value (TWS can be displayed as well). 
 
-### SailinstrumentInfo
-<img src="Images/sailinstrumentInfo-Widget.png">
+### LayLines
 
+There are two types of laylines.
 
-The configuration offers to select 4 different informations using the Displaytype entry: 
+- Laylines (dotted) in the instrument widget are symmetric around and relative to true wind.
+- Laylines (dashed) in the chart overlay are corrected for leeway and current (depending on the plugin config options `laylines_current` and `laylines_leeway`).
 
-<img src="Images/Sailinstrument-Info.png">
+The laylines in the chart overlay show the predicted ground track (if `laylines_current` is enabled), whereas the laylines in the instrument widget show the optimal TWA. The intersection points of the overlaid laylines indicate the recommended point where to tack including the effect of current.
 
-#####     dist (The distance to the waypoint for each layline individually)
-#####     time (The time to the waypoint for each layline individually (based on current speed))
-#####     cum-dist (The cumulated distance to the waypoint for both laylines)
-#####     cum-time (The cumulated time to the waypoint for both laylines (based on current speed))
+You configure the overlaid laylines to be shown on the waypoint and/or the boat, limit their length, and allow overlap on the intersections points.
 
+![LayLines](Images/laylines.png)
 
-## Two Map Widgets
-The plugin has also two Map-Widget which can be shown as Overlays on the NAV-page
-They are installed and configured with the [Layout-Editor](https://www.wellenvogel.net/software/avnav/docs/hints/layouts.html?lang=en#h2:LayoutEditor) using the map-widget-button ![map-widget](https://github.com/kdschmidt1/Sail_Instrument/assets/56232034/88443dfd-42b9-4bd0-ac7c-8e97e4e2f9ca)
+### Time and Distance
 
-<img src="Images/map-widgets.png">
+The *time/distance to WP* widget allows to display the distance to the next waypoint DTW and estimated time TTW. If the WP is in the upwind or downwind sector between the laylines, time and distance are computed along the (dashed) laylines using current speed for the current tack and the estimated polar speed for the opposite tack. Otherwise, direct distance and VMC are used to estimate the time.
 
-where you can select the overlays to add or (if already present) configure.
-
-> ### Sail_Instrument_Overlay
-
-
-<img src="Images/nav-sailsteer.png" width="75%" height="75%">
-
-
-
-#### Configuration of the Sail_Instrument_Overlay:
-
-![](https://github.com/kdschmidt1/Sail_Instrument/blob/master/Images/sailinstrument-config.png)
-
-> Widgetposition  (Boatposition or Mapcenter)
-
-> Displaysize     (Size of the Sailinstrument in percent)
-
-> Opacity         (Opacity of the Sailinstrument )
-
-
-> ### Laylines_Overlay
-
-<img src="Images/nav-laylines.png" width="75%" height="75%">
-
-
-#### Configuration of the Layline_Overlay:
-
-<img src="Images/laylines-config.png">
-
-> Opacity         (Opacity of the Laylines )
-
-> Laylinelength   (max. length of the Laylines in nm)
-
-> Laylineoverlap  (if not set Laylines are cut at the crossing )
-
-> LaylineBoat     (draw Laylines from Boat position )
-
-> LaylineWP       (draw Laylines from Waypont position )
-
-
-For sure you can also activate both together.
-
-
-<img src="Images/nav-both.png" width="75%" height="75%">
-
-## Map-Widget Visibility
-The visibility of the Map-Widget can be switched on the [Settings-Page](https://www.wellenvogel.net/software/avnav/docs/userdoc/settingspage.html?lang=en) using the User/Plugins-Button on the Layer-Section.
+You can configure the widget to show `time` or `distance` for the `current` or `opposite` tack or the `total` of both.
