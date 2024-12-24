@@ -1,127 +1,84 @@
 (function(){
-console.log("sail_instrument loaded");
+console.log("SailInstrument");
 
-
-//globalThis.globalParameter={};
-
-
-var Sail_InstrumentInfoParameters = {
-    formatterParameters: false,
-    caption: false,
-    unit: false,
-    value: false,
-    Displaytype: {
-        type: 'SELECT',
-        list: ['dist', 'cum_dist', 'time', 'cum_time'],
-        default: 'dist'
-    },
-};
-
-var intersections;
-
-const formatLL = function(dist, speed, opt_unit) {
-    let ret = ["", ""]
-    try {
-        if (!opt_unit || opt_unit.toLowerCase().match("dist")) {
-            ret[0] = "nm"
-            ret[1] = avnav.api.formatter.formatDistance(dist, 3, 1);
-            return ret
-        }
-        if (opt_unit.toLowerCase().match("time")) {
-
-            let dt = dist / 1825 / (speed * 1.944) //dt=dist[nm]/v[kn] in [hrs]
-            let tval = dt * 3600; // in sec
-            let sign = "";
-            if (tval < 0) {
-                sign = "-";
-                tval = -tval;
-            }
-            let h = Math.floor(tval / 3600);
-            let m = Math.floor((tval - h * 3600) / 60);
-            let s = tval - 3600 * h - 60 * m;
-            ret[0] = "hh:mm:ss"
-            ret[1] = sign + avnav.api.formatter.formatDecimal(h, 2, 0).replace(" ", "0") + ':' + avnav.api.formatter.formatDecimal(m, 2, 0).replace(" ", "0") + ':' + avnav.api.formatter.formatDecimal(s, 2, 0).replace(" ", "0");
-            return ret
-        }
-    } catch (e) {
-        return "-----"
-    }
+function toDateTime(secs) {
+    var t = new Date(1970, 0, 1); // Epoch
+    t.setSeconds(secs);
+    return t;
 }
 
-formatLL.parameters = [{
-    name: 'unit',
-    type: 'SELECT',
-    list: ['dist', 'cum_dist', 'time', 'cum_time'],
-    default: 'dist'
-}]
-
-avnav.api.registerFormatter("mySpecialLL", formatLL);
-
-var Sail_InstrumentInfoWidget = {
-    name: "Sail_InstrumentInfo",
+var LaylineWidget = {
+    name: "time/distance to WP",
+    unit: "",
+    caption: "TTW",
     storeKeys: {
-        boatposition: 'nav.gps.position',
-        speed: 'nav.gps.sail_instrument.STW',
-        LLSB: 'nav.gps.sail_instrument.LLSB',
-        LLBB: 'nav.gps.sail_instrument.LLBB',
+        WP: 'nav.wp.position',
+        POS: 'nav.gps.position',
+        TWA: 'nav.gps.sail_instrument.TWA',
+        VMC: 'nav.gps.sail_instrument.VMC',
+        LLS: 'nav.gps.sail_instrument.LLS',
+        LLP: 'nav.gps.sail_instrument.LLP',
+        LLSV: 'nav.gps.sail_instrument.LLSV',
+        LLPV: 'nav.gps.sail_instrument.LLPV',
     },
-    //unit: "nm",
-    renderHtml: function(props) {
-        let fmtParam = "";
-        let gpsdata = {
-            ...props
-        }; // https://www.delftstack.com/de/howto/javascript/javascript-deep-clone-an-object/
+    renderHtml: function(data) {
+//        console.log(data);
+        try {
+          var stb = to180(data.TWA)>0;
+          var is = calc_intersections(self, data);
+//          console.log(is);
+          if(typeof(is)=='undefined'){
+            // use direct distance and VMC
+            var direct = true;
+            var WP = new LatLon(data.WP.lat, data.WP.lon);
+            var POS = new LatLon(data.POS.lat, data.POS.lon);
+            var dist_c = POS.rhumbDistanceTo(WP);
+            var dist_o = dist_c;
+            var dist_t = dist_c;
+            var time_c = data.VMC>0 ? dist_c/data.VMC : NaN;
+            var time_o = time_c;
+            var time_t = time_c;
+          }else{
+            // distance on laylines with current speed and estimated speed on opposite tack
+            var direct = false;
+            var dist_c = (stb ? is.Boat.SB : is.Boat.BB).dist; // current tack
+            var dist_o = (stb ? is.Boat.BB : is.Boat.SB).dist; // opposite tack
+            var dist_t = dist_c + dist_o;
+            var time_c = dist_c/(stb ? data.LLSV : data.LLPV);
+            var time_o = dist_o/(stb ? data.LLPV : data.LLSV);
+            var time_t = time_c + time_o;
+          }
 
-        //console.log("Sail_InstrumentInfo");
-
-        //var fmtParam = ((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
-        if (typeof(intersections) != 'undefined' && intersections) {
-            if (typeof(gpsdata.Displaytype) != 'undefined')
-                fmtParam = gpsdata.Displaytype
-            else
-                fmtParam = ['dist']; //((gpsdata.formatterParameters instanceof  Array) && gpsdata.formatterParameters.length > 0) ? gpsdata.formatterParameters[0] : undefined;
-            var fv = formatLL(intersections.Boat.BB.dist, gpsdata.speed, fmtParam);
-            var fv2 = formatLL(intersections.Boat.SB.dist, gpsdata.speed, fmtParam);
-            var fvges = formatLL(intersections.Boat.SB.dist + intersections.Boat.BB.dist, gpsdata.speed, fmtParam);
-        } else {
-            fv = fv2 = fvges = ["--", "--"]
+          if(data.type=='distance') {
+            var dist = data.tack=='current' ? dist_c : data.tack=='opposite' ? dist_o : dist_t;
+            var val = avnav.api.formatter.formatDistance(dist,data.formatterParameters);
+          } else {
+            var time = data.tack=='current' ? time_c : data.tack=='opposite' ? time_o : time_t;
+            var val = avnav.api.formatter.formatTime(toDateTime(time));
+          }
+          if(direct && data.tack=='opposite') val='---';
+        } catch(error) {
+          var val='---';
         }
-        ret = "	\
-                                			 <div class=\"Sail_InstrumentInfo\"> </div> \
-                                			 <div class=\'infoRight\'> " + fv[0] + "</div>	\
-                                			 <div class=\" infoLeft \" > " + "Layl." + "</div> \
-                                			 <div class=\"resize\"> \
-                                			 <br> \
-                                			 "
-        if (fmtParam.toLowerCase().match("cum")) {
-            ret += "	\
-                                						 <div class=\"Sail_InstrumentInfoInner\"> \
-                                						 <div class=\" infoLeft \" > " + "LLcum" + "</div> \
-                                						 <div class=\" widgetData \" > " + fvges[1] + "</div> \
-                                						 </div> \
-                                						 </div> \
-                                						 "
-        } else {
-            ret += "	\
-                                						 <div class=\"Sail_InstrumentInfoInner\"> \
-                                						 <div class=\" infoLeft \" > " + "LLBB" + "</div> \
-                                						 <div class=\" widgetData \" > " + fv[1] + "</div> \
-                                						 </div> \
-                                						 <div class=\"Sail_InstrumentInfoInner\"> \
-                                						 <div class=\" infoLeft \" > " + "LLSB" + "</div> \
-                                						 <div class=\" widgetData \" > " + fv2[1] + "</div> \
-                                						 </div> \
-                                						 </div> \
-                                						 "
-        }
-        return (ret)
+        return '<div class="widgetData"><span class="valueData">'+val+'</span></div>';
     },
-    formatter: formatLL,
+    formatter: avnav.api.formatter.formatDistance,
 };
-/**
- * uncomment the next line to really register the widget
- */
-avnav.api.registerWidget(Sail_InstrumentInfoWidget, Sail_InstrumentInfoParameters);
+
+
+avnav.api.registerWidget(LaylineWidget, {
+    formatterParameters: true,
+    type: {
+        type: 'SELECT',
+        list: ['time','distance'],
+        default: 'time'
+    },
+    tack: {
+        type: 'SELECT',
+        list: ['total','current','opposite'],
+        default: 'total'
+    },
+});
 
 
 function clamp(smallest,x,largest){
@@ -533,7 +490,7 @@ avnav.api.registerWidget(WindPlotWidget, WindPlotParams);
 
 
 
-var Sail_InstrumentWidget = {
+var SailInstrumentWidget = {
     name: "Sail_InstrumentWidget",
     caption: "",
     unit: "",
@@ -548,10 +505,10 @@ var Sail_InstrumentWidget = {
         HDT: 'nav.gps.sail_instrument.HDT',
         AWD: 'nav.gps.sail_instrument.AWD',
         AWS: 'nav.gps.sail_instrument.AWS',
-        TWDF: 'nav.gps.sail_instrument.TWDF',
-        TWSF: 'nav.gps.sail_instrument.TWSF',
-        SETF: 'nav.gps.sail_instrument.SETF',
-        DFTF: 'nav.gps.sail_instrument.DFTF',
+        TWD: 'nav.gps.sail_instrument.TWDF',
+        TWS: 'nav.gps.sail_instrument.TWSF',
+        SET: 'nav.gps.sail_instrument.SETF',
+        DFT: 'nav.gps.sail_instrument.DFTF',
         minTWD: 'nav.gps.sail_instrument.TWDMIN',
         maxTWD: 'nav.gps.sail_instrument.TWDMAX',
         VMG: 'nav.gps.sail_instrument.VMG',
@@ -599,7 +556,7 @@ var Sail_InstrumentWidget = {
     },
 };
 
-avnav.api.registerWidget(Sail_InstrumentWidget, {
+avnav.api.registerWidget(SailInstrumentWidget, {
     WaterTrack: {
         type: 'BOOLEAN',
         default: false
@@ -654,7 +611,7 @@ var Sail_Instrument_OverlayParameter = {
     },
 };
 
-let Sail_Instrument_Overlay = {
+let SailInstrumentOverlay = {
 
     // Editable Parameters
     Displaysize: 100,
@@ -674,10 +631,10 @@ let Sail_Instrument_Overlay = {
         HDT: 'nav.gps.sail_instrument.HDT',
         AWD: 'nav.gps.sail_instrument.AWD',
         AWS: 'nav.gps.sail_instrument.AWS',
-        TWDF: 'nav.gps.sail_instrument.TWDF',
-        TWSF: 'nav.gps.sail_instrument.TWSF',
-        SETF: 'nav.gps.sail_instrument.SETF',
-        DFTF: 'nav.gps.sail_instrument.DFTF',
+        TWD: 'nav.gps.sail_instrument.TWDF',
+        TWS: 'nav.gps.sail_instrument.TWSF',
+        SET: 'nav.gps.sail_instrument.SETF',
+        DFT: 'nav.gps.sail_instrument.DFTF',
         minTWD: 'nav.gps.sail_instrument.TWDMIN',
         maxTWD: 'nav.gps.sail_instrument.TWDMAX',
         VMCA: 'nav.gps.sail_instrument.VMCA',
@@ -747,16 +704,16 @@ function drawWindWidget(ctx, size, maprotation, data){
         } else {
           return; // cannot draw anything w/o HDT
         }
-        if (knots(data.DFTF)>=vmin && data.SETF>=0) {
-            drawTideArrow(ctx, size, maprotation + data.SETF , "teal", knots(data.DFTF).toFixed(1));
+        if (knots(data.DFT)>=vmin && data.SET>=0) {
+            drawTideArrow(ctx, size, maprotation + data.SET , "teal", knots(data.DFT).toFixed(1));
         }
-        if (knots(data.TWSF)>=1 && rings) {
+        if (knots(data.TWS)>=1 && rings) {
           if(data.POLAR){
             drawPolar(ctx,size,maprotation,data,isNightMode()?'#aaa':'black');
           }
           var mm = [data.minTWD, data.maxTWD];
-          drawLayline(ctx, size, maprotation + data.TWDF - data.LAY, mm, green);
-          drawLayline(ctx, size, maprotation + data.TWDF + data.LAY, mm, red);
+          drawLayline(ctx, size, maprotation + data.TWD - data.LAY, mm, green);
+          drawLayline(ctx, size, maprotation + data.TWD + data.LAY, mm, red);
           if (data.VMCA>=0) {
             drawLayline(ctx, size, maprotation + data.VMCA, [0,0], blue);
           }
@@ -767,13 +724,13 @@ function drawWindWidget(ctx, size, maprotation, data){
         if (knots(data.AWS)>=1) {
             drawWindArrow(ctx, size, maprotation + data.AWD, blue, 'A');
         }
-        if (knots(data.TWSF)>=1) {
+        if (knots(data.TWS)>=1) {
             var noTarget = typeof(data.BRG) == 'undefined'
-                || Math.abs(to180(data.TWDF-data.BRG))>data.LAY && Math.abs(to180(data.TWDF-data.BRG))<=90
-                || Math.abs(to180(data.TWDF-data.BRG))<data.LAY && Math.abs(to180(data.TWDF-data.BRG))>90;
-            var a = noTarget ? 0 : Math.min(1,Math.min(Math.abs(to180(data.TWDF-data.LAY-data.HDT)),Math.abs(to180(data.TWDF+data.LAY-data.HDT)))/10);
+                || Math.abs(to180(data.TWD-data.BRG))>data.LAY && Math.abs(to180(data.TWD-data.BRG))<=90
+                || Math.abs(to180(data.TWD-data.BRG))<data.LAY && Math.abs(to180(data.TWD-data.BRG))>90;
+            var a = noTarget ? 0 : Math.min(1,Math.min(Math.abs(to180(data.TWD-data.LAY-data.HDT)),Math.abs(to180(data.TWD+data.LAY-data.HDT)))/10);
             var h = a*210+(1-a)*120;
-            drawWindArrow(ctx, size, maprotation + data.TWDF, 'hsl('+h+',100%,50%)', data.HDT==data.COG ? 'G' : 'T');
+            drawWindArrow(ctx, size, maprotation + data.TWD, 'hsl('+h+',100%,50%)', data.HDT==data.COG ? 'G' : 'T');
         }
         if(rings) {
           if (knots(data.STW)>=vmin && data.CTW>=0 && showWaterTrack) {
@@ -808,7 +765,7 @@ function displayDataCorner(ctx, size, data) {
       ctx.textAlign = x<0 ? "left" : "right";
       ctx.textBaseline = y<0 ? "top" : "bottom";
       ctx.font = "bold "+0.15*radius + "px Arial";
-      ctx.fillStyle = "gray";
+      ctx.fillStyle = night ? '#555' : 'gray';
       ctx.fillText(label, x*radius, 0.8*y*radius);
       ctx.font = "bold " + 0.3*radius + "px Arial";
       ctx.fillStyle = night ? '#a00' : 'black';
@@ -824,7 +781,7 @@ function displayDataCorner(ctx, size, data) {
   }
 
   val("AWS", -1.4, -1.4);
-  val("TWSF", +1.4, -1.4);
+  val("TWS", +1.4, -1.4);
   if(!val("VMC", -1.4, +1.4)) val("VMG", -1.4, +1.4);
   if(!val("STW", +1.4, +1.4)) val("SOG", +1.4, +1.4);
 }
@@ -845,17 +802,17 @@ function displayDataCircle(ctx, size, data) {
   }
 
   val("AWS", size, -45);
-  val("TWSF", size, 45);
+  val("TWS", size, 45);
   if (!val("VMC", size, -135)) val("VMG", size, -135);
   if (!val("STW", size, +135)) val("SOG", size, 135);
 }
 
-avnav.api.registerWidget(Sail_Instrument_Overlay, Sail_Instrument_OverlayParameter);
+avnav.api.registerWidget(SailInstrumentOverlay, Sail_Instrument_OverlayParameter);
 
 function drawPolar(ctx,size,maprotation,data,color){
     ctx.save();
     ctx.beginPath();
-    ctx.rotate((maprotation+data.TWDF) * Math.PI/180);
+    ctx.rotate((maprotation+data.TWD) * Math.PI/180);
     var r=0.7*size;
     //console.log(data.POLAR);
     var v=[];
@@ -893,9 +850,9 @@ let LayLines_Overlay = {
     storeKeys: {
         WP: 'nav.wp.position',
         POS: 'nav.gps.position',
-        LL1: 'nav.gps.sail_instrument.LL1',
-        LL2: 'nav.gps.sail_instrument.LL2',
-        TWDF: 'nav.gps.sail_instrument.TWDF',
+        LLS: 'nav.gps.sail_instrument.LLS',
+        LLP: 'nav.gps.sail_instrument.LLP',
+        TWD: 'nav.gps.sail_instrument.TWD',
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -905,7 +862,7 @@ let LayLines_Overlay = {
             ctx.save();
             ctx.globalAlpha *= data.Opacity;
 
-            intersections = calc_intersections(self, data);
+            let intersections = calc_intersections(self, data);
 //            console.log(intersections);
 
             if (typeof(intersections) != 'undefined') {
@@ -946,17 +903,16 @@ avnav.api.registerWidget(LayLines_Overlay, LayLines_OverlayParameter);
 let LatLon = avnav.api.LatLon();
 let calc_intersections = function(self, props) {
 //    console.log('props',props);
-    var intersections = null;
-    let b_pos = new LatLon(props.POS.lat, props.POS.lon);
-    //b_pos = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
+    let POS = new LatLon(props.POS.lat, props.POS.lon);
+    //POS = avnav.api.createLatLon(props.boatposition.lat, props.boatposition.lon);
     if (props.WP) {
-        WP_pos = new LatLon(props.WP.lat, props.WP.lon);
+        WP = new LatLon(props.WP.lat, props.WP.lon);
 
         // Intersections berechnen
-//        console.log(props.LL1,props.LL2);
-        var is_SB = LatLon.intersection(b_pos, props.LL1, WP_pos, to360(props.LL2 + 180));
-        var is_BB = LatLon.intersection(b_pos, props.LL2, WP_pos, to360(props.LL1 + 180));
-//        console.log(b_pos,is_SB,is_BB);
+//        console.log(props.LLS,props.LLP);
+        var is_SB = LatLon.intersection(POS, props.LLS, WP, to360(props.LLP + 180));
+        var is_BB = LatLon.intersection(POS, props.LLP, WP, to360(props.LLS + 180));
+//        console.log(POS,is_SB,is_BB);
         calc_endpoint = function(intersection, pos) {
             let is = {};
             is.dist = pos.rhumbDistanceTo(intersection); // in m
@@ -974,51 +930,47 @@ let calc_intersections = function(self, props) {
 
         is_BB_boat = is_BB_WP = is_SB_boat = is_SB_WP = null;
         if (is_BB) {
-            is_BB_boat = calc_endpoint(is_BB, b_pos);
-            is_BB_WP = calc_endpoint(is_BB, WP_pos);
+            is_BB_boat = calc_endpoint(is_BB, POS);
+            is_BB_WP = calc_endpoint(is_BB, WP);
         }
         if (is_SB) {
-            is_SB_boat = calc_endpoint(is_SB, b_pos);
-            is_SB_WP = calc_endpoint(is_SB, WP_pos);
+            is_SB_boat = calc_endpoint(is_SB, POS);
+            is_SB_WP = calc_endpoint(is_SB, WP);
         }
 
         if (is_SB_boat && is_SB_WP && is_BB_boat && is_BB_WP) {
-            // es gibt schnittpunkte
-            intersections = {
+            return {
                 Boat: {
                     SB: {
-                        P1: b_pos,
+                        P1: POS,
                         P2: is_SB_boat.pos,
-                        color: 'rgb(0,255,0)',
-                        dist: is_SB_boat.dist
+                        dist: is_SB_boat.dist,
+                        color: 'green',
                     },
                     BB: {
-                        P1: b_pos,
+                        P1: POS,
                         P2: is_BB_boat.pos,
+                        dist: is_BB_boat.dist,
                         color: 'red',
-                        dist: is_BB_boat.dist
                     }
                 },
                 WP: {
                     SB: {
-                        P1: WP_pos,
+                        P1: WP,
                         P2: is_SB_WP.pos,
+                        dist: is_SB_WP.dist,
                         color: 'red',
-                        dist: is_SB_WP.dist
                     },
                     BB: {
-                        P1: WP_pos,
+                        P1: WP,
                         P2: is_BB_WP.pos,
-                        color: 'rgb(0,255,0)',
-                        dist: is_BB_WP.dist
+                        dist: is_BB_WP.dist,
+                        color: 'green',
                     }
                 }
             }
-        } else
-            // keine schnittpunkte
-            intersections = null;
+        }
     }
-    return intersections
 }
 
 
@@ -1151,8 +1103,8 @@ let drawCourseMarker = function(ctx, radius, angle, color, part=0) {
     ctx.rotate(radians(angle))
     let xc = 0;
     let yc = -radius;
-    let xl = -0.4 * thickness;
-    let xr = +0.4 * thickness;
+    let xl = -0.3 * thickness;
+    let xr = +0.3 * thickness;
     let yt = yc - 0.9 * thickness;
     let yb = yc + 0.9 * thickness;
     ctx.beginPath();

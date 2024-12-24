@@ -580,9 +580,11 @@ class Plugin(object):
             data.VMCA, data.VMCB = -1, -1
             data.VPOL, data.POLAR = 0, 0
 
+            data.LLSV = data.LLPV = data.STW # velocities on laylines
+
             if upwind and tack_angle or not upwind and gybe_angle:
                 data.LAY = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
-                data.LL1, data.LL2 = to360(twd-data.LAY), to360(twd+data.LAY) # absolute layline directions
+                data.LLS, data.LLP = to360(twd-data.LAY), to360(twd+data.LAY) # absolute layline directions
                 self.msg += ", fixed laylines"
                 return
 
@@ -597,12 +599,14 @@ class Plugin(object):
                 self.msg += ", laylines from table"
 
             leeway = list(map(float,self.config[LAYLINES_LEEWAY].split(',')))[0 if upwind else 1]
-            data.LL1, data.LL2 = to360(twd-data.LAY-leeway), to360(twd+data.LAY+leeway) # absolute layline directions incl. leeway
+            data.LLS, data.LLP = to360(twd-data.LAY-leeway), to360(twd+data.LAY+leeway) # absolute layline directions incl. leeway
 
             if self.config[LAYLINES_WITH_CURENT] and data.has('SET','DFT','LAY'):
               stw = self.config[POLAR_FACTOR]*self.polar.value(data.LAY, tws) # STW on layline
-              data.LL1=add_polar((data.SET,data.DFT),(data.LL1,stw))[0] # stb layline incl. current
-              data.LL2=add_polar((data.SET,data.DFT),(data.LL2,stw))[0] # bb layline incl. current
+              data.LLS,data.LLSV=add_polar((data.SET,data.DFT),(data.LLS,stw)) # stbd layline incl. current
+              data.LLP,data.LLPV=add_polar((data.SET,data.DFT),(data.LLP,stw)) # port layline incl. current
+              if to180(twa)>0: data.LLSV=data.SOG # use current speed for current tack
+              else: data.LLPV=data.SOG
 
             data.VPOL = self.config[POLAR_FACTOR]*self.polar.value(twa, tws)
             if data.has("VPOL","STW"):
