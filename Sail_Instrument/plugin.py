@@ -601,10 +601,10 @@ class Plugin(object):
             leeway = list(map(float,self.config[LAYLINES_LEEWAY].split(',')))[0 if upwind else 1]
             data.LLS, data.LLP = to360(twd-data.LAY-leeway), to360(twd+data.LAY+leeway) # absolute layline directions incl. leeway
 
-            if self.config[LAYLINES_WITH_CURENT] and data.has('SET','DFT','LAY'):
+            if self.config[LAYLINES_WITH_CURENT] and data.has('SETF','DFTF','LAY'):
               stw = self.config[POLAR_FACTOR]*self.polar.value(data.LAY, tws) # STW on layline
-              data.LLS,data.LLSV=add_polar((data.SET,data.DFT),(data.LLS,stw)) # stbd layline incl. current
-              data.LLP,data.LLPV=add_polar((data.SET,data.DFT),(data.LLP,stw)) # port layline incl. current
+              data.LLS,data.LLSV=add_polar((data.SETF,data.DFTF),(data.LLS,stw)) # stbd layline incl. current
+              data.LLP,data.LLPV=add_polar((data.SETF,data.DFTF),(data.LLP,stw)) # port layline incl. current
               if to180(twa)>0: data.LLSV=data.SOG # use current speed for current tack
               else: data.LLPV=data.SOG
 
