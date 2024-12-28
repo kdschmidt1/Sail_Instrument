@@ -85,7 +85,7 @@ function clamp(smallest,x,largest){
   return Math.max(smallest,Math.min(largest,x));
 }
 
-function drawCircularText(ctxRef, text, x, y, diameter, startAngle, align, textInside, inwardFacing, fName, fSize, kerning) {
+function drawCircularText(ctxRef, text, x, y, diameter, startAngle, align, textInside, inwardFacing, fName, fSize, kerning, night=false) {
     // text:         The text to be displayed in circular fashion
     // diameter:     The diameter of the circle around which the text will
     //               be displayed (inside or outside)
@@ -129,7 +129,6 @@ function drawCircularText(ctxRef, text, x, y, diameter, startAngle, align, textI
             diameter += textHeight * 3;
     }
 
-    var night = isNightMode();
     ctxRef.fillStyle = night ? '#a00' : 'black';
     ctxRef.strokeStyle = night ? 'black' : 'white';
     ctxRef.font = "bold " + fSize + " " + fName;
@@ -273,7 +272,7 @@ var WindPlotWidget = {
         return Math.ceil(Math.max(1,max-min));
       }
 
-      var night = isNightMode();
+      var night = data.nightMode;
       var r = data.range;
       var xtick = x => x.toFixed(1).replace(".0","");
       var c0 = d => d.AWA<0 ? red : d.AWA>0 ? green : blue;
@@ -664,7 +663,7 @@ let SailInstrumentOverlay = {
 
 
         ctx.globalAlpha *= data.Opacity;
-        if(data.NightInvert && isNightMode()) ctx.filter = 'invert(100%) hue-rotate(180deg)';
+        if(data.NightInvert && data.nightMode) ctx.filter = 'invert(100%) hue-rotate(180deg)';
         drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
         ctx.restore();
     }
@@ -682,14 +681,6 @@ var lightblue = "#3ba3f7";
 var black = "black";
 var orange = "orange";
 
-function isNightMode() {
-  try {
-    var e = document.getElementsByClassName('pageFrame');
-    return e[0].classList.contains('nightMode');
-  } catch(error) {
-    return false;
-  }
-}
 
 function drawWindWidget(ctx, size, maprotation, data){
 //        console.log("wind widget",data);
@@ -698,7 +689,7 @@ function drawWindWidget(ctx, size, maprotation, data){
         var rings = typeof(data.Rings) == 'undefined' ? true : data.Rings;
         var displayData = typeof(data.DisplayData) == 'undefined' ? false : data.DisplayData;
         var showWaterTrack = typeof(data.WaterTrack) == 'undefined' ? false : data.WaterTrack;
-        if(rings) drawCompassRing(ctx, size, maprotation);
+        if(rings) drawCompassRing(ctx, size, maprotation, data.nightMode);
         if (data.HDT>=0) {
           if(rings) drawOuterRing(ctx, size, maprotation + data.HDT);
         } else {
@@ -709,7 +700,7 @@ function drawWindWidget(ctx, size, maprotation, data){
         }
         if (knots(data.TWS)>=1 && rings) {
           if(data.POLAR){
-            drawPolar(ctx,size,maprotation,data,isNightMode()?'#aaa':'black');
+            drawPolar(ctx,size,maprotation,data,data.nightMode?'#aaa':'black');
           }
           var mm = [data.minTWD, data.maxTWD];
           drawLayline(ctx, size, maprotation + data.TWD - data.LAY, mm, green);
@@ -743,7 +734,7 @@ function drawWindWidget(ctx, size, maprotation, data){
               drawWaypointMarker(ctx, size, maprotation + data.BRG);
           }
           if (data.HDT>=0) {
-              drawHeadingBox(ctx, size, maprotation + data.HDT, black, Math.round(data.HDT));
+              drawHeadingBox(ctx, size, maprotation + data.HDT, Math.round(data.HDT), data.nightMode);
           }
         }
         if(displayData) {
@@ -758,7 +749,7 @@ function displayDataCorner(ctx, size, data) {
     var value=data[label];
     var radius=size;
     if(typeof(value)=="number" && isFinite(value)){
-      var night = isNightMode();
+      var night = data.nightMode;
       value = speed ? knots(value) : value;
       value = value.toFixed(digits);
       if(label.endsWith("F")) label=label.substring(0,label.length-1);
@@ -795,7 +786,7 @@ function displayDataCircle(ctx, size, data) {
           if (label.endsWith("F")) label = label.substring(0, label.length - 1);
           let inward = Math.abs(angle)<90;
           let radius = size * 2 * 1.35 * (inward ? 1 : 0.94);
-          drawCircularText(ctx, label + " " + value, 0, 0, radius, angle, "center", false, inward, "sans-serif", size / 100 * 15 + "pt", -2);
+          drawCircularText(ctx, label + " " + value, 0, 0, radius, angle, "center", false, inward, "sans-serif", size / 100 * 15 + "pt", -2, data.nightMode);
           return true;
       }
       return false;
@@ -1054,10 +1045,9 @@ let drawLayline = function(ctx, radius, angle, minmax, color) {
 };
 
 
-let drawHeadingBox = function(ctx, radius, angle, color, Text) {
+let drawHeadingBox = function(ctx, radius, angle, Text, night=false) {
     ctx.save();
     ctx.rotate(radians(angle));
-    var night = isNightMode();
 
     let roundRect = function(x, y, w, h, radius) {
         var r = x + w;
@@ -1263,8 +1253,7 @@ let drawOuterRing = function(ctx, radius, angle) {
     ctx.restore();
 } //Ende OuterRing
 
-let drawCompassRing = function(ctx, radius, angle) {
-    var night = isNightMode();
+let drawCompassRing = function(ctx, radius, angle, night=false) {
     ctx.save();
     ctx.rotate(radians(angle));
     var thickness = 0.2 * radius; //1*Math.min(x,y)
