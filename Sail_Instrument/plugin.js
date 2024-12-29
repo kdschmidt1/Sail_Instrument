@@ -721,7 +721,7 @@ function drawWindWidget(ctx, size, maprotation, data){
                 || Math.abs(to180(data.TWD-data.BRG))<data.LAY && Math.abs(to180(data.TWD-data.BRG))>90;
             var a = noTarget ? 0 : Math.min(1,Math.min(Math.abs(to180(data.TWD-data.LAY-data.HDT)),Math.abs(to180(data.TWD+data.LAY-data.HDT)))/10);
             var h = a*210+(1-a)*120;
-            drawWindArrow(ctx, size, maprotation + data.TWD, 'hsl('+h+',100%,50%)', data.HDT==data.COG ? 'G' : 'T');
+            drawWindArrow(ctx, size, maprotation + data.TWD, 'hsl('+h+',100%,50%)', 'T');
         }
         if(rings) {
           if (knots(data.STW)>=vmin && data.CTW>=0 && showWaterTrack) {
