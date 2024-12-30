@@ -244,7 +244,7 @@ var HistoryPlotWidget = {
         VMC: 'nav.gps.sail_instrument.VMC',
     },
     translateFunction: (props)=>{
-        console.log(props);
+//        console.log(props);
         var units={'TWD':'°','TWS':'kn','TWA':'°','AWA':'°','AWS':'kn','COG':'°','SOG':'kn','HDT':'°','STW':'°','HEL':'°','DBS':'m','twa':'','VMG':'kn','VMC':'kn','SET':'°','DFT':'kn'};
         return {...props,
           caption: props.quantity,
