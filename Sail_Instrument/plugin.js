@@ -202,6 +202,10 @@ var WindPlotWidget = {
     quantity: "TWD",
     storeKeys: {
         TIME: 'nav.gps.rtime',
+        COG: 'nav.gps.course',
+        SOG: 'nav.gps.speed',
+        HDT: 'nav.gps.sail_instrument.HDT',
+        STW: 'nav.gps.sail_instrument.STW',
         AWA: 'nav.gps.sail_instrument.AWA',
         AWS: 'nav.gps.sail_instrument.AWS',
         TWA: 'nav.gps.sail_instrument.TWA',
@@ -212,10 +216,10 @@ var WindPlotWidget = {
         TWAF: 'nav.gps.sail_instrument.TWAF',
         TWDF: 'nav.gps.sail_instrument.TWDF',
         TWSF: 'nav.gps.sail_instrument.TWSF',
-        COG: 'nav.gps.course',
-        SOG: 'nav.gps.speed',
-        HDT: 'nav.gps.sail_instrument.HDT',
-        STW: 'nav.gps.sail_instrument.STW',
+        SET: 'nav.gps.sail_instrument.SET',
+        DFT: 'nav.gps.sail_instrument.DFT',
+        SETF: 'nav.gps.sail_instrument.SETF',
+        DFTF: 'nav.gps.sail_instrument.DFTF',
         HEL: 'nav.gps.sail_instrument.HEL',
         DBS: 'nav.gps.sail_instrument.DBS',
         DBT: 'nav.gps.sail_instrument.DBT',
@@ -287,6 +291,13 @@ var WindPlotWidget = {
         var v0 = d=>to180(d.AWA-c)/m;
         var v1 = d=>to180(d.AWAF-c)/m;
 
+      } else if(data.quantity=="AWS"){
+        var c = r>0 ? r/2 : Math.round(knots(data.AWSF)*10)/10;
+        var m = c;
+        var v0 = d=>(knots(d.AWS)-c)/m;
+        var v1 = d=>(knots(d.AWSF)-c)/m;
+        var c0 = d=>"gray";
+
       } else if(data.quantity=="TWA"){
         var c = Math.round(data.TWAF);
         var m = r>0 ? r : maxrange(q,c);
@@ -317,11 +328,19 @@ var WindPlotWidget = {
         var v1 = d=>(knots(d.TWSF)-c)/m;
         var c0 = d=>"gray";
 
-      } else if(data.quantity=="AWS"){
-        var c = r>0 ? r/2 : Math.round(knots(data.AWSF)*10)/10;
+      } else if(data.quantity=="SET"){
+        var c = Math.round(data.SETF);
+        var m = r>0 ? r : maxrange(q,c);
+        var xtick = x => to360(x).toFixed(1).replace(".0","");
+        var v0 = d=>to180(d.SET-c)/m;
+        var v1 = d=>to180(d.SETF-c)/m;
+        var c0 = d=>"gray";
+
+      } else if(data.quantity=="DFT"){
+        var c = r>0 ? r/2 : Math.round(knots(data.DFTF)*10)/10;
         var m = c;
-        var v0 = d=>(knots(d.AWS)-c)/m;
-        var v1 = d=>(knots(d.AWSF)-c)/m;
+        var v0 = d=>(knots(d.DFT)-c)/m;
+        var v1 = d=>(knots(d.DFTF)-c)/m;
         var c0 = d=>"gray";
 
       } else if(data.quantity=="COG"){
@@ -465,7 +484,7 @@ var WindPlotWidget = {
 var WindPlotParams = {
     quantity: {
         type: 'SELECT',
-        list: ['TWD','TWS','TWA','AWA','AWS','COG','SOG','HDT','STW','HEL','DBS','twa','VMG','VMC'],
+        list: ['TWD','TWS','TWA','AWA','AWS','COG','SOG','HDT','STW','HEL','DBS','twa','VMG','VMC','SET','DFT'],
         default: 'TWD'
     },
     history: {
