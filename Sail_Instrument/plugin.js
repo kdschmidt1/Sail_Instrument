@@ -9,7 +9,7 @@ function toDateTime(secs) {
 
 var LaylineWidget = {
     name: "time/distance to WP",
-    unit: "",
+    unit: "nm",
     caption: "TTW",
     storeKeys: {
         WP: 'nav.wp.position',
@@ -20,6 +20,21 @@ var LaylineWidget = {
         LLP: 'nav.gps.sail_instrument.LLP',
         LLSV: 'nav.gps.sail_instrument.LLSV',
         LLPV: 'nav.gps.sail_instrument.LLPV',
+    },
+    formatter: avnav.api.formatter.formatDistance,
+    formatterParameters: ['nm'],
+    translateFunction: (props)=>{
+        var suffix = '';
+        if(props.tack=='current') {
+          suffix = to180(props.TWA)>0 ? '-S' : '-P';
+        }
+        if(props.tack=='opposite') {
+          suffix = to180(props.TWA)<0 ? '-S' : '-P';
+        }
+        return {...props,
+          caption: (props.type=='time' ? 'TTW' : 'DTW') + suffix,
+          unit: props.type=='time' ? '' : props.formatterParameters.length ? props.formatterParameters[0] : props.unit,
+        };
     },
     renderHtml: function(data) {
 //        console.log(data);
@@ -62,12 +77,13 @@ var LaylineWidget = {
         }
         return '<div class="widgetData"><span class="valueData">'+val+'</span></div>';
     },
-    formatter: avnav.api.formatter.formatDistance,
 };
 
 
 avnav.api.registerWidget(LaylineWidget, {
     formatterParameters: true,
+    caption: false,
+    unit: false,
     type: {
         type: 'SELECT',
         list: ['time','distance'],
@@ -192,7 +208,7 @@ function drawCircularText(ctxRef, text, x, y, diameter, startAngle, align, textI
 }
 
 
-var WindPlotWidget = {
+var HistoryPlotWidget = {
     name: "WindPlot",
     caption: "TWD",
     unit: "°",
@@ -226,6 +242,14 @@ var WindPlotWidget = {
         DBK: 'nav.gps.sail_instrument.DBK',
         VMG: 'nav.gps.sail_instrument.VMG',
         VMC: 'nav.gps.sail_instrument.VMC',
+    },
+    translateFunction: (props)=>{
+        console.log(props);
+        var units={'TWD':'°','TWS':'kn','TWA':'°','AWA':'°','AWS':'kn','COG':'°','SOG':'kn','HDT':'°','STW':'°','HEL':'°','DBS':'m','twa':'','VMG':'kn','VMC':'kn','SET':'°','DFT':'kn'};
+        return {...props,
+          caption: props.quantity,
+          unit: units[props.quantity],
+        };
     },
     initFunction: function() {},
     finalizeFunction: function() {},
@@ -481,7 +505,9 @@ var WindPlotWidget = {
     },
 };
 
-var WindPlotParams = {
+avnav.api.registerWidget(HistoryPlotWidget, {
+    caption: false,
+    unit: false,
     quantity: {
         type: 'SELECT',
         list: ['TWD','TWS','TWA','AWA','AWS','COG','SOG','HDT','STW','HEL','DBS','twa','VMG','VMC','SET','DFT'],
@@ -499,8 +525,7 @@ var WindPlotParams = {
         type: 'NUMBER',
         default: 1
     },
-};
-avnav.api.registerWidget(WindPlotWidget, WindPlotParams);
+});
 
 
 /*################################################################################################*/
