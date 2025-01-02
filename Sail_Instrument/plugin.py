@@ -52,8 +52,7 @@ try:
 except:
     pass
 
-PLUGIN_VERSION = 20241011
-
+PLUGIN_VERSION = 20241221
 SOURCE = "Sail_Instrument"
 MIN_AVNAV_VERSION = 20230705
 KNOTS = 1.94384  # knots per m/s
@@ -69,7 +68,10 @@ TACK_ANGLE = "tack_angle"
 GYBE_ANGLE = "gybe_angle"
 CALC_VMC = "calc_vmc"
 LEEWAY_FACTOR = "lee_factor"
-LAYLINES_FROM_MATRIX = "laylines_polar"
+POLAR_FACTOR = "polar_factor"
+LAYLINES_FROM_POLAR = "laylines_polar"
+LAYLINES_WITH_CURENT = "laylines_current"
+LAYLINES_LEEWAY = "laylines_leeway"
 SHOW_POLAR = "show_polar"
 PERIOD = "period"
 WMM_FILE = "wmm_file"
@@ -130,8 +132,7 @@ NMEA_SENTENCES = {
     "DBS": "${ID}DBS,,,{data.DBS:.1f},M,,",  # depth below surface
     "DBT": "${ID}DBT,,,{data.DBT:.1f},M,,",  # depth below transducer
     "DBK": "${ID}DBK,,,{data.DBK:.1f},M,,",  # depth below keel
-    # depth of transducer and offset
-    "DBT,DOT": "${ID}DPT,{data.DBK:.1f},{data.DOT:.1f},,",
+    "DBT,DOT": "${ID}DPT,{data.DBK:.1f},{data.DOT:.1f},,",  # depth of transducer and offset
 }
 
 CONFIG = [
@@ -166,10 +167,22 @@ CONFIG = [
         "type": "BOOLEAN",
     },
     {
-        "name": LAYLINES_FROM_MATRIX,
+        "name": LAYLINES_FROM_POLAR,
         "description": "calculate laylines from polar speed, not from beat/run angle table",
         "default": "False",
         "type": "BOOLEAN",
+    },
+    {
+        "name": LAYLINES_WITH_CURENT,
+        "description": "correct laylines for current and leeway (laylines over ground) with current data is present",
+        "default": "False",
+        "type": "BOOLEAN",
+    },
+    {
+        "name": LAYLINES_LEEWAY,
+        "description": "assumed upwind and downwind leeway used in layline calculation of corrected laylines",
+        "default": "0,0",
+        "type": "STRING",
     },
     {
         "name": SHOW_POLAR,
@@ -199,6 +212,12 @@ CONFIG = [
         "name": LEEWAY_FACTOR,
         "description": "leeway factor LEF, if >0 leeway angle is estimated as LEF * HEL / STW^2",
         "default": "10",
+        "type": "FLOAT",
+    },
+    {
+        "name": POLAR_FACTOR,
+        "description": "polar speed correction factor",
+        "default": "1",
         "type": "FLOAT",
     },
     {
@@ -433,7 +452,7 @@ class Plugin(object):
     def run(self):
         self.read_config()
         self.api.setStatus("STARTED", "running")
-        d = CourseData(self.polar)
+        d = CourseData()
         while not self.api.shouldStopMainThread():
             try:
                 self.msg = ""
@@ -441,6 +460,7 @@ class Plugin(object):
                 data["HEL"] = data["HEL"] or data["HEL1"] or (
                     degrees(data["HEL2"]) if data.get("HEL2") is not None else None)
                 present = {k for k in data.keys() if data[k] is not None}
+
                 data["LEF"] = self.config[LEEWAY_FACTOR] / KNOTS ** 2
 
                 if data["VAR"] is None and all(data.get(k) is not None for k in ("LAT", "LON")):
@@ -460,15 +480,13 @@ class Plugin(object):
 
                 if all(data.get(k) is None for k in ("AWA", "AWS", "TWA", "TWS", "TWD")):
                     data["GWD"], data["GWS"] = self.manual_wind() or (None, None)
-                    if all(data.get(k) is not None for k in ("GWD", "GWS")):
-                        if data["COG"] is None and (data["SOG"] or 0) < self.config[VMIN]:
-                            # allow to compute TW w/o COG if not moving
-                            data["COG"], data["SOG"] = 0, 0
-                        self.msg += ", manually entered wind"
+                    if all(data.get(k) is not None for k in ("GWD","GWS")):
+                      if data["COG"] is None and (data["SOG"] or 0)<self.config[VMIN]:
+                          data["COG"],data["SOG"] = 0,0 # allow to compute TW w/o COG if not moving
+                      self.msg += ", manually entered wind"
 
                 if data["HEL"] is None and self.heels and all(d.has(k) for k in ("TWAF", "TWSF")):
-                    data["HEL"] = copysign(self.heels.value(
-                        d["TWAF"], d["TWSF"] * KNOTS), -d["TWAF"])
+                    data["HEL"] = copysign(self.heels.value(d["TWAF"], d["TWSF"] * KNOTS), -d["TWAF"])
                     self.msg += ", heel from polar"
 
                 if data["HEL"] is not None:
@@ -478,20 +496,16 @@ class Plugin(object):
                 draught = self.config[DRAUGHT]
                 data["DOT"] = dot if dot >= 0 else None
                 data["DRT"] = draught if draught >= 0 else None
-                
+                data["BRG"] = bearing_to_waypoint()
 
-                data = {k: (to180(v) if k.endswith("A") and v else v)
-                        for k, v in data.items() if len(k) == 3}
+                data = {k: (to180(v) if k.endswith("A") and v else v) for k, v in data.items() if len(k) == 3}
 
+                data = d = CourseData(**data)  # compute missing values
 
-                data = d = CourseData(self.polar, **data)  # compute missing values
-                data["VERSION"]=str(PLUGIN_VERSION)
                 self.smooth(data, "AWD", "AWS")
-                data["AWAF"] = to360(
-                    data["AWDF"] - data["HDT"]) if d.has("AWDF", "HDT") else None
+                data["AWAF"] = to360(data["AWDF"] - data["HDT"]) if d.has("AWDF", "HDT") else None
                 self.smooth(data, "TWD", "TWS")
-                data["TWAF"] = to180(
-                    data["TWDF"] - data["HDT"]) if d.has("TWDF", "HDT") else None
+                data["TWAF"] = to180(data["TWDF"] - data["HDT"]) if d.has("TWDF", "HDT") else None
                 self.smooth(data, "SET", "DFT")
                 self.min_max(data, "TWD", lambda v: to180(v - data["TWDF"]))
                 for k in ("AWS", "TWS", "DFT"):
@@ -500,6 +514,7 @@ class Plugin(object):
                         self.msg += ", no " + k
 
                 self.laylines(data)
+
                 calculated = {k for k in data.keys() if data[k] is not None}
                 calculated -= present
 
@@ -541,6 +556,7 @@ class Plugin(object):
             except Exception as x:
                 self.api.error(f"{x}")
                 self.api.setStatus("ERROR", f"{x}")
+
             time.sleep(self.config[PERIOD])
         self.api.log("terminated run-loop")
 
@@ -550,7 +566,7 @@ class Plugin(object):
             if any(v is None for v in (twa, tws, twd)):
                 return
 
-            brg = bearing_to_waypoint()
+            brg = data["BRG"]
             if brg:
                 upwind = abs(to180(brg - twd)) < 90
             else:
@@ -562,27 +578,41 @@ class Plugin(object):
             assert 0 <= gybe_angle < 180
 
             data.VMCA, data.VMCB = -1, -1
-            data.POLAR = 0
+            data.VPOL, data.POLAR = 0, 0
+
+            data.LLSV = data.LLPV = data.STW # velocities on laylines
 
             if upwind and tack_angle or not upwind and gybe_angle:
-                data.LAY = (
-                    tack_angle / 2) if upwind else (180 - gybe_angle / 2)
+                data.LAY = (tack_angle / 2) if upwind else (180 - gybe_angle / 2)
+                data.LLS, data.LLP = to360(twd-data.LAY), to360(twd+data.LAY) # absolute layline directions
                 self.msg += ", fixed laylines"
                 return
 
             if not self.polar:
                 return
 
-            if self.config[LAYLINES_FROM_MATRIX] or not self.polar.has_angle(upwind):
-                data.LAY = abs(
-                    to180(self.polar.vmc_angle(
-                        0, tws, 0 if upwind else 180))
-                )
+            if self.config[LAYLINES_FROM_POLAR] or not self.polar.has_angle(upwind):
+                data.LAY = abs(to180(self.polar.vmc_angle(0, tws, 0 if upwind else 180)))
                 self.msg += ", laylines from polar"
             else:
                 data.LAY = self.polar.angle(tws, upwind)
                 self.msg += ", laylines from table"
-            
+
+            leeway = list(map(float,self.config[LAYLINES_LEEWAY].split(',')))[0 if upwind else 1]
+            data.LLS, data.LLP = to360(twd-data.LAY-leeway), to360(twd+data.LAY+leeway) # absolute layline directions incl. leeway
+
+            if self.config[LAYLINES_WITH_CURENT] and data.has('SETF','DFTF','LAY'):
+              stw = self.config[POLAR_FACTOR]*self.polar.value(data.LAY, tws) # STW on layline
+              data.LLS,data.LLSV=add_polar((data.SETF,data.DFTF),(data.LLS,stw)) # stbd layline incl. current
+              data.LLP,data.LLPV=add_polar((data.SETF,data.DFTF),(data.LLP,stw)) # port layline incl. current
+              if to180(twa)>0: data.LLSV=data.SOG # use current speed for current tack
+              else: data.LLPV=data.SOG
+
+            data.VPOL = self.config[POLAR_FACTOR]*self.polar.value(twa, tws)
+            if data.has("VPOL","STW"):
+                data.VPP = 100*data.STW/data.VPOL
+            self.msg += ", calculate VPOL"
+
             if self.config[SHOW_POLAR]:
                 values = numpy.array(
                     [
@@ -598,7 +628,7 @@ class Plugin(object):
                 data.VMCA = self.polar.vmc_angle(twd, tws, brg)
                 if upwind and abs(to180(brg - twd)) < data.LAY:
                     data.VMCB = self.polar.vmc_angle(twd, tws, brg, -1)
-                self.msg += ", VMCangles"
+                self.msg += ", VMC angles"
 
         except Exception as x:
             self.api.error(f"laylines {x}")
@@ -631,32 +661,27 @@ class Polar:
 
     def angle(self, tws, upwind):
         angle = self.data["beat_angle" if upwind else "run_angle"]
-        return numpy.interp(tws, self.data["TWS"], angle)
+        return numpy.interp(tws*KNOTS, self.data["TWS"], angle)
 
-    def value(self, twa, tws):  # Sollte speed in m/s zurückgeben    '''
+    def value(self, twa, tws):
         """
         get the 2d interpolated value
         @param twa: TrueWindAngle in degrees
         @param tws: TrueWindSpeed in m/s
         @return: 2d interpolated speed through water in m/s
         """
-        twa = to180(twa)
 
         if not self.spl:
             val = "STW" if "STW" in self.data else "heel"
             try:
                 interp2d = scipy.interpolate.RectBivariateSpline
-                kw = {"kx": 1, "ky": min(1, len(self.data["TWS"])-1)}
+                kw = {"kx":1, "ky":min(1,len(self.data["TWS"])-1)}
             except:
                 interp2d = scipy.interpolate.interp2d
                 kw = {}
-            self.spl = interp2d(
-                self.data["TWA"], self.data["TWS"], self.data[val], **kw)
+            self.spl = interp2d(self.data["TWA"], self.data["TWS"], self.data[val],**kw)
 
-        # !! weil die Matrix in kn aufgebaut ist, muss tws in kn angegeben werden
-        ret = max(0.0, float(self.spl(abs(twa), tws*KNOTS)))
-        # ret ist in kn, daher umrechnung in m/s:
-        return ret*MPS
+        return float(self.spl(abs(to180(twa)), tws*KNOTS))*MPS
 
     def vmc_angle(self, twd, tws, brg, s=1):
         """
@@ -664,7 +689,7 @@ class Polar:
         @param twd: TrueWindDirection in degrees
         @param tws: TrueWindSpeed in m/s
         @param brg: Bearing to waypoint in degrees
-        @return: course for highest VMC
+        @return: course for highest VMC in degrees relative to twd
         """
 
         brg_twd = to180(brg - twd)  # BRG from wind
@@ -673,8 +698,7 @@ class Polar:
             # negative sign for minimizer
             return -self.value(twa, tws) * cos(radians(s * twa - abs(brg_twd)))
 
-        res = scipy.optimize.minimize_scalar(
-            vmc, bounds=(0, 180), method='bounded')
+        res = scipy.optimize.minimize_scalar(vmc, bounds=(0, 180), method='bounded')
 
         if res.success:
             return to360(twd + s * copysign(res.x, brg_twd))
@@ -705,9 +729,9 @@ class CourseData:
     SET = set, direction of tide/current, cannot be measured directly
     DFT = drift, rate of tide/current, cannot be measured directly
     STW = speed through water, usually from paddle wheel, water speed vector projected onto HDT (long axis of boat)
+    CTW = course through water, estimated from heading + leeway
     HEL = heel angle, measured by sensor or from heel polar TWA/TWS -> HEL
     LEE = leeway angle, angle between HDT and direction of water speed vector, usually estimated from wind and/or heel and STW
-    CRS = course through water
     AWA = apparent wind angle, measured by wind direction sensor
     AWD = apparent wind direction, relative to true north
     AWS = apparent wind speed, measured by anemometer
@@ -722,6 +746,8 @@ class CourseData:
     DBK = depth below keel
     DRT = draught
     DOT = depth of transducer
+    VMG = velocity made good to windward (water track projected on TWD)
+    VMC = velocity made good on track (ground track projected on BRG to waypoint)
 
     Beware! Wind direction is the direction where the wind is coming FROM, SET,HDG,COG is the direction where the tide/boat is going TO.
 
@@ -751,25 +777,25 @@ class CourseData:
     ### Leeway and Course
 
     - LEE = LEF * HEL / STW^2
-    - CRS = HDT + LEE
+    - CTW = HDT + LEE
 
     With leeway factor LEF = 0..20, boat specific
 
     ### Course, Speed and Tide
 
-    - [COG,SOG] = [CRS,STW] (+) [SET,DFT]
-    - [SET,DFT] = [COG,SOG] (+) [CRS,-STW]
+    - [COG,SOG] = [CTW,STW] (+) [SET,DFT]
+    - [SET,DFT] = [COG,SOG] (+) [CTW,-STW]
 
     ### Wind
 
     angles and directions are always converted like xWD = xWA + HDT and xWA = xWD - HDT
 
     - [AWD,AWS] = [GWD,GWS] (+) [COG,SOG]
-    - [AWD,AWS] = [TWD,TWS] (+) [CRS,STW]
+    - [AWD,AWS] = [TWD,TWS] (+) [CTW,STW]
     - [AWA,AWS] = [TWA,TWS] (+) [LEE,STW]
 
     - [TWD,TWS] = [GWD,GWS] (+) [SET,DFT]
-    - [TWD,TWS] = [AWD,AWS] (+) [CRS,-STW]
+    - [TWD,TWS] = [AWD,AWS] (+) [CTW,-STW]
     - [TWA,TWS] = [AWA,AWS] (+) [LEE,-STW]
 
     - [GWD,GWS] = [AWD,AWS] (+) [COG,-SOG]
@@ -783,8 +809,7 @@ class CourseData:
     See test.py for examples.
     """
 
-    def __init__(self, polar, **kwargs):
-        self.polar=polar
+    def __init__(self, **kwargs):
         self._data = kwargs
         self.angles360 = kwargs.get("angles360", False)
         self.compute_missing()
@@ -812,25 +837,21 @@ class CourseData:
         if self.misses("LEE"):
             self.LEE = 0
 
-        if self.misses("CRS") and self.has("HDT", "LEE"):
-            self.CRS = to360(self.HDT + self.LEE)
+        if self.misses("CTW") and self.has("HDT", "LEE"):
+            self.CTW = to360(self.HDT + self.LEE)
 
-        if self.misses("SET", "DFT") and self.has("COG", "SOG", "CRS", "STW"):
-            self.SET, self.DFT = add_polar(
-                (self.COG, self.SOG), (self.CRS, -self.STW))
+        if self.misses("SET", "DFT") and self.has("COG", "SOG", "CTW", "STW"):
+            self.SET, self.DFT = add_polar((self.COG, self.SOG), (self.CTW, -self.STW))
 
-        if self.misses("COG", "SOG") and self.has("SET", "DFT", "CRS", "STW"):
-            self.COG, self.SOG = add_polar(
-                (self.SET, self.DFT), (self.CRS, self.STW))
+        if self.misses("COG", "SOG") and self.has("SET", "DFT", "CTW", "STW"):
+            self.COG, self.SOG = add_polar((self.SET, self.DFT), (self.CTW, self.STW))
 
         if self.misses("TWA", "TWS") and self.has("AWA", "AWS", "STW", "LEE"):
-            self.TWA, self.TWS = add_polar(
-                (self.AWA, self.AWS), (self.LEE, -self.STW))
+            self.TWA, self.TWS = add_polar((self.AWA, self.AWS), (self.LEE, -self.STW))
             self.TWA = self.angle(self.TWA)
 
         if self.misses("TWD", "TWS") and self.has("GWD", "GWS", "SET", "DFT"):
-            self.TWD, self.TWS = add_polar(
-                (self.GWD, self.GWS), (self.SET, self.DFT))
+            self.TWD, self.TWS = add_polar((self.GWD, self.GWS), (self.SET, self.DFT))
 
         if self.misses("AWD") and self.has("AWA", "HDT"):
             self.AWD = to360(self.AWA + self.HDT)
@@ -842,26 +863,20 @@ class CourseData:
             self.TWA = self.angle(self.TWD - self.HDT)
 
         if self.misses("GWD", "GWS") and self.has("AWD", "AWS", "COG", "SOG"):
-            self.GWD, self.GWS = add_polar(
-                (self.AWD, self.AWS), (self.COG, -self.SOG))
+            self.GWD, self.GWS = add_polar((self.AWD, self.AWS), (self.COG, -self.SOG))
 
         if self.misses("GWA") and self.has("GWD", "HDT"):
             self.GWA = self.angle(self.GWD - self.HDT)
 
         if self.misses("AWA", "AWS") and self.has("TWA", "TWS", "LEE", "STW"):
-            self.AWA, self.AWS = add_polar(
-                (self.TWA, self.TWS), (self.LEE, self.STW))
+            self.AWA, self.AWS = add_polar((self.TWA, self.TWS), (self.LEE, self.STW))
             self.AWA = self.angle(self.AWA)
 
-        if self.misses("VMG") and self.has("TWD", "CRS", "STW"):
-            self.VMG = cos(radians(self.TWD - self.CRS)) * self.STW
+        if self.misses("VMG") and self.has("TWD", "CTW", "STW"):
+            self.VMG = cos(radians(self.TWD - self.CTW)) * self.STW
 
-        if self.misses("VMC") and self.has("CRS", "SOG"):
-            try:
-              self.VMC = self.SOG * cos(radians(bearing_to_waypoint()-self.CRS))
-            except:
-              self.VMC=0
-            #print("VMC ",self.VMC)
+        if self.misses("VMC") and self.has("BRG", "COG", "SOG"):
+            self.VMC = cos(radians(self.BRG - self.COG)) * self.SOG
 
         if self.misses("AWD") and self.has("AWA", "HDT"):
             self.AWD = to360(self.AWA + self.HDT)
@@ -871,14 +886,7 @@ class CourseData:
 
         if self.misses("DBK") and self.has("DBS", "DRT"):
             self.DBK = self.DBS - self.DRT
-            
-        if self.misses("VPOL") and self.has("TWA", "TWS"):
-            self.VPOL = self.polar.value(self["TWA"], self["TWS"])
 
-        if self.misses("VPP") and self.has("VPOL", "STW"):
-            self.VPP = self.STW/self.VPOL*100
-
-            
 
     def __getattribute__(self, item):
         if re.match("[A-Z]+", item):
@@ -942,3 +950,4 @@ def add_polar(a, b):
     a, b = toCart(a), toCart(b)
     s = a[0] + b[0], a[1] + b[1]
     return toPol(s)
+

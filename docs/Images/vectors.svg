@@ -24,9 +24,9 @@
      inkscape:deskcolor="#505050"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="2.3269546"
-     inkscape:cx="299.10338"
-     inkscape:cy="659.01586"
+     inkscape:zoom="1.6454054"
+     inkscape:cx="396.86267"
+     inkscape:cy="561.25984"
      inkscape:window-width="2784"
      inkscape:window-height="2091"
      inkscape:window-x="540"
@@ -4745,28 +4745,16 @@
        inkscape:transform-center-y="1.9678648" />
     <text
        xml:space="preserve"
-       style="font-size:1.21199px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#000080;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="54.658646"
-       y="225.16252"
-       id="text44644"
-       transform="rotate(-21.40544)"><tspan
-         sodipodi:role="line"
-         id="tspan44642"
-         style="fill:#000080;stroke:none;stroke-width:0.264583px"
-         x="54.658646"
-         y="225.16252">water track</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:1.21199px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#00ffff;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="149.53734"
-       y="181.57217"
+       style="font-size:2.11667px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#00ffff;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="149.93425"
+       y="183.94063"
        id="text45720"
        transform="rotate(9.0000796)"><tspan
          sodipodi:role="line"
          id="tspan45718"
-         style="fill:#00ffff;stroke:none;stroke-width:0.264583px"
-         x="149.53734"
-         y="181.57217">tide</tspan></text>
+         style="font-size:2.11667px;fill:#00ffff;stroke:none;stroke-width:0.264583px"
+         x="149.93425"
+         y="183.94063">current</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.90461px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#00ffff;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -4821,16 +4809,16 @@
        inkscape:transform-center-y="-7.788689" />
     <text
        xml:space="preserve"
-       style="font-size:1.21199px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#808000;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="100.06169"
-       y="217.07068"
+       style="font-size:2.11667px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#808000;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="98.820412"
+       y="217.08974"
        id="text57653"
-       transform="rotate(-10.781895)"><tspan
+       transform="rotate(-9.3736863)"><tspan
          sodipodi:role="line"
          id="tspan57651"
-         style="fill:#808000;stroke:none;stroke-width:0.264583px"
-         x="100.06169"
-         y="217.07068">ground track</tspan></text>
+         style="font-size:2.11667px;fill:#808000;stroke:none;stroke-width:0.264583px"
+         x="98.820412"
+         y="217.08974">ground track</tspan></text>
     <path
        style="fill:none;stroke:#ff00ff;stroke-width:0.3;stroke-linecap:round;stroke-dasharray:none;stroke-dashoffset:0;marker-end:url(#Arrow2);paint-order:stroke fill markers"
        id="path47878"
@@ -4946,23 +4934,18 @@
          style="fill:#aa8800;stroke:none;stroke-width:0.264583px"
          x="207.49565"
          y="50.493652">COG</tspan></text>
-    <path
-       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
-       d="M 105,200.93205 77.868028,144.13363"
-       id="path72936"
-       sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
-       style="font-size:1.21199px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#0000ff;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="179.35008"
-       y="-9.6925392"
+       style="font-size:2.11667px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#0000ff;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="181.69151"
+       y="-10.146807"
        id="text73321"
        transform="rotate(64.76388)"><tspan
          sodipodi:role="line"
          id="tspan73319"
-         style="fill:#0000ff;stroke:none;stroke-width:0.264583px"
-         x="179.35008"
-         y="-9.6925392">apparent wind</tspan></text>
+         style="font-size:2.11667px;fill:#0000ff;stroke:none;stroke-width:0.264583px"
+         x="181.69151"
+         y="-10.146807">apparent wind</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.90461px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#0000ff;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -4987,11 +4970,6 @@
          style="fill:#0000ff;stroke:none;stroke-width:0.264583px"
          x="166.93901"
          y="-10.609767">AWS</tspan></text>
-    <path
-       style="fill:#800080;fill-rule:evenodd;stroke:#008000;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
-       d="M 105,200.93205 36.896954,159.70198"
-       id="path77891"
-       sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
        style="font-size:2.90461px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#008000;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -5006,16 +4984,16 @@
          y="115.44744">TWS</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:1.21199px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#008000;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="131.80151"
-       y="116.6895"
+       style="font-size:2.11667px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#008000;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="131.73245"
+       y="116.26394"
        id="text81209"
        transform="rotate(31.369346)"><tspan
          sodipodi:role="line"
          id="tspan81207"
-         style="fill:#008000;stroke:none;stroke-width:0.264583px"
-         x="131.80151"
-         y="116.6895">true wind</tspan></text>
+         style="font-size:2.11667px;fill:#008000;stroke:none;stroke-width:0.264583px"
+         x="131.73245"
+         y="116.26394">true wind</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.90461px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#008000;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -5042,21 +5020,21 @@
          y="118.89143">TWD</tspan></text>
     <path
        style="fill:#800080;fill-rule:evenodd;stroke:#999999;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
-       d="M 105,200.93205 10.844534,155.51207"
+       d="m 10.10286,155.23193 94.15547,45.41998"
        id="path95139"
        sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
-       style="font-size:1.21199px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#999999;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="114.25546"
-       y="132.97707"
+       style="font-size:2.11667px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#999999;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="112.79758"
+       y="132.65247"
        id="text96262"
        transform="rotate(26.688318)"><tspan
          sodipodi:role="line"
          id="tspan96260"
-         style="fill:#999999;stroke:none;stroke-width:0.264583px"
-         x="114.25546"
-         y="132.97707">ground wind</tspan></text>
+         style="font-size:2.11667px;fill:#999999;stroke:none;stroke-width:0.264583px"
+         x="112.79758"
+         y="132.65247">ground wind</tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#808000;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.6, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
        d="m 10.087938,155.05774 66.38002,-11.64326"
@@ -5249,5 +5227,27 @@
          inkscape:transform-center-x="0.56875872"
          inkscape:transform-center-y="-0.15544898" />
     </g>
+    <path
+       style="fill:#800080;fill-rule:evenodd;stroke:#008000;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
+       d="m 36.200063,159.33927 68.103047,41.23007"
+       id="path77891"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:0.3;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:0.3, 0.6;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2)"
+       d="m 77.591303,143.39032 27.131967,56.79842"
+       id="path72936"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:125%;font-family:Ubuntu;-inkscape-font-specification:Ubuntu;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;fill:#000080;stroke:none;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="54.436234"
+       y="227.67918"
+       id="text44644"
+       transform="rotate(-21.40544)"><tspan
+         sodipodi:role="line"
+         id="tspan44642"
+         style="font-size:2.11667px;fill:#000080;stroke:none;stroke-width:0.264583px"
+         x="54.436234"
+         y="227.67918">water track</tspan></text>
   </g>
 </svg>
