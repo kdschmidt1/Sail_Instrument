@@ -1,0 +1,52 @@
+
+
+.Sail_InstrumentWidget {
+￼    display: flex;￼
+￼    flex-direction: row;
+    height: 10em;
+    padding: 0;
+}
+
+.Sail_InstrumentWidget canvas.widgetData {
+    width: 100%;
+    height: 100%;
+    flex-grow: 1;
+}
+
+.Sail_InstrumentInfo {
+    ￼    display: flex;￼
+    ￼    flex-direction: row;
+}
+.Sail_InstrumentInfo .Sail_InstrumentInfoInner {
+    font-size: 1 em;
+    position: relative;
+    padding-right: 0.3em;
+}
+.SIcompass {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: url('compass.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center center;
+}
+.nightMode .SIcompass {
+  filter: invert(1) brightness(0.3) sepia(1) saturate(7) hue-rotate(-30deg) brightness(0.9);
+}
+.SImarker {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: url('marker.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center center;
+}
+.SIvalue {
+  position: absolute;
+  width: 100%;
+  xheight: 100%;
+  text-align: center;
+  xvertical-align: bottom;
+}

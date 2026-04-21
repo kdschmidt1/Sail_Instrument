@@ -29,22 +29,23 @@ import re
 import shutil
 import sys
 import time
-from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign
+from math import sin, cos, radians, degrees, sqrt, atan2, isfinite, copysign, exp
 
 import numpy
 import scipy.interpolate
 import scipy.optimize
-from avnav_nmea import NMEAParser
 
 try:
-    from avnrouter import AVNRouter, WpData
+    from avnrouter import AVNRouter
     from avnav_worker import AVNWorker
+    from avnav_nmea import NMEAParser
 except:
     pass
 
 hasgeomag = False
 
 try:
+    # https://www.ncei.noaa.gov/products/world-magnetic-model
     sys.path.insert(0, os.path.dirname(__file__) + "/lib")
     import geomag
 
@@ -60,7 +61,12 @@ MPS = 1 / KNOTS
 POLAR_FILE = "polar.json"
 HEEL_FILE = "heel.json"
 PATH_PREFIX = "gps.sail_instrument."
-SMOOTHING_FACTOR = "smoothing_factor"
+SMOOTHING_AW = "smoothing_aw"
+SMOOTHING_TW = "smoothing_tw"
+SMOOTHING_SD = "smoothing_sd"
+SMOOTHING_COG = "smoothing_cog"
+SMOOTHING_CTW = "smoothing_ctw"
+SMOOTHING_HDT = "smoothing_hdt"
 MM_SAMPLES = "minmax_samples"
 GROUND_WIND = "ground_wind"
 FALLBACK = "allow_fallback"
@@ -143,10 +149,40 @@ CONFIG = [
         "default": 0.5,
     },
     {
-        "name": SMOOTHING_FACTOR,
-        "description": "exponential smoothing factor for TWD/AWD",
-        "default": "0.1",
-        "type": "FLOAT",
+        "name": SMOOTHING_AW,
+        "description": "exponential smoothing time (s) for apparent wind",
+        "default": "15",
+        "type": "NUMBER",
+    },
+    {
+        "name": SMOOTHING_TW,
+        "description": "exponential smoothing time (s) for true wind",
+        "default": "300",
+        "type": "NUMBER",
+    },
+    {
+        "name": SMOOTHING_SD,
+        "description": "exponential smoothing time (s) for set/drift",
+        "default": "600",
+        "type": "NUMBER",
+    },
+    {
+        "name": SMOOTHING_COG,
+        "description": "exponential smoothing time (s) for COG/SOG",
+        "default": "10",
+        "type": "NUMBER",
+    },
+    {
+        "name": SMOOTHING_CTW,
+        "description": "exponential smoothing time (s) for CTW/STW",
+        "default": "10",
+        "type": "NUMBER",
+    },
+    {
+        "name": SMOOTHING_HDT,
+        "description": "exponential smoothing time (s) for HDT/STW",
+        "default": "5",
+        "type": "NUMBER",
     },
     {
         "name": MM_SAMPLES,
@@ -223,7 +259,7 @@ CONFIG = [
     {
         "name": WMM_FILE,
         "description": "file with WMM-coefficents for magnetic variation",
-        "default": "WMM2020.COF",
+        "default": "WMM2025.COF",
     },
     {
         "name": WMM_PERIOD,
@@ -264,7 +300,7 @@ CONFIG = [
         "name": TALKER_ID,
         "description": "NMEA talker ID for emitted sentences",
         "type": "STRING",
-        "default": "CA",
+        "default": "SI",
     },
     {
         "name": DECODE,
@@ -412,6 +448,18 @@ class Plugin(object):
             ws *= MPS
             return wd, ws
 
+    def smoothing_factor(self, phi):
+        dt = self.config[PERIOD]
+        tau = self.config[SMOOTHING_TW if phi.startswith('TW') else
+                          SMOOTHING_AW if phi.startswith('AW') else
+                          SMOOTHING_SD if phi=='SET' else
+                          SMOOTHING_COG if phi=='COG' else
+                          SMOOTHING_CTW if phi=='CTW' else
+                          SMOOTHING_HDT if phi=='HDT' else
+                          None]
+        if tau<=0: return 1
+        return 1-exp(-dt/tau)
+
     def smooth(self, data, phi, rad):
         if not hasattr(self, "filtered"):
             self.filtered = {}
@@ -420,14 +468,14 @@ class Plugin(object):
             return
         k = phi + rad
         p, r = data[phi], data[rad]
-        xy = toCart((p, r))
-        if k in filtered:
-            a = self.config[SMOOTHING_FACTOR]
+        w = toCart((p, r))
+        if k in filtered and all(map(isfinite,filtered[k])):
+            a = self.smoothing_factor(phi)
             assert 0 < a <= 1
             v = filtered[k]
-            filtered[k] = [v[i] + a * (xy[i] - v[i]) for i in (0, 1)]
+            filtered[k] = [(1-a)*v[i] + a*w[i] for i in (0, 1)]
         else:
-            filtered[k] = xy
+            filtered[k] = w
         p, r = toPol(filtered[k])
         data[phi + "F"] = to180(p) if phi[-1] == "A" else p
         data[rad + "F"] = r
@@ -507,6 +555,9 @@ class Plugin(object):
                 self.smooth(data, "TWD", "TWS")
                 data["TWAF"] = to180(data["TWDF"] - data["HDT"]) if d.has("TWDF", "HDT") else None
                 self.smooth(data, "SET", "DFT")
+                self.smooth(data, "COG", "SOG")
+                self.smooth(data, "HDT", "STW")
+                self.smooth(data, "CTW", "STW")
                 self.min_max(data, "TWD", lambda v: to180(v - data["TWDF"]))
                 for k in ("AWS", "TWS", "DFT"):
                     if k not in data:
@@ -926,12 +977,14 @@ class CourseData:
 
 
 def to360(a):
-    "limit a to [0,360)"
-    return a % 360
+    'limit angle a to [0,360)'
+    # Python's modulo always returns same sign as divisor
+    # it is done twice to fix round off errors (like for a=-1e-14)
+    return (a % 360) % 360
 
 
 def to180(a):
-    "limit a to [-180,+180)"
+    'limit angle a to [-180,+180)'
     return to360(a + 180) - 180
 
 
@@ -950,4 +1003,3 @@ def add_polar(a, b):
     a, b = toCart(a), toCart(b)
     s = a[0] + b[0], a[1] + b[1]
     return toPol(s)
-
