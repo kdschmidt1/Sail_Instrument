@@ -791,7 +791,8 @@
       ctx.globalAlpha *= data.Opacity;
       if (data.NightInvert && data.nightMode)
         ctx.filter = "invert(100%) hue-rotate(180deg)";
-      drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
+      //drawWindWidget(ctx, data.Displaysize, degrees(this.getRotation()), data);
+      drawWindWidget(ctx, data.Displaysize, 0, data);
       ctx.restore();
     },
   };
