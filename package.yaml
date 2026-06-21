@@ -5,13 +5,13 @@
 name: "avnav-sailinstrument-plugin"
 arch: "all"
 platform: "linux"
-version: "202404"
+version: "20260621"
 license: "MIT"
 keep_version: true
 section: "default"
 priority: "extra"
 depends:
-  - avnav (>=20220426)
+  - avnav (>=20260616)
   - python3-scipy
   - python3-numpy
 replaces: 
