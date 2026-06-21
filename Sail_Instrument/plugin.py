@@ -80,7 +80,7 @@ LAYLINES_WITH_CURENT = "laylines_current"
 LAYLINES_LEEWAY = "laylines_leeway"
 SHOW_POLAR = "show_polar"
 PERIOD = "period"
-WMM_FILE = "wmm_file"
+WMM_FILE = "WMM2025.COF"
 WMM_PERIOD = "wmm_period"
 WRITE = "nmea_write"
 NMEA_FILTER = "nmea_filter"
@@ -257,11 +257,6 @@ CONFIG = [
         "type": "FLOAT",
     },
     {
-        "name": WMM_FILE,
-        "description": "file with WMM-coefficents for magnetic variation",
-        "default": "WMM2025.COF",
-    },
-    {
         "name": WMM_PERIOD,
         "description": "period (s) to recompute magnetic variation",
         "type": "NUMBER",
@@ -426,7 +421,7 @@ class Plugin(object):
                 self.variation = None
                 self.variation_time = 0
                 assert self.config[WMM_PERIOD] > 0
-                filename = self.config[WMM_FILE]
+                filename = WMM_FILE
                 if "/" not in filename:
                     filename = os.path.join(
                         os.path.dirname(__file__) + "/lib", filename
