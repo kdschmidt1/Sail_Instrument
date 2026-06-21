@@ -705,7 +705,7 @@
       default: 100,
     },
     Opacity: {
-      type: "NUMBER",
+      type: "FLOAT",
       default: 1,
     },
     Rings: {
@@ -1053,11 +1053,11 @@
 
   var LayLines_OverlayParameter = {
     Opacity: {
-      type: "NUMBER",
+      type: "FLOAT",
       default: 1,
     },
     Laylinelength_nm: {
-      type: "NUMBER",
+      type: "FLOAT",
       default: 10,
     },
     Laylineoverlap: {
